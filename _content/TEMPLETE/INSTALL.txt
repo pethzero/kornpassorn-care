@@ -3,19 +3,66 @@ ng new webui --style=scss --routing
 ? Do you want to create a 'zoneless' application without zone.js (Developer Preview)? (y/N)
 
 
-src/
-└── app/
-    ├── core/               # services, interceptors, constants, guards
-    ├── shared/             # reusable UI components (buttons, cards, pipes)
-    ├── layout/             # layout components
-        ├── full-layout/    # main layout (Sidebar + Header + router-outlet)
-        ├── header/         # header bar
-        └── sidebar/        # sidebar menu
-    ├── pages/
-        └── dashboard/     # dashboard page (main content)
-app.config.ts
-app.html
-app.routes.ts
-app.scss
-app.spec.ts
-app.ts
+
+kornpassorn-care/
+└── webui/
+    ├── angular.json
+    ├── package.json
+    ├── tsconfig.json
+    └── src/
+        ├── app/
+        │   ├── core/               # service, guard, interceptor
+        │   │   ├── services/       🔁 ติดต่อ API, business logic
+        │   │   ├── interceptors/   🛡️ ดัก request/response เช่น auth token
+        │   │   ├── guards/         🚪 ป้องกัน route ที่ไม่ควรเข้า
+        │   │   ── constants/      🧭 ค่าคงที่ เช่น API endpoint, role list
+        │   │
+        │   ├── shared/             # pipe, directive, base components
+        │   │   ├── pipes/
+        │   │   ├── directives/
+        │   │   └── components/
+        │   │       ├── loading-spinner/
+        │   │       └── confirm-dialog/
+        │   │
+        │   ├── ui/                 # atomic design หรือ reusable components เฉพาะ style
+        │   │   ├── button/
+        │   │   ├── input/
+        │   │   ├── card/
+        │   │   └── modal/
+        │   │
+        │   ├── layout/
+        │   │   ├── full-layout/
+        │   │   ├── header/
+        │   │   └── sidebar/
+        │   │
+        │   ├── pages/              # แต่ละ feature ของระบบ
+        │   │   ├── dashboard/
+        │   │   ├── users/
+        │   │   ├── settings/
+        │   │   └── reports/
+        │   │
+        │   ├── app.config.ts
+        │   ├── app.routes.ts
+        │   ├── app.html
+        │   ├── app.scss
+        │   ├── app.spec.ts
+        │   └── app.ts
+        │
+        ├── environments/          # environment files
+        │   ├── environment.ts         # สำหรับ dev
+        │   ├── environment.prod.ts    # สำหรับ production
+        │   └── environment.staging.ts # ถ้ามี staging
+        │
+        ├── assets/
+        │   ├── i18n/
+        │   │   ├── en.json
+        │   │   └── th.json
+        │   ├── images/
+        │   │   ├── logo.png
+        │   │   └── icons/
+        │   ├── fonts/
+        │   │   └── ...
+        │   └── mock-data/         # JSON mock สำหรับ dev หรือ testing
+        │
+        └── index.html
+

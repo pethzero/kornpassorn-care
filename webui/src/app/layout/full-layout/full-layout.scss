@@ -3,7 +3,6 @@
 }
 
 .sidenav {
-  background-color: white;
   width: 250px;   // ความกว้าง sidebar ที่ต้องการ
 }
 
@@ -26,16 +25,11 @@ mat-sidenav-content {
   display: flex;
   flex-direction: column;
   height: 100vh;        // เต็มความสูง
+  background: #f9fdff;
 }
 
-// main.content {
-//   flex-grow: 1;         // ขยายเต็มพื้นที่ที่เหลือ
-//   padding: 16px;
-//   overflow-y: auto;     // เลื่อนเนื้อหาได้เมื่อยาวเกิน
-// }
-
 main.content {
-  padding-top: 56px;
+  // padding-top: 56px;
   flex-grow: 1;
   overflow-y: scroll;
   min-height: calc(100vh - 56px);
