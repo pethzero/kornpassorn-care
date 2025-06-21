@@ -1,12 +1,7 @@
-<mat-nav-list class="sidebar-list"  [@slideInOut]="isSidebarOpen ? 'in' : 'out'">
-  <!-- ชื่อกลุ่มเมนู -->
+<!-- <mat-nav-list class="sidebar-list"  [@slideInOut]="isSidebarOpen ? 'in' : 'out'">
   <h3 class="menu-name">{{ menu.name }}</h3>
-  <mat-divider></mat-divider>
-  <!-- วนหัวข้อเมนู -->
   <ng-container *ngFor="let head of menu.heads">
-    <!-- หัวข้อแต่ละหมวด -->
     <h5 class="menu-head">{{ head.label }}</h5>
-    <!-- เมนูแบบ flat -->
     <ng-container *ngIf="!head.expandable">
       <mat-nav-list class="detail-list">
         <a mat-list-item
@@ -21,13 +16,60 @@
         </a>
       </mat-nav-list>
     </ng-container>
-    <!-- เมนูแบบ collapsible -->
     <ng-container *ngIf="head.expandable">
       <mat-accordion class="detail-list">
         <mat-expansion-panel>
           <mat-expansion-panel-header>
             <mat-panel-title>{{ head.label }}</mat-panel-title>
           </mat-expansion-panel-header>
+          <mat-nav-list>
+            <a mat-list-item
+               class="detail-item"
+               *ngFor="let detail of head.details"
+               [routerLink]="detail.link"
+               routerLinkActive="active-link"
+               #rla2="routerLinkActive"
+               [class.active-link]="rla2.isActive">
+              <mat-icon matListIcon>{{ detail.icon }}</mat-icon>
+              <span class="label-text">{{ detail.label }}</span>
+            </a>
+          </mat-nav-list>
+        </mat-expansion-panel>
+      </mat-accordion>
+    </ng-container>
+  </ng-container>
+</mat-nav-list> -->
+<mat-nav-list class="sidebar-list" [@slideInOut]="isSidebarOpen ? 'in' : 'out'">
+  <div class="menu-name">{{ menu.name }}</div>
+  <!-- <mat-divider></mat-divider> -->
+<mat-divider></mat-divider> 
+  <ng-container *ngFor="let head of menu.heads">
+    <div class="menu-head">{{ head.label }}</div>
+
+    <!-- เมนูแบบไม่พับ -->
+    <ng-container *ngIf="!head.expandable">
+      <mat-nav-list class="detail-list">
+        <a mat-list-item
+           class="detail-item"
+           *ngFor="let detail of head.details"
+           [routerLink]="detail.link"
+           routerLinkActive="active-link"
+           #rla="routerLinkActive"
+           [class.active-link]="rla.isActive">
+          <mat-icon  matListIcon>{{ detail.icon }}</mat-icon>
+          <span class="label-text">{{ detail.label }}</span>
+        </a>
+      </mat-nav-list>
+    </ng-container>
+
+    <!-- เมนูแบบพับได้ -->
+    <ng-container *ngIf="head.expandable">
+      <mat-accordion class="detail-list">
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>{{ head.label }}</mat-panel-title>
+          </mat-expansion-panel-header>
+
           <mat-nav-list>
             <a mat-list-item
                class="detail-item"

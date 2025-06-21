@@ -1,59 +1,162 @@
+// .menu-name {
+//     text-align: center;
+// }
+
+// .detail-item {
+//   display: flex;
+//   align-items: center;
+//   font-size: 0.7rem;
+//   color: #495057;
+//   border-left: 3px solid transparent;
+//   border-radius: 0.375rem;
+//   padding-left: 5px;
+//   transition: background-color 0.2s, border-left-color 0.2s, color 0.2s;
+
+//   mat-icon {
+//     color: #3399ff;
+//     margin-bottom: -9px;
+//     font-size: 0.9rem;
+//     flex-shrink: 0;   /* กันไม่ให้ไอคอนย่อ */
+//   }
+
+//   .label-text {
+//     white-space: nowrap;  /* ไม่ให้ขึ้นบรรทัดใหม่ */
+//      font-size: 0.9rem;
+//   }
+
+//   &:hover {
+//     background-color: #e9f5ff;
+//     border-left-color: #3399ff;
+//     color: #0056b3;
+
+//     mat-icon {
+//       color: #0056b3;
+//     }
+//   }
+
+//   &.active-link {
+//     background-color: #d9ecff;
+//     border-left-color: #3399ff;
+//     font-weight: 200;
+//     color: #0056b3;
+
+//     mat-icon {
+//       color: #0056b3;
+//     }
+//   }
+// }
+
+// .menu-head {
+//   font-size: 1.0rem;         /* ขนาดตัวอักษร */
+//   font-weight: 600;          /* หนากว่าปกติ */
+//   color: #333333;            /* สีเทาเข้ม */
+//   margin-bottom: 0.75rem;    /* เว้นข้างล่าง */
+//   text-transform: uppercase; /* ตัวอักษรพิมพ์ใหญ่ */
+//   letter-spacing: 0.05em;    /* เว้นวรรคตัวอักษรเล็กน้อย */
+// }
+
+// mat-sidenav-content {
+//   display: flex;
+//   flex-direction: column;
+//   height: 100vh;
+//   padding: 0;
+// }
+
+
+.sidebar-list {
+  background-color: #ffffff;
+  border-right: 1px solid #e0e0e0; // ขอบขวาบางๆ
+  padding: 1rem 0;
+}
+
+.menu-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  // color: #2c3e50;
+  text-align: center;
+  // padding: 1rem;
+  // // border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 1rem;
+}
+
+.menu-head {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #777;
+  padding: 0.75rem 0.75rem 0.25rem;
+  margin: 0;
+  text-transform: uppercase;
+  // border-top: 1px solid #f0f0f0;
+}
+
+
 .detail-item {
   display: flex;
   align-items: center;
-  font-size: 0.7rem;
-  color: #495057;
+  font-size: 0.9rem;
+  color: #333;
+  padding: 0.5rem 1rem;
   border-left: 3px solid transparent;
-  border-radius: 0.375rem;
-  padding-left: 5px;
-  transition: background-color 0.2s, border-left-color 0.2s, color 0.2s;
+  transition: all 0.2s ease-in-out;
+  border-radius: 0;
 
   mat-icon {
-    color: #3399ff;
+    font-size: 1.1rem;
+    margin-right: 0.25rem;
     margin-bottom: -9px;
-    font-size: 0.9rem;
-    flex-shrink: 0;   /* กันไม่ให้ไอคอนย่อ */
+    color: #5c6bc0; // สีหลักแบบ CoreUI-ish
   }
 
   .label-text {
-    white-space: nowrap;  /* ไม่ให้ขึ้นบรรทัดใหม่ */
-     font-size: 0.9rem;
+    white-space: nowrap;
   }
 
   &:hover {
-    background-color: #e9f5ff;
-    border-left-color: #3399ff;
-    color: #0056b3;
+    background-color: #f5f9ff;
+    border-left-color: #42a5f5;
+    color: #1976d2;
 
     mat-icon {
-      color: #0056b3;
+      color: #1976d2;
+       margin-bottom: -9px;
     }
   }
 
   &.active-link {
-    background-color: #d9ecff;
-    border-left-color: #3399ff;
-    font-weight: 200;
-    color: #0056b3;
+    background-color: #e3f2fd;
+    border-left-color: #1976d2;
+    font-weight: 500;
+    color: #1976d2;
 
     mat-icon {
-      color: #0056b3;
+      color: #1976d2;
     }
   }
 }
 
-.menu-head {
-  font-size: 1.0rem;         /* ขนาดตัวอักษร */
-  font-weight: 600;          /* หนากว่าปกติ */
-  color: #333333;            /* สีเทาเข้ม */
-  margin-bottom: 0.75rem;    /* เว้นข้างล่าง */
-  text-transform: uppercase; /* ตัวอักษรพิมพ์ใหญ่ */
-  letter-spacing: 0.05em;    /* เว้นวรรคตัวอักษรเล็กน้อย */
+mat-divider {
+  margin: 0.5rem 0;
+  background-color: #e0e0e0;
 }
 
-mat-sidenav-content {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  padding: 0;
+mat-accordion {
+  background-color: transparent;
+
+  mat-expansion-panel {
+    background-color: #ffffff;
+    box-shadow: none;
+    border-left: 2px solid transparent;
+
+    mat-expansion-panel-header {
+      padding: 0.25rem 1rem;
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: #444;
+    }
+
+    mat-expansion-panel-header.mat-expanded {
+      background-color: #f5f5f5;
+      border-left-color: #42a5f5;
+    }
+  }
 }
