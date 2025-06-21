@@ -1,0 +1,12 @@
+<p>Example works!</p>
+
+<ul>
+  <li *ngFor="let item of items">
+    <span *ngIf="showFruitOnly && item.type === 'fruit'">
+      {{ item.name }} (Fruit)
+    </span>
+    <span *ngIf="!showFruitOnly">
+      {{ item.name }} ({{ item.type }})
+    </span>
+  </li>
+</ul>

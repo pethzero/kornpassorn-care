@@ -1,0 +1,48 @@
+// // .header-toolbar {
+// //   display: flex;
+// //   align-items: center;
+// //   justify-content: space-between; /* ซ้าย-กลาง-ขวา */
+// //   padding: 0 16px;
+// //   height: 56px;
+// // }
+
+// .header-toolbar {
+//   position: fixed;
+//   top: 0; left: 0; right: 0;
+//   height: 56px;
+//   z-index: 1000;
+//   display: flex;
+//   align-items: center;
+//   justify-content: space-between;
+//   padding: 0 16px;
+// }
+
+
+
+.header-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2000;
+  background-color: #3f51b5;
+  color: white;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.toolbar-left, .toolbar-center, .toolbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.toolbar-center {
+  flex-grow: 1;             /* ขยายเต็มพื้นที่ตรงกลาง */
+  justify-content: center;  /* จัดกลาง */
+}
+
+.toolbar-right {
+  justify-content: flex-end;
+  gap: 8px; /* เว้นห่างไอคอนหรือข้อความขวา */
+}

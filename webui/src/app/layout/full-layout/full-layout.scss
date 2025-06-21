@@ -1,0 +1,43 @@
+.sidenav-container {
+  height: 100vh;  // เต็มหน้าจอ viewport
+}
+
+.sidenav {
+  background-color: white;
+  width: 250px;   // ความกว้าง sidebar ที่ต้องการ
+}
+
+.content {
+  padding: 16px;
+  min-height: 100vh;  // ให้ content มีความสูงเต็มหน้าจออย่างน้อย
+  box-sizing: border-box;
+}
+
+mat-sidenav-container {
+  height: 100vh;        // ให้ container ครอบคลุมเต็มจอ
+}
+
+mat-sidenav {
+  width: 240px;         // กำหนดความกว้าง sidebar
+}
+
+mat-sidenav-content {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;        // เต็มความสูง
+}
+
+// main.content {
+//   flex-grow: 1;         // ขยายเต็มพื้นที่ที่เหลือ
+//   padding: 16px;
+//   overflow-y: auto;     // เลื่อนเนื้อหาได้เมื่อยาวเกิน
+// }
+
+main.content {
+  padding-top: 56px;
+  flex-grow: 1;
+  overflow-y: scroll;
+  min-height: calc(100vh - 56px);
+  box-sizing: border-box;
+}

@@ -1,0 +1,59 @@
+.detail-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.7rem;
+  color: #495057;
+  border-left: 3px solid transparent;
+  border-radius: 0.375rem;
+  padding-left: 5px;
+  transition: background-color 0.2s, border-left-color 0.2s, color 0.2s;
+
+  mat-icon {
+    color: #3399ff;
+    margin-bottom: -9px;
+    font-size: 0.9rem;
+    flex-shrink: 0;   /* กันไม่ให้ไอคอนย่อ */
+  }
+
+  .label-text {
+    white-space: nowrap;  /* ไม่ให้ขึ้นบรรทัดใหม่ */
+     font-size: 0.9rem;
+  }
+
+  &:hover {
+    background-color: #e9f5ff;
+    border-left-color: #3399ff;
+    color: #0056b3;
+
+    mat-icon {
+      color: #0056b3;
+    }
+  }
+
+  &.active-link {
+    background-color: #d9ecff;
+    border-left-color: #3399ff;
+    font-weight: 200;
+    color: #0056b3;
+
+    mat-icon {
+      color: #0056b3;
+    }
+  }
+}
+
+.menu-head {
+  font-size: 1.0rem;         /* ขนาดตัวอักษร */
+  font-weight: 600;          /* หนากว่าปกติ */
+  color: #333333;            /* สีเทาเข้ม */
+  margin-bottom: 0.75rem;    /* เว้นข้างล่าง */
+  text-transform: uppercase; /* ตัวอักษรพิมพ์ใหญ่ */
+  letter-spacing: 0.05em;    /* เว้นวรรคตัวอักษรเล็กน้อย */
+}
+
+mat-sidenav-content {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 0;
+}

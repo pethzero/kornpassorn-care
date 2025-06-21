@@ -1,0 +1,21 @@
+ng new webui --style=scss --routing
+
+? Do you want to create a 'zoneless' application without zone.js (Developer Preview)? (y/N)
+
+
+src/
+└── app/
+    ├── core/               # services, interceptors, constants, guards
+    ├── shared/             # reusable UI components (buttons, cards, pipes)
+    ├── layout/             # layout components
+        ├── full-layout/    # main layout (Sidebar + Header + router-outlet)
+        ├── header/         # header bar
+        └── sidebar/        # sidebar menu
+    ├── pages/
+        └── dashboard/     # dashboard page (main content)
+app.config.ts
+app.html
+app.routes.ts
+app.scss
+app.spec.ts
+app.ts
