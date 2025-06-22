@@ -1,68 +1,3 @@
-// .menu-name {
-//     text-align: center;
-// }
-
-// .detail-item {
-//   display: flex;
-//   align-items: center;
-//   font-size: 0.7rem;
-//   color: #495057;
-//   border-left: 3px solid transparent;
-//   border-radius: 0.375rem;
-//   padding-left: 5px;
-//   transition: background-color 0.2s, border-left-color 0.2s, color 0.2s;
-
-//   mat-icon {
-//     color: #3399ff;
-//     margin-bottom: -9px;
-//     font-size: 0.9rem;
-//     flex-shrink: 0;   /* กันไม่ให้ไอคอนย่อ */
-//   }
-
-//   .label-text {
-//     white-space: nowrap;  /* ไม่ให้ขึ้นบรรทัดใหม่ */
-//      font-size: 0.9rem;
-//   }
-
-//   &:hover {
-//     background-color: #e9f5ff;
-//     border-left-color: #3399ff;
-//     color: #0056b3;
-
-//     mat-icon {
-//       color: #0056b3;
-//     }
-//   }
-
-//   &.active-link {
-//     background-color: #d9ecff;
-//     border-left-color: #3399ff;
-//     font-weight: 200;
-//     color: #0056b3;
-
-//     mat-icon {
-//       color: #0056b3;
-//     }
-//   }
-// }
-
-// .menu-head {
-//   font-size: 1.0rem;         /* ขนาดตัวอักษร */
-//   font-weight: 600;          /* หนากว่าปกติ */
-//   color: #333333;            /* สีเทาเข้ม */
-//   margin-bottom: 0.75rem;    /* เว้นข้างล่าง */
-//   text-transform: uppercase; /* ตัวอักษรพิมพ์ใหญ่ */
-//   letter-spacing: 0.05em;    /* เว้นวรรคตัวอักษรเล็กน้อย */
-// }
-
-// mat-sidenav-content {
-//   display: flex;
-//   flex-direction: column;
-//   height: 100vh;
-//   padding: 0;
-// }
-
-
 .sidebar-list {
   background-color: #ffffff;
   border-right: 1px solid #e0e0e0; // ขอบขวาบางๆ
@@ -70,14 +5,34 @@
 }
 
 .menu-name {
-  font-size: 1.1rem;
-  font-weight: 600;
-  // color: #2c3e50;
+  font-size: 1.5rem;
+  font-weight: 800;
   text-align: center;
-  // padding: 1rem;
-  // // border-bottom: 1px solid #e0e0e0;
-  margin-bottom: 1rem;
+  // padding: 1rem 1.5rem;
+  // margin: 0 1rem 1.5rem;
+  color: #1e293b;
+  background-color: #ffffff;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: all 0.3s ease-in-out;
+
+  /* 🔥 3D Text Effect */
+  text-shadow:
+    1px 1px 0 #cbd5e1,  /* ด้านล่างซ้าย */
+    2px 2px 0 #94a3b8,  /* เงา layer 2 */
+    3px 3px 0 #64748b,  /* เงา layer 3 */
+    4px 4px 4px rgba(0, 0, 0, 0.25); /* เงานุ่ม */
 }
+
+// .menu-name:hover {
+//   transform: translateY(-2px);
+//   box-shadow:
+//     0 6px 12px rgba(0, 0, 0, 0.15),
+//     0 2px 4px rgba(0, 0, 0, 0.1);
+// }
+
+
 
 .menu-head {
   font-size: 0.85rem;
@@ -86,9 +41,8 @@
   padding: 0.75rem 0.75rem 0.25rem;
   margin: 0;
   text-transform: uppercase;
-  // border-top: 1px solid #f0f0f0;
+  background-color: #ffffff;
 }
-
 
 .detail-item {
   display: flex;
@@ -99,31 +53,32 @@
   border-left: 3px solid transparent;
   transition: all 0.2s ease-in-out;
   border-radius: 0;
+  background-color: #ffffff;
 
-  mat-icon {
-    font-size: 1.1rem;
-    margin-right: 0.25rem;
-    margin-bottom: -9px;
-    color: #5c6bc0; // สีหลักแบบ CoreUI-ish
-  }
+  // mat-icon {
+  //   font-size: 1.1rem;
+  //   margin-right: 0.25rem;
+  //   margin-bottom: -5px;
+  //   color: #5c6bc0; // สีหลักแบบ CoreUI-ish
+  // }
 
   .label-text {
     white-space: nowrap;
   }
 
   &:hover {
-    background-color: #f5f9ff;
+    background-color: #ffffff; // เปลี่ยนจาก #f5f9ff เป็นขาว
     border-left-color: #42a5f5;
     color: #1976d2;
 
     mat-icon {
       color: #1976d2;
-       margin-bottom: -9px;
+      margin-bottom: -9px;
     }
   }
 
   &.active-link {
-    background-color: #e3f2fd;
+    background-color: #ffffff; // เปลี่ยนจาก #e3f2fd เป็นขาว
     border-left-color: #1976d2;
     font-weight: 500;
     color: #1976d2;
@@ -139,24 +94,29 @@ mat-divider {
   background-color: #e0e0e0;
 }
 
-mat-accordion {
-  background-color: transparent;
 
-  mat-expansion-panel {
+mat-expansion-panel {
+  background-color: #ffffff;
+  box-shadow: none;
+  border-left: 2px solid transparent;
+
+  mat-expansion-panel-header {
+    padding: 0.25rem 1rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: #444;
     background-color: #ffffff;
-    box-shadow: none;
-    border-left: 2px solid transparent;
+  }
 
-    mat-expansion-panel-header {
-      padding: 0.25rem 1rem;
-      font-weight: 500;
-      font-size: 0.9rem;
-      color: #444;
-    }
-
-    mat-expansion-panel-header.mat-expanded {
-      background-color: #f5f5f5;
-      border-left-color: #42a5f5;
-    }
+  mat-expansion-panel-header.mat-expanded {
+    background-color: #ffffff; // เปลี่ยนจาก #f5f5f5 เป็นขาว
+    border-left-color: #42a5f5;
   }
 }
+
+  mat-icon {
+    font-size: 1.1rem;
+    // margin-right: 0.25rem;
+    margin-bottom: -9px;
+    color: #5c6bc0; // สีหลักแบบ CoreUI-ish
+  }

@@ -1,89 +1,38 @@
-<!-- <mat-nav-list class="sidebar-list"  [@slideInOut]="isSidebarOpen ? 'in' : 'out'">
-  <h3 class="menu-name">{{ menu.name }}</h3>
-  <ng-container *ngFor="let head of menu.heads">
-    <h5 class="menu-head">{{ head.label }}</h5>
-    <ng-container *ngIf="!head.expandable">
-      <mat-nav-list class="detail-list">
-        <a mat-list-item
-           class="detail-item"
-           *ngFor="let detail of head.details"
-           [routerLink]="detail.link"
-           routerLinkActive="active-link"
-           #rla="routerLinkActive"
-           [class.active-link]="rla.isActive">
-          <mat-icon matListIcon>{{ detail.icon }}</mat-icon>
-          <span class="label-text">{{ detail.label }}</span>
-        </a>
-      </mat-nav-list>
-    </ng-container>
-    <ng-container *ngIf="head.expandable">
-      <mat-accordion class="detail-list">
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>{{ head.label }}</mat-panel-title>
-          </mat-expansion-panel-header>
-          <mat-nav-list>
-            <a mat-list-item
-               class="detail-item"
-               *ngFor="let detail of head.details"
-               [routerLink]="detail.link"
-               routerLinkActive="active-link"
-               #rla2="routerLinkActive"
-               [class.active-link]="rla2.isActive">
-              <mat-icon matListIcon>{{ detail.icon }}</mat-icon>
-              <span class="label-text">{{ detail.label }}</span>
-            </a>
-          </mat-nav-list>
-        </mat-expansion-panel>
-      </mat-accordion>
-    </ng-container>
-  </ng-container>
-</mat-nav-list> -->
-<mat-nav-list class="sidebar-list" [@slideInOut]="isSidebarOpen ? 'in' : 'out'">
+<mat-nav-list [@slideInOut]="isSidebarOpen ? 'in' : 'out'">
   <div class="menu-name">{{ menu.name }}</div>
-  <!-- <mat-divider></mat-divider> -->
-<mat-divider></mat-divider> 
+  <mat-divider></mat-divider>
+
   <ng-container *ngFor="let head of menu.heads">
-    <div class="menu-head">{{ head.label }}</div>
-
-    <!-- เมนูแบบไม่พับ -->
-    <ng-container *ngIf="!head.expandable">
-      <mat-nav-list class="detail-list">
+    <ng-container *ngIf="head.roles.includes(userRole)">
+      
+      <ng-container *ngIf="!head.expandable">
         <a mat-list-item
-           class="detail-item"
-           *ngFor="let detail of head.details"
-           [routerLink]="detail.link"
-           routerLinkActive="active-link"
-           #rla="routerLinkActive"
-           [class.active-link]="rla.isActive">
-          <mat-icon  matListIcon>{{ detail.icon }}</mat-icon>
-          <span class="label-text">{{ detail.label }}</span>
+           [routerLink]="head.link"
+           (click)="onMenuClick()"
+           [class.active-link]="currentPath === head.link">
+          <mat-icon matListIcon>{{ head.icon }}</mat-icon>
+          <span class="label-text">{{ head.label }}</span>
         </a>
-      </mat-nav-list>
-    </ng-container>
+      </ng-container>
 
-    <!-- เมนูแบบพับได้ -->
-    <ng-container *ngIf="head.expandable">
-      <mat-accordion class="detail-list">
+      <ng-container *ngIf="head.expandable">
         <mat-expansion-panel>
           <mat-expansion-panel-header>
             <mat-panel-title>{{ head.label }}</mat-panel-title>
           </mat-expansion-panel-header>
-
           <mat-nav-list>
             <a mat-list-item
-               class="detail-item"
                *ngFor="let detail of head.details"
                [routerLink]="detail.link"
-               routerLinkActive="active-link"
-               #rla2="routerLinkActive"
-               [class.active-link]="rla2.isActive">
+               (click)="onMenuClick()"
+               [class.active-link]="currentPath === detail.link">
               <mat-icon matListIcon>{{ detail.icon }}</mat-icon>
               <span class="label-text">{{ detail.label }}</span>
             </a>
           </mat-nav-list>
         </mat-expansion-panel>
-      </mat-accordion>
+      </ng-container>
+
     </ng-container>
   </ng-container>
 </mat-nav-list>

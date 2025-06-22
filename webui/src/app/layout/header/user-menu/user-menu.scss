@@ -1,0 +1,40 @@
+/* ให้พื้นหลังขาว และปรับความกว้าง */
+::ng-deep .mat-mdc-menu-panel.custom-menu {
+    background: white !important;
+    color: #333;
+    width: 250px;
+    /* default สำหรับ desktop */
+    transform-origin: top;
+    animation: slideDown 0.25s ease-out;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes slideDown {
+    0% {
+        transform: translateY(-10px);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+
+/* Responsive: โทรศัพท์จอเล็ก */
+@media (max-width: 640px) {
+    ::ng-deep .mat-mdc-menu-panel.custom-menu {
+        width: 90vw !important;
+        /* 90% ของหน้าจอ */
+        max-width: 320px;
+    }
+}
+
+.menu-head-icon {
+    font-size: 36px;
+    width: 36px !important;
+    height: 36px !important;
+    color: white;
+}
+

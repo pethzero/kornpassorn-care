@@ -17,6 +17,7 @@ mat-sidenav-container {
 }
 
 mat-sidenav {
+  background: white;
   width: 240px;         // กำหนดความกว้าง sidebar
 }
 
@@ -25,7 +26,7 @@ mat-sidenav-content {
   display: flex;
   flex-direction: column;
   height: 100vh;        // เต็มความสูง
-  background: #f9fdff;
+  background: #f5fcff;
 }
 
 main.content {

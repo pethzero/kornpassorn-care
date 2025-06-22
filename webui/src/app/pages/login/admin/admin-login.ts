@@ -1,25 +1,26 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { AuthService } from '../../core/services/auth.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { FormsModule } from '@angular/forms';
+
 
 @Component({
   standalone: true,
-  selector: 'app-login',
-  imports: [CommonModule,FormsModule],
-  templateUrl: './login.html',
-  styleUrls: ['./login.scss']  // แก้ชื่อเป็น styleUrls (พหูพจน์)
+  selector: 'app-admin-login',
+  imports: [CommonModule, FormsModule],
+  templateUrl: './admin-login.html',
+  styleUrls: ['./admin-login.scss']
 })
-export class LoginComponent {
+export class AdminLoginComponent {
   username = '';
   password = '';
   errorMessage = '';
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(private auth: AuthService, private router: Router) { }
 
   login() {
-    const success = this.auth.loginWithCredentials(this.username, this.password);
+    const success = this.auth.loginWithCredentials(this.username, this.password,'admin');
     if (success) {
       this.router.navigate(['/dashboard']);
     } else {

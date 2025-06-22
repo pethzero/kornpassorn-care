@@ -16,8 +16,8 @@ export class AuthService {
     }
   }
 
-  loginWithCredentials(username: string, password: string): boolean {
-    const user = MOCK_USERS.find(u => u.username === username && u.password === password);
+  loginWithCredentials(username: string, password: string,role:string): boolean {
+    const user = MOCK_USERS.find(u => u.username === username && u.password === password &&  u.role == role);
     if (user) {
       localStorage.setItem('token', user.token);
       this.currentUserSubject.next(user);

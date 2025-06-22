@@ -5,7 +5,7 @@ import { AdminSetting } from './admin-setting/admin-setting';
 
 const routes: Routes = [
     { path: 'dashboard', component: AdminDashboard },
-    { path: 'setting', component: AdminSetting }
+    { path: 'setting', component: AdminSetting },
 ];
 
 
