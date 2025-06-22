@@ -1,8 +1,8 @@
-<div class="dashboard-container bg-white min-h-screen p-6">
+<div class="dashboard-container  min-h-screen p-6">
   <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
-    
+
     <!-- การ์ด: คนไข้ทั้งหมด -->
-    <mat-card class="bg-white shadow-md p-4 rounded-xl">
+    <mat-card class=" shadow-md p-4 rounded-xl">
       <mat-card-title class="text-gray-800 text-lg font-semibold">คนไข้ทั้งหมด</mat-card-title>
       <mat-card-content>
         <p class="text-3xl font-bold text-blue-600">{{ stats.totalPatients }}</p>
@@ -10,7 +10,7 @@
     </mat-card>
 
     <!-- การ์ด: คนไข้ใหม่วันนี้ -->
-    <mat-card class="bg-white shadow-md p-4 rounded-xl">
+    <mat-card class=" shadow-md p-4 rounded-xl">
       <mat-card-title class="text-gray-800 text-lg font-semibold">คนไข้ใหม่วันนี้</mat-card-title>
       <mat-card-content>
         <p class="text-3xl font-bold text-green-600">{{ stats.newPatientsToday }}</p>
@@ -18,7 +18,7 @@
     </mat-card>
 
     <!-- การ์ด: นัดหมายวันนี้ -->
-    <mat-card class="bg-white shadow-md p-4 rounded-xl">
+    <mat-card class=" shadow-md p-4 rounded-xl">
       <mat-card-title class="text-gray-800 text-lg font-semibold">นัดหมายวันนี้</mat-card-title>
       <mat-card-content>
         <p class="text-3xl font-bold text-purple-600">{{ stats.appointmentsToday }}</p>
@@ -26,7 +26,7 @@
     </mat-card>
 
     <!-- การ์ด: อยู่ในห้องตรวจ -->
-    <mat-card class="bg-white shadow-md p-4 rounded-xl">
+    <mat-card class=" shadow-md p-4 rounded-xl">
       <mat-card-title class="text-gray-800 text-lg font-semibold">อยู่ในห้องตรวจ</mat-card-title>
       <mat-card-content>
         <p class="text-3xl font-bold text-red-600">{{ stats.inExamRoom }}</p>

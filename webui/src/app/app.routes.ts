@@ -8,6 +8,11 @@ export const routes: Routes = [
     component: FullLayoutComponent,
     children: [
       {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'dashboard'
+      },
+      {
         path: 'dashboard',
         loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.DashboardComponent),
         canActivate: [AuthGuard],
@@ -20,7 +25,7 @@ export const routes: Routes = [
         data: { roles: ['user', 'admin'] } // ให้ user และ admin เข้าได้
       },
       {
-        path: 'admin-area',
+        path: 'admin',
         canActivateChild: [AuthGuard], // 👈 ใช้ CanActivateChild
         data: { roles: ['admin'] },
         children: [
@@ -32,24 +37,20 @@ export const routes: Routes = [
             path: 'settings',
             loadComponent: () => import('./pages/admin/admin-routing.module').then(m => m.AdminRoutingModule)
           },
-          // {
-          //   path: 'secure',
-          //   canMatch: [AuthGuard],
-          //   loadComponent: () => import('./pages/secure/secure').then(m => m.SecureComponent),
-          //   data: { roles: ['admin'] }
-          // },
-          // 
-          // {
-          //   path: 'users',
-          //   loadComponent: () => import('./pages/admin/admin-routing.module').then(m => m.UsersPage)
-          // }
         ]
       }
-
     ],
-  },
-  {
-    path: 'login',
-    loadComponent: () => import('./pages/login/login').then(m => m.LoginComponent)
   }
+  ,{
+    path: 'login',
+    loadComponent: () => import('./pages/login/user/login').then(m => m.LoginComponent)
+  },{
+    path: 'admin-login',
+    loadComponent: () => import('./pages/login/admin/admin-login').then(m => m.AdminLoginComponent)
+  },
+  // {
+  //   path: '**', // จับทุก path ที่ไม่ match route ไหนเลย
+  //   loadComponent: () => import('./pages/not-found/not-found').then(m => m.NotFoundComponent),
+  // }
 ];
+
