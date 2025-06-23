@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { FullLayoutComponent } from './layout/full-layout/full-layout';
 import { AuthGuard } from './core/guards/auth-guard';  // import guard เข้ามา
+import { LoginRedirectGuard } from './core/guards/login-redirect.guard';
 
 export const routes: Routes = [
   {
@@ -40,14 +41,21 @@ export const routes: Routes = [
         ]
       }
     ],
-  }
-  ,{
+  }, {
     path: 'login',
+    canActivate: [LoginRedirectGuard],
     loadComponent: () => import('./pages/login/user/login').then(m => m.LoginComponent)
-  },{
+  },
+  {
     path: 'admin-login',
+    canActivate: [LoginRedirectGuard],
     loadComponent: () => import('./pages/login/admin/admin-login').then(m => m.AdminLoginComponent)
   },
+  {
+    path: 'logout',
+    loadComponent: () =>
+      import('./pages/logout/logout.component').then(m => m.LogoutComponent)
+  }
   // {
   //   path: '**', // จับทุก path ที่ไม่ match route ไหนเลย
   //   loadComponent: () => import('./pages/not-found/not-found').then(m => m.NotFoundComponent),

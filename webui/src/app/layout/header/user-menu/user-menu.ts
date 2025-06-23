@@ -10,14 +10,14 @@ import { MatDividerModule } from '@angular/material/divider';
 
 @Component({
   selector: 'app-user-menu',
-  imports: [FormsModule, CommonModule, MatMenuModule, MatIconModule, MatButtonModule,MatDividerModule],
+  imports: [FormsModule, CommonModule, MatMenuModule, MatIconModule, MatButtonModule, MatDividerModule],
   templateUrl: './user-menu.html',
   styleUrl: './user-menu.scss'
 })
 export class UserMenu implements OnInit {
   user: any;
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(private auth: AuthService, private router: Router) { }
 
   ngOnInit(): void {
     this.user = this.auth.getCurrentUser();
@@ -25,7 +25,13 @@ export class UserMenu implements OnInit {
 
   logout() {
     this.auth.logout();
-    this.router.navigate(['/login']);
+    console.log('logout system', this.user)
+    if (this.user.role === 'admin') {
+      this.router.navigate(['/admin-login']);
+    } else {
+      this.router.navigate(['/login']);
+    }
+    // this.router.navigate(['/login']);
   }
 
   goToSettings() {
