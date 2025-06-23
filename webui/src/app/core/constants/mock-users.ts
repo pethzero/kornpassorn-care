@@ -33,7 +33,7 @@ export const MOCK_USERS: MockUser[] = [
   },
   {
     id: '3',
-    name: 'Normal User',
+    name: 'Pethzero Admin',
     username: 'pethzero',
     password: '123456',
     role: 'admin',
