@@ -53,8 +53,8 @@ export const routes: Routes = [
   },
   {
     path: 'logout',
-    loadComponent: () =>
-      import('./pages/logout/logout.component').then(m => m.LogoutComponent)
+    loadComponent: () => import('./pages/logout/logout.component').then(m => m.LogoutComponent),
+      data: { roles: ['guest', 'user', 'admin'] } 
   }
   // {
   //   path: '**', // จับทุก path ที่ไม่ match route ไหนเลย

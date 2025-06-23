@@ -46,3 +46,86 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 }
+
+
+// import { Injectable } from '@angular/core';
+// import { HttpClient } from '@angular/common/http';
+// import { BehaviorSubject, Observable } from 'rxjs';
+
+// interface User {
+//   id: string;
+//   username: string;
+//   role: string;
+//   // ...อื่น ๆ ตาม backend ส่งมา
+// }
+
+// @Injectable({ providedIn: 'root' })
+// export class AuthService {
+//   private currentUserSubject = new BehaviorSubject<User | null>(null);
+//   currentUser$ = this.currentUserSubject.asObservable();
+
+//   constructor(private http: HttpClient) {
+//     this.initUser(); // ตอน service ถูกโหลด
+//   }
+
+//   // 🟢 เรียกเมื่อ login สำเร็จ
+//   login(username: string, password: string): Observable<boolean> {
+//     return new Observable(observer => {
+//       this.http.post<{ token: string }>('/api/login', { username, password }).subscribe({
+//         next: res => {
+//           localStorage.setItem('token', res.token);
+
+//           // 👇 Decode token แล้ว set current user จาก payload
+//           const payload = JSON.parse(atob(res.token.split('.')[1]));
+//           const user: User = {
+//             id: payload.sub,
+//             username: payload.username,
+//             role: payload.role
+//           };
+//           this.currentUserSubject.next(user);
+
+//           observer.next(true);
+//           observer.complete();
+//         },
+//         error: err => {
+//           observer.next(false);
+//           observer.complete();
+//         }
+//       });
+//     });
+//   }
+
+//   // 🟡 สำหรับ refresh state ตอน reload หน้า
+//   initUser(): void {
+//     const token = localStorage.getItem('token');
+//     if (!token) return;
+
+//     // 1) Decode JWT จาก token
+//     try {
+//       const payload = JSON.parse(atob(token.split('.')[1]));
+//       const user: User = {
+//         id: payload.sub,
+//         username: payload.username,
+//         role: payload.role
+//       };
+//       this.currentUserSubject.next(user);
+//     } catch (e) {
+//       this.logout(); // token พัง → logout ไปเลย
+//     }
+
+//     // หรือ 2) ใช้ API ดึงข้อมูลสดก็ได้
+//     // this.http.get<User>('/api/me').subscribe({
+//     //   next: user => this.currentUserSubject.next(user),
+//     //   error: _ => this.logout()
+//     // });
+//   }
+
+//   logout(): void {
+//     localStorage.removeItem('token');
+//     this.currentUserSubject.next(null);
+//   }
+
+//   getCurrentUser(): User | null {
+//     return this.currentUserSubject.value;
+//   }
+// }

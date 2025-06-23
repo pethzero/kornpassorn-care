@@ -12,16 +12,11 @@ import { AuthService } from '../../core/services/auth.service';
 
 export class LogoutComponent implements OnInit {
     user: any;
+
     constructor(private auth: AuthService, private router: Router) { }
-        
+
     ngOnInit(): void {
-        this.user = this.auth.getCurrentUser();
-        console.log(  this.user )
-        // this.auth.logout();
-        // if (this.user.role === 'admin') {
-        //     this.router.navigate(['/admin-login']);
-        // } else {
-        //     this.router.navigate(['/login']);
-        // }
+        // this.user = this.auth.getCurrentUser();
     }
+
 }
