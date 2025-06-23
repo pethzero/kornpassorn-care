@@ -36,6 +36,12 @@ export class AuthGuard implements CanActivate, CanActivateChild, CanMatch {
       return false;
     }
 
+    // // ตอนนี้ user มีค่าแน่นอน
+    // if (user.role === 'admin') {
+    //   this.router.navigate(['/admin-login']);
+    //   return false;
+    // }
+
     // ถ้าไม่ได้ระบุ allowedRoles (หรือว่าง) ถือว่าให้ user ที่ login เข้าได้
     if (!allowedRoles || allowedRoles.length === 0) {
       return true;
