@@ -17,6 +17,7 @@ import { AppController } from './app.controller';  // นำเข้า control
 import { AppService } from './app.service';        // นำเข้า service
 import { AuthModule } from './auth/auth.module';
 import { ProfileController } from './profile/profile.controller';
+import { SupabaseModule } from './supabase/supabase.module'; // 👈 เพิ่ม
 
 @Module({
   imports: [
@@ -25,9 +26,9 @@ import { ProfileController } from './profile/profile.controller';
       envFilePath: `.env.${process.env.NODE_ENV || 'dev'}`,
     }),
     AuthModule,
+    SupabaseModule,
   ],
-  // controllers: [AppController],  // ลงทะเบียน controller
-  controllers: [ProfileController],  
+  controllers: [ ProfileController],  
   providers: [AppService],       // ลงทะเบียน service
 })
 export class AppModule {}
