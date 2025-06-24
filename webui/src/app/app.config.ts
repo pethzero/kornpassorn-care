@@ -11,9 +11,12 @@ import { loggingInterceptor } from './core/interceptors/logging-interceptor';
 import { errorInterceptor } from './core/interceptors/error-interceptor';
 
 import { provideAnimations } from '@angular/platform-browser/animations';
+// import provideCharts + registerables
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideCharts(withDefaultRegisterables()),
     provideBrowserGlobalErrorListeners(),
     provideAnimations(),
     provideZoneChangeDetection({ eventCoalescing: true }),
