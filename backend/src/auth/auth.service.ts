@@ -39,6 +39,19 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
     };
   }
+
+  // ✅ Guest Login แบบไม่เช็ค DB
+  loginAsGuest() {
+    const guestPayload = {
+      sub: 'guest-id',
+      username: 'guest',
+      role: 'guest',
+    };
+
+    const token = this.jwtService.sign(guestPayload);
+    return { access_token: token };
+  }
+
   // private readonly users: User[] = [
   //   { id: 1, username: 'admin', password: 'admin123', role: 'admin' },
   //   { id: 2, username: 'user', password: 'user123', role: 'user' },

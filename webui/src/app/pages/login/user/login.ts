@@ -19,7 +19,7 @@ export class LoginComponent {
   constructor(private auth: AuthService, private router: Router) {}
 
   login() {
-    const success = this.auth.loginWithCredentials(this.username, this.password,'user');
+    const success = this.auth.loginWithCredentials(this.username, this.password);
     if (success) {
       this.router.navigate(['/dashboard']);
     } else {
