@@ -17,6 +17,7 @@ export class LogoutComponent implements OnInit {
 
     ngOnInit(): void {
         // this.user = this.auth.getCurrentUser();
+        // console.log(this.user)
     }
 
 }

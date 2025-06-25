@@ -51,14 +51,15 @@ export const routes: Routes = [
     canActivate: [LoginRedirectGuard],
     loadComponent: () => import('./pages/login/admin/admin-login').then(m => m.AdminLoginComponent)
   },
-  {
-    path: 'logout',
-    loadComponent: () => import('./pages/logout/logout.component').then(m => m.LogoutComponent),
-      data: { roles: ['guest', 'user', 'admin'] } 
-  }
   // {
-  //   path: '**', // จับทุก path ที่ไม่ match route ไหนเลย
-  //   loadComponent: () => import('./pages/not-found/not-found').then(m => m.NotFoundComponent),
-  // }
+  //   path: 'logout',
+  //   loadComponent: () => import('./pages/logout/logout.component').then(m => m.LogoutComponent),
+  //   data: { roles: ['guest', 'user', 'admin'] }
+  // },
+  {
+    path: 'example',
+    loadComponent: () => import('./pages/example/example').then(m => m.ExampleComponent),
+    data: { roles: ['guest', 'user', 'admin'] }
+  }
 ];
 
