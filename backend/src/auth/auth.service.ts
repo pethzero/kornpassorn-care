@@ -36,7 +36,7 @@ export class AuthService {
   login(user: any) {
     const payload = { sub: user.id, username: user.username, role: user.role };
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: this.jwtService.sign(payload, { expiresIn: '10s' }),
     };
   }
 
@@ -47,10 +47,12 @@ export class AuthService {
       username: 'guest',
       role: 'guest',
     };
-
+    console.log(guestPayload)
     const token = this.jwtService.sign(guestPayload);
     return { access_token: token };
   }
+}
+
 
   // private readonly users: User[] = [
   //   { id: 1, username: 'admin', password: 'admin123', role: 'admin' },
@@ -73,4 +75,3 @@ export class AuthService {
   //     access_token: this.jwtService.sign(payload),
   //   };
   // }
-}

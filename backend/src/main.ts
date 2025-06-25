@@ -14,7 +14,13 @@ import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-    app.setGlobalPrefix('api/'); // ✅ เพิ่ม global path prefix
+
+  app.enableCors({
+    origin: 'http://localhost:4200', // หรือ '*'
+    credentials: true
+  });
+
+  app.setGlobalPrefix('api/'); // ✅ เพิ่ม global path prefix
   const config = app.get(ConfigService);
 
   const port = config.get<number>('PORT') || 3000;
