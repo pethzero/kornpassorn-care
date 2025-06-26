@@ -36,8 +36,13 @@ export class AuthService {
   login(user: any) {
     const payload = { sub: user.id, username: user.username, role: user.role };
     return {
-      access_token: this.jwtService.sign(payload, { expiresIn: '10s' }),
+      // access_token: this.jwtService.sign(payload, { expiresIn: '10s' }),
+      access_token: this.jwtService.sign(payload, { expiresIn: '30m' }), // ผู้ใช้จริง
     };
+  }
+
+  generateJwt(payload: any, expiresIn: string = '30m'): string {
+    return this.jwtService.sign(payload, { expiresIn });
   }
 
   // ✅ Guest Login แบบไม่เช็ค DB
@@ -49,29 +54,33 @@ export class AuthService {
     };
     console.log(guestPayload)
     const token = this.jwtService.sign(guestPayload);
-    return { access_token: token };
+    return {
+      // access_token: token 
+      access_token: this.jwtService.sign(guestPayload, { expiresIn: '5m' }), // สั้นลง
+    };
   }
 }
 
 
-  // private readonly users: User[] = [
-  //   { id: 1, username: 'admin', password: 'admin123', role: 'admin' },
-  //   { id: 2, username: 'user', password: 'user123', role: 'user' },
-  // ];
 
-  // constructor(private jwtService: JwtService) {}
+// private readonly users: User[] = [
+//   { id: 1, username: 'admin', password: 'admin123', role: 'admin' },
+//   { id: 2, username: 'user', password: 'user123', role: 'user' },
+// ];
 
-  // async validateUser(username: string, password: string): Promise<Omit<User, 'password'> | null> {
-  //   const user = this.users.find(u => u.username === username && u.password === password);
-  //   if (!user) return null;
+// constructor(private jwtService: JwtService) {}
 
-  //   const { password: _, ...result } = user;
-  //   return result;
-  // }
+// async validateUser(username: string, password: string): Promise<Omit<User, 'password'> | null> {
+//   const user = this.users.find(u => u.username === username && u.password === password);
+//   if (!user) return null;
 
-  // async login(user: Omit<User, 'password'>) {
-  //   const payload = { username: user.username, sub: user.id, role: user.role };
-  //   return {
-  //     access_token: this.jwtService.sign(payload),
-  //   };
-  // }
+//   const { password: _, ...result } = user;
+//   return result;
+// }
+
+// async login(user: Omit<User, 'password'>) {
+//   const payload = { username: user.username, sub: user.id, role: user.role };
+//   return {
+//     access_token: this.jwtService.sign(payload),
+//   };
+// }
