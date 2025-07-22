@@ -28,7 +28,7 @@ export class AuthService {
       .eq('password', password)
       .maybeSingle(); // ใช้ maybeSingle เพื่อไม่ให้ error ถ้าไม่เจอ
 
-    console.log(data)
+    console.log('AA',data)
     if (error || !data) return null;
     return data;
   }
