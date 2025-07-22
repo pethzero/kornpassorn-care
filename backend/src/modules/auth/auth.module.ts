@@ -6,13 +6,17 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './jwt.strategy';
-import { SupabaseModule } from '../supabase/supabase.module';
+// import { SupabaseModule } from '../../../supabase/supabase.module';
+// import { User } from '../postgresql/entities/user.entity';
+// import { TypeOrmModule } from '@nestjs/typeorm';
+
 
 @Module({
   imports: [
     ConfigModule,
     PassportModule,
-    SupabaseModule,
+    // SupabaseModule,
+    // TypeOrmModule.forFeature([User]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { json } from 'express';
 import * as cookieParser from 'cookie-parser';
 import * as csurf from 'csurf';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -33,6 +34,8 @@ async function bootstrap() {
     origin: 'http://localhost:4200',
     credentials: true,
   });
+
+  app.useGlobalPipes(new ValidationPipe());
 
   await app.listen(process.env.PORT || 3000);
 }
