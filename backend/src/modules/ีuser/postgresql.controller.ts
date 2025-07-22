@@ -1,5 +1,6 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Post, Body } from '@nestjs/common';
 import { PostgresqlService } from './postgresql.service';
+import { User } from '../../database/entities/user.entity';
 
 @Controller('users')
 export class PostgresqlController {
@@ -8,5 +9,10 @@ export class PostgresqlController {
   @Get()
   findAll() {
     return this.postgresqlService.findAll();
+  }
+
+  @Post()
+  create(@Body() data: Partial<User>) {
+    return this.postgresqlService.create(data);
   }
 }
