@@ -19,4 +19,8 @@ export class DatabaseService {
   async deactivateUser(id: string): Promise<void> {
     await this.userRepository.update(id, { isActive: false });
   }
+
+  async findUserByUsername(username: string): Promise<User | null> {
+    return this.userRepository.findOne({ where: { username } });
+  }
 }

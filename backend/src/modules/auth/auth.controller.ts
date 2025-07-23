@@ -11,22 +11,24 @@ export class AuthController {
   @Post('login')
   async login(@Body() body: LoginDto, @Req() req: Request, @Res() res: Response) {
     const user = await this.authService.validateUser(body.username, body.password);
+    console.log(user);
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
-    const payload = { sub: user.id, username: user.username, role: user.role };
-    const token = this.authService.generateJwt(payload);
-
-    res.cookie('token', token, {
-      httpOnly: true, // เพิ่มความปลอดภัยไม่ให้สามารถอ่าน cookie ได้จาก JavaScript
-      secure: false,  // ใช้ `true` เมื่อใช้ https
-      sameSite: 'strict', // ป้องกัน CSRF ข้ามเว็บไซต์
+    const token = this.authService.generateJwt({
+      sub: user.id,
+      username: user.username,
+      role: user.role,
     });
 
-    // ส่ง CSRF token กลับมา
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'strict',
+    });
+
     if (req.csrfToken) {
       return res.json({ csrfToken: req.csrfToken() });
     }
-
     return res.status(500).json({ message: 'CSRF token not available' });
   }
 
@@ -38,6 +40,17 @@ export class AuthController {
     } else {
       return { message: 'CSRF protection not applied properly' }; // แจ้งเตือนถ้า csrfToken() ไม่สามารถใช้งานได้
     }
+  }
+
+  @Post('guest')
+  async loginAsGuest(@Res() res: Response) {
+    const result = this.authService.loginAsGuest();
+    res.cookie('token', result.access_token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'strict',
+    });
+    return res.json({ access_token: result.access_token });
   }
 
 }

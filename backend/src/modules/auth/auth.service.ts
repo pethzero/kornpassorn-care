@@ -6,30 +6,39 @@ import { Repository } from 'typeorm';
 // Update the import path to the correct location of user.entity.ts
 import { User } from '../../database/entities/user.entity';
 import * as bcrypt from 'bcrypt';
+import { DatabaseService } from '../../database/database.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
+    private databaseService: DatabaseService, // inject service
   ) {}
 
-  async validateUser(username: string, password: string) {
-    const user = await this.userRepository.findOne({
-      where: { username },
-    });
+  async validateUser(username: string, password: string): Promise<User | null> {
+    const user = await this.databaseService.findUserByUsername(username);
+    console.log('Validating user:', username);
+    console.log('User found:', user);
+
+  
+
     if (!user) return null;
     const isMatch = await bcrypt.compare(password, user.passwordHash);
+    // console.log(password, user.passwordHash, isMatch);
     if (!isMatch) return null;
     return user;
   }
 
   login(user: any) {
     const payload = { sub: user.id, username: user.username, role: user.role };
+    let options = {};
+    if (user.role === 'admin') {
+      options = {}; // ไม่กำหนด expiresIn = ไม่หมดอายุ
+    } else {
+      options = { expiresIn: '1d' };
+    }
     return {
-      // access_token: this.jwtService.sign(payload, { expiresIn: '10s' }),
-      access_token: this.jwtService.sign(payload, { expiresIn: '30m' }), // ผู้ใช้จริง
+      access_token: this.jwtService.sign(payload, options),
     };
   }
 
@@ -44,11 +53,8 @@ export class AuthService {
       username: 'guest',
       role: 'guest',
     };
-    console.log(guestPayload)
-    const token = this.jwtService.sign(guestPayload);
     return {
-      // access_token: token 
-      access_token: this.jwtService.sign(guestPayload, { expiresIn: '5m' }), // สั้นลง
+      access_token: this.jwtService.sign(guestPayload, { expiresIn: '1d' }),
     };
   }
 }

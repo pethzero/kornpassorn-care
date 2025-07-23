@@ -6,17 +6,16 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './jwt.strategy';
-// import { SupabaseModule } from '../../../supabase/supabase.module';
-// import { User } from '../postgresql/entities/user.entity';
-// import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from '../../database/entities/user.entity'; // ปรับ path ให้ตรงกับที่เก็บ entity
+import { DatabaseModule } from '../../database/database.module';
 
 
 @Module({
   imports: [
     ConfigModule,
     PassportModule,
-    // SupabaseModule,
-    // TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -25,8 +24,9 @@ import { JwtStrategy } from './jwt.strategy';
         signOptions: { expiresIn: config.get('JWT_EXPIRES_IN') || '1d' },
       }),
     }),
+    DatabaseModule,
   ],
-  controllers: [AuthController], // ✅ ต้องมีตรงนี้
+  controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
 })
 export class AuthModule {}

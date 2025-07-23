@@ -7,6 +7,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ProfileController } from './modules/profile/profile.controller';
 import { DatabaseModule } from './database/database.module';
 import databaseConfig from './config/database.config';
+import { DummyModule } from './modules/dummy/dummy.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import databaseConfig from './config/database.config';
     TypeOrmModule.forRoot(databaseConfig()),
     AuthModule,
     DatabaseModule,
+    DummyModule,
   ],
   controllers: [AppController, ProfileController],
   providers: [AppService],
