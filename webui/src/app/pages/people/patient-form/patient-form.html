@@ -1,0 +1,46 @@
+<form [formGroup]="patientForm" (ngSubmit)="submit()" class="space-y-4 max-w-lg mx-auto bg-white p-6 rounded-xl shadow">
+  <div>
+    <label>รหัสคนไข้</label>
+    <input formControlName="patient_code" class="input" required />
+  </div>
+  <div>
+    <label>ชื่อ</label>
+    <input formControlName="first_name" class="input" required />
+  </div>
+  <div>
+    <label>นามสกุล</label>
+    <input formControlName="last_name" class="input" required />
+  </div>
+  <div>
+    <label>เพศ</label>
+    <select formControlName="gender" class="input">
+      <option value="">-</option>
+      <option value="male">ชาย</option>
+      <option value="female">หญิง</option>
+      <option value="other">อื่นๆ</option>
+    </select>
+  </div>
+  <div>
+    <label>วันเกิด</label>
+    <input type="date" formControlName="date_of_birth" class="input" />
+  </div>
+  <div>
+    <label>เบอร์โทร</label>
+    <input formControlName="phone" class="input" />
+  </div>
+  <div>
+    <label>Email</label>
+    <input formControlName="email" class="input" />
+  </div>
+  <div>
+    <label>ที่อยู่</label>
+    <input formControlName="address" class="input" />
+  </div>
+  <div>
+    <label>กรุ๊ปเลือด</label>
+    <input formControlName="blood_type" class="input" />
+  </div>
+  <button type="submit" class="btn btn-primary" [disabled]="patientForm.invalid">บันทึก</button>
+  <div *ngIf="successMessage" class="text-green-600">{{ successMessage }}</div>
+  <div *ngIf="errorMessage" class="text-red-600">{{ errorMessage }}</div>
+</form>

@@ -47,7 +47,7 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/login/user/login').then(m => m.LoginComponent)
   },
   {
-    path: 'admin-login',
+    path: 'admin-login', // เปลี่ยนเป็น admin/login
     canActivate: [LoginRedirectGuard],
     loadComponent: () => import('./pages/login/admin/admin-login').then(m => m.AdminLoginComponent)
   },

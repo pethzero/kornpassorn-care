@@ -6,6 +6,7 @@ import * as csurf from 'csurf';
 import { ValidationPipe } from '@nestjs/common';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -23,10 +24,20 @@ async function bootstrap() {
     },
   });
 
-  const skipPaths = ['/api/auth/login', '/api/auth/guest']; // ❌ เอา csrf-token ออก
+  const skipPaths = [
+    '/api/auth/login',
+    '/api/auth/guest',
+    '/api/openapi',
+    '/api-json',
+    // *** ไม่ต้องใส่ '/api/auth/csrf-token' ใน skipPaths ***
+  ];
 
   app.use((req, res, next) => {
-    if (skipPaths.includes(req.path)) {
+    if (
+      skipPaths.includes(req.path) ||
+      req.path.startsWith('/api/openapi') ||
+      req.path.startsWith('/api-json')
+    ) {
       return next();
     }
     csrfProtection(req, res, next);
@@ -40,6 +51,16 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new LoggingInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter());
+
+  // Swagger setup
+  const config = new DocumentBuilder()
+    .setTitle('Kornpassorn Care API')
+    .setDescription('API documentation')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/openapi', app, document);
 
   await app.listen(process.env.PORT || 3000);
 }

@@ -23,8 +23,8 @@ export class AuthController {
       secure: false, // set true in production (HTTPS)
       sameSite: 'strict',
     });
-
-    return res.json({ message: 'Login successful' });
+    console.log('Login successful, token generated:', token);
+    return res.json({ access_token: token });
   }
 
   @Get('csrf-token')

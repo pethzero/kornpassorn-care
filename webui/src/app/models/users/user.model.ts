@@ -11,13 +11,14 @@ export interface User {
 }
 
 export interface Patient {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dob: string;
-  gender: 'male' | 'female' | 'other';
+  id?: number;
+  patient_code: string;
+  first_name: string;
+  last_name: string;
+  gender?: string;
+  date_of_birth?: string;
   phone?: string;
   email?: string;
   address?: string;
-  registeredAt: string;
+  blood_type?: string;
 }

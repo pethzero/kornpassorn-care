@@ -20,11 +20,8 @@ export class AuthService {
     console.log('Validating user:', username);
     console.log('User found:', user);
 
-  
-
     if (!user) return null;
     const isMatch = await bcrypt.compare(password, user.passwordHash);
-    // console.log(password, user.passwordHash, isMatch);
     if (!isMatch) return null;
     return user;
   }
