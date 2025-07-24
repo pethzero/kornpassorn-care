@@ -1,5 +1,3 @@
-
-
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -54,13 +52,18 @@ export class AuthService {
 
 
   loginWithCredentials(username: string, password: string): Observable<boolean> {
-    return this.http.post<{ csrfToken: string }>(
+    return this.http.post<{ access_token: string }>(
       `${environment.apiUrl}/auth/login`,
       { username, password },
-      { withCredentials: true } // ✅ สำคัญมาก ต้องเปิดเพื่อรับ cookie
+      { withCredentials: true }
     ).pipe(
       tap(response => {
-        this.csrfToken = response.csrfToken;
+        // ถ้าต้องการเก็บ access_token ใน localStorage (ถ้า backend ส่งกลับมา)
+        if (response.access_token) {
+          localStorage.setItem('token', response.access_token);
+          const user = this.decodeToken(response.access_token);
+          this.currentUserSubject.next(user);
+        }
       }),
       map(() => true),
       catchError(() => of(false))
