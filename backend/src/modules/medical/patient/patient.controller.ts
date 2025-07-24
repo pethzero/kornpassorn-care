@@ -42,4 +42,13 @@ export class PatientController {
     if (result.affected === 0) return res.status(HttpStatus.NOT_FOUND).json({ message: 'Patient not found' });
     return res.status(HttpStatus.OK).json({ message: 'Patient deleted' });
   }
+
+  @Post('upsert')
+  async upsert(@Body() body: any, @Res() res: Response) {
+    // สมมติ criteria คือ patient_code
+    const result = await this.patientService.updateOrCreate(
+      { patient_code: body.patient_code },body
+    );
+    return res.status(HttpStatus.OK).json(result);
+  }
 }

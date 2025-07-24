@@ -8,7 +8,7 @@ import { ProfileController } from './modules/profile/profile.controller';
 import { DatabaseModule } from './database/database.module';
 import databaseConfig from './config/database.config';
 import { DummyModule } from './modules/dummy/dummy.module';
-import { PatientModule } from './modules/patient/patient.module';
+import { PatientModule } from './modules/medical/patient/patient.module';
 
 @Module({
   imports: [
