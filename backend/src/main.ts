@@ -4,6 +4,8 @@ import { json } from 'express';
 import * as cookieParser from 'cookie-parser';
 import * as csurf from 'csurf';
 import { ValidationPipe } from '@nestjs/common';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -36,6 +38,8 @@ async function bootstrap() {
   });
 
   app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   await app.listen(process.env.PORT || 3000);
 }

@@ -7,11 +7,9 @@ import { LoginDto } from './dto/login.dto';
 export class AuthController {
   constructor(private authService: AuthService) { }
 
-  
   @Post('login')
-  async login(@Body() body: LoginDto, @Req() req: Request, @Res() res: Response) {
+  async login(@Body() body: LoginDto, @Res() res: Response) {
     const user = await this.authService.validateUser(body.username, body.password);
-    console.log(user);
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
     const token = this.authService.generateJwt({
@@ -22,23 +20,19 @@ export class AuthController {
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: false,
+      secure: false, // set true in production (HTTPS)
       sameSite: 'strict',
     });
 
-    if (req.csrfToken) {
-      return res.json({ csrfToken: req.csrfToken() });
-    }
-    return res.status(500).json({ message: 'CSRF token not available' });
+    return res.json({ message: 'Login successful' });
   }
-
 
   @Get('csrf-token')
   getCsrfToken(@Req() req: Request) {
     if (req.csrfToken) {
-      return { csrfToken: req.csrfToken() }; // ส่งคืน CSRF token
+      return { csrfToken: req.csrfToken() };
     } else {
-      return { message: 'CSRF protection not applied properly' }; // แจ้งเตือนถ้า csrfToken() ไม่สามารถใช้งานได้
+      return { message: 'CSRF protection not applied properly' };
     }
   }
 
@@ -52,5 +46,4 @@ export class AuthController {
     });
     return res.json({ access_token: result.access_token });
   }
-
 }

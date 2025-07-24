@@ -1,6 +1,7 @@
 // filepath: e:\PROJECT\kornpassorn-care\backend\src\common\interceptors\logging.interceptor.ts
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, catchError } from 'rxjs';
+import { throwError } from 'rxjs';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -12,6 +13,10 @@ export class LoggingInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       tap(() => console.log(`[${method}] ${url} - ${Date.now() - now}ms`)),
+      catchError((err) => {
+        console.error(`[${method}] ${url} - ERROR:`, err.message);
+        return throwError(() => err);
+      }),
     );
   }
 }
