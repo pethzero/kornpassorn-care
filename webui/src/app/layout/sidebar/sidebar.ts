@@ -60,40 +60,6 @@ export class SidebarComponent {
   @Output() closeSidebar = new EventEmitter<void>();
   
 
-menu = {
-  name: 'KRONPASSORN',
-  heads: [
-    {
-      label: 'Dashboard',
-      expandable: false,
-      link: '/dashboard',
-      icon: 'dashboard',
-      roles: ['guest', 'user', 'admin']  // ทุก role เข้าถึงได้
-    },
-    {
-      label: 'Patient',
-      expandable: false,
-      link: '/patient',
-      icon: 'people',
-      roles: ['user', 'admin']          // เฉพาะ user/admin
-    },
-    {
-      label: 'Admin Settings',
-      expandable: false,
-      link: '/settings',
-      icon: 'settings',
-      roles: ['admin']                  // เฉพาะ admin
-    },
-    {
-      label: 'Components',
-      expandable: true,
-      roles: ['user', 'admin'],
-      details: [
-        { label: 'Accordion', icon: 'unfold_more', link: '/components/accordion' },
-        { label: 'Breadcrumb', icon: 'linear_scale', link: '/components/breadcrumb' }
-      ]
-    }
-  ]
-};
+menu = {name: 'KRONPASSORN',};
 
 }
