@@ -8,6 +8,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { AuthService } from '../../core/services/auth.service';
 import { filter } from 'rxjs/operators';
+import { PAGE_MENUS, PageMenuItem } from '../../core/constants/page-menu';
 
 @Component({
   selector: 'app-sidebar',
@@ -33,6 +34,7 @@ import { filter } from 'rxjs/operators';
 export class SidebarComponent {
   userRole: string;
   currentPath: string = '';
+  pageMenu: PageMenuItem[] = [];
 
   constructor(private auth: AuthService, private router: Router) {
     this.userRole = this.auth.getCurrentUser()?.role || 'guest';
@@ -42,6 +44,12 @@ export class SidebarComponent {
     ).subscribe((e: NavigationEnd) => {
       this.currentPath = e.urlAfterRedirects;
     });
+  }
+
+  ngOnInit() {
+    // สมมุติว่าคุณใช้ currentPath หรือ route ปัจจุบัน
+    const mainPath = this.currentPath.split('/')[1] ? '/' + this.currentPath.split('/')[1] : '/dashboard';
+    this.pageMenu = PAGE_MENUS[mainPath] || [];
   }
 
   onMenuClick() {

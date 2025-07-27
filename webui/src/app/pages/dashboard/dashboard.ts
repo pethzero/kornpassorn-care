@@ -5,7 +5,8 @@ import { BaseChartDirective } from 'ng2-charts';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
-import { PatientList } from "../people/patient-list/patient-list";
+import { PatientList } from '../../features/patient/patient-list/patient-list';
+import { MatIconModule } from '@angular/material/icon';
 
 export interface Patient {
   id: number;
@@ -18,7 +19,7 @@ export interface Patient {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, MatCardModule, BaseChartDirective, PatientList],
+  imports: [CommonModule, MatCardModule, BaseChartDirective, PatientList, MatIconModule,],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
 })

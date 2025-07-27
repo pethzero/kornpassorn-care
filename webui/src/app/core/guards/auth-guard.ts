@@ -30,9 +30,14 @@ export class AuthGuard implements CanActivate, CanActivateChild, CanMatch {
 
   private checkAccess(allowedRoles?: string[]): boolean {
     const user = this.auth.getCurrentUser();
-    console.log(user)
+    // Logging สำหรับ debug
+    // console.log('[AuthGuard] user:', user, 'allowedRoles:', allowedRoles);
+
     if (!user) {
-      this.router.navigate(['/login']);
+      // ป้องกัน redirect loop
+      if (this.router.url !== '/login') {
+        this.router.navigate(['/login']);
+      }
       return false;
     }
 
@@ -44,7 +49,10 @@ export class AuthGuard implements CanActivate, CanActivateChild, CanMatch {
       return true;
     }
 
-    this.router.navigate(['/unauthorized']);
+    // ป้องกัน redirect loop
+    if (this.router.url !== '/unauthorized') {
+      this.router.navigate(['/unauthorized']);
+    }
     return false;
   }
 }

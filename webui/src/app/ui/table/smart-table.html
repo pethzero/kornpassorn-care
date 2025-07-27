@@ -1,0 +1,38 @@
+<div class="relative">
+  <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+  <table mat-table [dataSource]="data" matSort (matSortChange)="onSort($event)" class="min-w-full">
+    <ng-container *ngFor="let col of config.columns" [matColumnDef]="col.field">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header="{{col.sortable ? '' : null}}">
+        {{ col.header }}
+      </th>
+      <td mat-cell *matCellDef="let row">
+        {{ row[col.field] }}
+      </td>
+    </ng-container>
+
+    <ng-container *ngIf="config.showActions" matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef>Actions</th>
+      <td mat-cell *matCellDef="let row">
+        <ng-content select="[actions]"></ng-content>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+
+  <mat-paginator
+    *ngIf="!config.serverSide"
+    [length]="data.length"
+    [pageSizeOptions]="config.pageSizeOptions || [10, 25, 50]"
+    [pageSize]="config.defaultPageSize || 10"
+    (page)="onPage($event)">
+  </mat-paginator>
+  <mat-paginator
+    *ngIf="config.serverSide"
+    [length]="total"
+    [pageSizeOptions]="config.pageSizeOptions || [10, 25, 50]"
+    [pageSize]="config.defaultPageSize || 10"
+    (page)="onPage($event)">
+  </mat-paginator>
+</div>
