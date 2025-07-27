@@ -21,9 +21,9 @@ export const routes: Routes = [
       },
       {
         path: 'patient',
-        loadChildren: () => import('./pages/people/people-routing.module').then(m => m.PeopleRoutingModule),
+        loadChildren: () => import('./features/patient/patient-routing.module').then(m => m.PeopleRoutingModule),
         canActivate: [AuthGuard],
-        data: { roles: ['user', 'admin'] } // ให้ user และ admin เข้าได้
+        data: { roles: ['guest', 'user', 'admin'] } // ให้ user และ admin เข้าได้
       },
       {
         path: 'admin',
@@ -51,15 +51,14 @@ export const routes: Routes = [
     canActivate: [LoginRedirectGuard],
     loadComponent: () => import('./pages/login/admin/admin-login').then(m => m.AdminLoginComponent)
   },
-  // {
-  //   path: 'logout',
-  //   loadComponent: () => import('./pages/logout/logout.component').then(m => m.LogoutComponent),
-  //   data: { roles: ['guest', 'user', 'admin'] }
-  // },
   {
     path: 'example',
     loadComponent: () => import('./pages/example/example').then(m => m.ExampleComponent),
     data: { roles: ['guest', 'user', 'admin'] }
+  },
+  {
+    path: '**',
+    loadComponent: () => import('./pages/not-found/not-found').then(m => m.NotFoundComponent)
   }
 ];
 

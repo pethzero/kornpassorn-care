@@ -1,14 +1,25 @@
 .sidenav-container {
-  height: 100vh;  // เต็มหน้าจอ viewport
+  height: 100vh;
+  background: #f5f7fa;
 }
 
 .sidenav {
-  width: 250px;   // ความกว้าง sidebar ที่ต้องการ
+  width: 250px;
+  background: #fff;
+  box-shadow: 2px 0 8px 0 rgba(25, 118, 210, 0.04);
+}
+
+.sidenav-content {
+  background: #f8f9fa;
 }
 
 .content {
-  padding: 16px;
-  min-height: 100vh;  // ให้ content มีความสูงเต็มหน้าจออย่างน้อย
+  padding: 32px 24px 24px 24px;
+  background: #fafcff;
+  min-height: calc(100vh - 60px);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.03);
+  overflow-y: scroll;
   box-sizing: border-box;
 }
 

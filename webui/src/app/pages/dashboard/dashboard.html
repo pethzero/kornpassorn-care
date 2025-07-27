@@ -1,59 +1,63 @@
 <div class="dashboard-container min-h-screen p-6 bg-gray-100">
+  <!-- สรุปสถิติ -->
   <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
-
     <!-- การ์ด: คนไข้ทั้งหมด -->
-    <mat-card class="shadow-md p-4 rounded-xl bg-white">
-      <mat-card-title class="text-gray-800 text-lg font-semibold">คนไข้ทั้งหมด</mat-card-title>
-      <mat-card-content>
-        <p class="text-3xl font-bold text-blue-600">{{ stats.totalPatients }}</p>
-      </mat-card-content>
-    </mat-card>
-
+    <div class="rounded-2xl bg-gradient-to-br from-white via-blue-50 to-gray-100 shadow-lg p-6 flex flex-col items-start hover:shadow-xl transition">
+      <div class="flex items-center mb-2">
+        <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 mr-3">
+          <span class="material-icons text-blue-500 text-2xl">groups</span>
+        </span>
+        <span class="text-lg font-bold text-gray-700">คนไข้ทั้งหมด</span>
+      </div>
+      <div class="text-3xl font-extrabold text-blue-600">{{ stats.totalPatients }}</div>
+    </div>
     <!-- การ์ด: คนไข้ใหม่วันนี้ -->
-    <mat-card class="shadow-md p-4 rounded-xl bg-white">
-      <mat-card-title class="text-gray-800 text-lg font-semibold">คนไข้ใหม่วันนี้</mat-card-title>
-      <mat-card-content>
-        <p class="text-3xl font-bold text-green-600">{{ stats.newPatientsToday }}</p>
-      </mat-card-content>
-    </mat-card>
-
+    <div class="rounded-2xl bg-gradient-to-br from-white via-green-50 to-gray-100 shadow-lg p-6 flex flex-col items-start hover:shadow-xl transition">
+      <div class="flex items-center mb-2">
+        <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-green-100 mr-3">
+          <span class="material-icons text-green-500 text-2xl">person_add</span>
+        </span>
+        <span class="text-lg font-bold text-gray-700">คนไข้ใหม่วันนี้</span>
+      </div>
+      <div class="text-3xl font-extrabold text-green-600">{{ stats.newPatientsToday }}</div>
+    </div>
     <!-- การ์ด: นัดหมายวันนี้ -->
-    <mat-card class="shadow-md p-4 rounded-xl bg-white">
-      <mat-card-title class="text-gray-800 text-lg font-semibold">นัดหมายวันนี้</mat-card-title>
-      <mat-card-content>
-        <p class="text-3xl font-bold text-purple-600">{{ stats.appointmentsToday }}</p>
-      </mat-card-content>
-    </mat-card>
-
+    <div class="rounded-2xl bg-gradient-to-br from-white via-purple-50 to-gray-100 shadow-lg p-6 flex flex-col items-start hover:shadow-xl transition">
+      <div class="flex items-center mb-2">
+        <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-purple-100 mr-3">
+          <span class="material-icons text-purple-500 text-2xl">event</span>
+        </span>
+        <span class="text-lg font-bold text-gray-700">นัดหมายวันนี้</span>
+      </div>
+      <div class="text-3xl font-extrabold text-purple-600">{{ stats.appointmentsToday }}</div>
+    </div>
     <!-- การ์ด: อยู่ในห้องตรวจ -->
-    <mat-card class="shadow-md p-4 rounded-xl bg-white">
-      <mat-card-title class="text-gray-800 text-lg font-semibold">อยู่ในห้องตรวจ</mat-card-title>
-      <mat-card-content>
-        <p class="text-3xl font-bold text-red-600">{{ stats.inExamRoom }}</p>
-      </mat-card-content>
-    </mat-card>
-
+    <div class="rounded-2xl bg-gradient-to-br from-white via-red-50 to-gray-100 shadow-lg p-6 flex flex-col items-start hover:shadow-xl transition">
+      <div class="flex items-center mb-2">
+        <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-red-100 mr-3">
+          <span class="material-icons text-red-500 text-2xl">local_hospital</span>
+        </span>
+        <span class="text-lg font-bold text-gray-700">อยู่ในห้องตรวจ</span>
+      </div>
+      <div class="text-3xl font-extrabold text-red-600">{{ stats.inExamRoom }}</div>
+    </div>
   </div>
 
-  <!-- Container สำหรับกราฟ 2 อัน side by side บน sm+ -->
+  <!-- กราฟ -->
   <div class="charts-container grid grid-cols-1 sm:grid-cols-2 gap-6 mt-8">
-    <mat-card class="shadow-md p-4 rounded-xl bg-white">
-      <mat-card-title class="text-gray-800 text-lg font-semibold mb-4">สัดส่วนเพศคนไข้</mat-card-title>
-      <mat-card-content>
-        <canvas baseChart [data]="chartData" [options]="chartOptions" [type]="chartType"
-          class="dashboard-chart"></canvas>
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card class="shadow-md p-4 rounded-xl bg-white">
-      <mat-card-title class="text-gray-800 text-lg font-semibold mb-4">ยอดผู้ป่วยรายเดือน</mat-card-title>
-      <mat-card-content>
-        <canvas baseChart [data]="chartData2" [options]="chartOptions2" [type]="chartType2"
-          class="dashboard-chart"></canvas>
-      </mat-card-content>
-    </mat-card>
+    <div class="rounded-2xl bg-white shadow-lg p-6">
+      <div class="text-gray-800 text-lg font-semibold mb-4">สัดส่วนเพศคนไข้</div>
+      <canvas baseChart [data]="chartData" [options]="chartOptions" [type]="chartType"
+        class="dashboard-chart"></canvas>
+    </div>
+    <div class="rounded-2xl bg-white shadow-lg p-6">
+      <div class="text-gray-800 text-lg font-semibold mb-4">ยอดผู้ป่วยรายเดือน</div>
+      <canvas baseChart [data]="chartData2" [options]="chartOptions2" [type]="chartType2"
+        class="dashboard-chart"></canvas>
+    </div>
   </div>
 
+  <!-- ตารางรายชื่อคนไข้ -->
   <div>
     <app-patient-list></app-patient-list>
   </div>

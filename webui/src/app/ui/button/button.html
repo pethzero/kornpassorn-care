@@ -1,0 +1,22 @@
+<button
+  mat-raised-button
+  [color]="color"
+  [type]="type"
+  [disabled]="disabled || loading"
+  [class.full-width]="fullWidth"
+>
+  <mat-icon *ngIf="icon && !loading" class="mr-2">{{ icon }}</mat-icon>
+  <span *ngIf="!loading"><ng-content></ng-content></span>
+  <mat-progress-spinner
+    *ngIf="loading"
+    diameter="20"
+    mode="indeterminate"
+    color="primary"
+    class="loading-spinner"
+  ></mat-progress-spinner>
+</button>
+
+
+<!-- <app-button color="primary" icon="add">เพิ่มข้อมูล</app-button>
+<app-button color="accent" [loading]="isSaving" fullWidth>บันทึก</app-button>
+<app-button color="warn" icon="delete" [disabled]="true">ลบ</app-button> -->

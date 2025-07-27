@@ -8,6 +8,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { AuthService } from '../../core/services/auth.service';
 import { filter } from 'rxjs/operators';
+import { PAGE_MENUS, PageMenuItem } from '../../core/constants/page-menu';
 
 @Component({
   selector: 'app-sidebar',
@@ -33,6 +34,7 @@ import { filter } from 'rxjs/operators';
 export class SidebarComponent {
   userRole: string;
   currentPath: string = '';
+  pageMenu: PageMenuItem[] = [];
 
   constructor(private auth: AuthService, private router: Router) {
     this.userRole = this.auth.getCurrentUser()?.role || 'guest';
@@ -44,6 +46,12 @@ export class SidebarComponent {
     });
   }
 
+  ngOnInit() {
+    // สมมุติว่าคุณใช้ currentPath หรือ route ปัจจุบัน
+    const mainPath = this.currentPath.split('/')[1] ? '/' + this.currentPath.split('/')[1] : '/dashboard';
+    this.pageMenu = PAGE_MENUS[mainPath] || [];
+  }
+
   onMenuClick() {
     this.closeSidebar.emit();
   }
@@ -52,40 +60,6 @@ export class SidebarComponent {
   @Output() closeSidebar = new EventEmitter<void>();
   
 
-menu = {
-  name: 'KRONPASSORN',
-  heads: [
-    {
-      label: 'Dashboard',
-      expandable: false,
-      link: '/dashboard',
-      icon: 'dashboard',
-      roles: ['guest', 'user', 'admin']  // ทุก role เข้าถึงได้
-    },
-    {
-      label: 'Patient',
-      expandable: false,
-      link: '/patient',
-      icon: 'people',
-      roles: ['user', 'admin']          // เฉพาะ user/admin
-    },
-    {
-      label: 'Admin Settings',
-      expandable: false,
-      link: '/settings',
-      icon: 'settings',
-      roles: ['admin']                  // เฉพาะ admin
-    },
-    {
-      label: 'Components',
-      expandable: true,
-      roles: ['user', 'admin'],
-      details: [
-        { label: 'Accordion', icon: 'unfold_more', link: '/components/accordion' },
-        { label: 'Breadcrumb', icon: 'linear_scale', link: '/components/breadcrumb' }
-      ]
-    }
-  ]
-};
+menu = {name: 'KRONPASSORN',};
 
 }

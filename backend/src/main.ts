@@ -11,6 +11,12 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // 1. เปิด CORS ก่อน middleware อื่น
+  app.enableCors({
+    origin: 'http://localhost:4200',
+    credentials: true,
+  });
+
   app.use(cookieParser());
   app.use(json());
 
@@ -18,9 +24,9 @@ async function bootstrap() {
 
   const csrfProtection = csurf({
     cookie: {
-      httpOnly: false,  // ⚠️ ใน production ควรตั้งเป็น true
+      httpOnly: false,  // ⚠️ production ควร true
       sameSite: 'strict',
-      secure: false,    // ✅ ใช้ true ถ้า deploy แบบ HTTPS
+      secure: false,
     },
   });
 
@@ -29,7 +35,6 @@ async function bootstrap() {
     '/api/auth/guest',
     '/api/openapi',
     '/api-json',
-    // *** ไม่ต้องใส่ '/api/auth/csrf-token' ใน skipPaths ***
   ];
 
   app.use((req, res, next) => {
@@ -41,11 +46,6 @@ async function bootstrap() {
       return next();
     }
     csrfProtection(req, res, next);
-  });
-
-  app.enableCors({
-    origin: 'http://localhost:4200',
-    credentials: true,
   });
 
   app.useGlobalPipes(new ValidationPipe());
