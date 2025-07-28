@@ -1,3 +1,6 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserToken } from '../../database/entities/user-token.entity';
 import { Controller, Get, UseGuards, Request } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -12,3 +15,9 @@ export class ProfileController {
     };
   }
 }
+
+@Module({
+  imports: [TypeOrmModule.forFeature([UserToken])],
+  controllers: [ProfileController],
+})
+export class ProfileModule {}

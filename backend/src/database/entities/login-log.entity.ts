@@ -1,30 +1,27 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from './user.entity';
 
-@Entity({ name: 'login_logs' })
+@Entity('login_logs')
 export class LoginLog {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'uuid' })
-  userId: string;
-
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ type: 'timestamptz', default: () => 'now()' })
-  loginTime: Date;
+  @CreateDateColumn()
+  login_time: Date;
 
   @Column({ length: 45, nullable: true })
-  ipAddress: string;
+  ip_address: string;
 
   @Column({ type: 'text', nullable: true })
-  userAgent: string;
+  user_agent: string;
 
   @Column({ default: false })
   success: boolean;
 
   @Column({ type: 'text', nullable: true })
-  failReason: string;
+  fail_reason: string;
 }

@@ -9,13 +9,16 @@ import { JwtStrategy } from './jwt.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../../database/entities/user.entity'; // ปรับ path ให้ตรงกับที่เก็บ entity
 import { DatabaseModule } from '../../database/database.module';
+import { UserToken } from '../../database/entities/user-token.entity';
+import { LoginLog } from '../../database/entities/login-log.entity';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 
 @Module({
   imports: [
     ConfigModule,
     PassportModule,
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, UserToken, LoginLog]), // <-- มี UserToken แล้ว
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -27,6 +30,7 @@ import { DatabaseModule } from '../../database/database.module';
     DatabaseModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, JwtAuthGuard], // <-- เพิ่ม JwtAuthGuard
+  exports: [JwtModule, JwtAuthGuard], // <-- export JwtAuthGuard ถ้าต้องใช้ข้าม module
 })
-export class AuthModule {}
+export class AuthModule { }
