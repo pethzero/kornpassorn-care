@@ -7,13 +7,18 @@ import { Repository } from 'typeorm';
 import { User } from '../../database/entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { DatabaseService } from '../../database/database.service';
+import { UserToken } from '../../database/entities/user-token.entity';
+import { LoginLog } from '../../database/entities/login-log.entity';
+
 
 @Injectable()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
     private databaseService: DatabaseService, // inject service
-  ) {}
+    @InjectRepository(UserToken) private userTokenRepo: Repository<UserToken>,
+    @InjectRepository(LoginLog) private loginLogRepo: Repository<LoginLog>,
+  ) { }
 
   async validateUser(username: string, password: string): Promise<User | null> {
     const user = await this.databaseService.findUserByUsername(username);
@@ -53,6 +58,37 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(guestPayload, { expiresIn: '1d' }),
     };
+  }
+
+
+  // บันทึก log ทุกครั้งที่ login (สำเร็จ/ล้มเหลว)
+  async logLogin(user: User | null, success: boolean, req: any, failReason?: string) {
+    await this.loginLogRepo.save({
+      user: user || undefined, // ใช้ undefined แทน null
+      ip_address: req.ip,
+      user_agent: req.headers['user-agent'],
+      success,
+      fail_reason: failReason || undefined,
+    });
+  }
+
+  // หลัง login สำเร็จ
+  async saveToken(user: User, token: string, expiredAt: Date) {
+    await this.userTokenRepo.save({
+      user,
+      token,
+      expired_at: expiredAt,
+      revoked: false,
+    });
+  }
+
+  // logout
+  async revokeToken(token: string) {
+    await this.userTokenRepo.update({ token }, { revoked: true });
+  }
+
+  async revokeAllTokensOfUser(userId: string) {
+    await this.userTokenRepo.update({ user: { id: userId } }, { revoked: true });
   }
 }
 

@@ -2,51 +2,26 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { json } from 'express';
 import * as cookieParser from 'cookie-parser';
-import * as csurf from 'csurf';
 import { ValidationPipe } from '@nestjs/common';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { csrfExcludeMiddleware } from './common/middleware/csrf-exclude.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // 1. เปิด CORS ก่อน middleware อื่น
+  app.use(cookieParser());
+  app.use(json());
+
+  app.use(csrfExcludeMiddleware);
+
   app.enableCors({
     origin: 'http://localhost:4200',
     credentials: true,
   });
 
-  app.use(cookieParser());
-  app.use(json());
-
   app.setGlobalPrefix('api');
-
-  const csrfProtection = csurf({
-    cookie: {
-      httpOnly: false,  // ⚠️ production ควร true
-      sameSite: 'strict',
-      secure: false,
-    },
-  });
-
-  const skipPaths = [
-    '/api/auth/login',
-    '/api/auth/guest',
-    '/api/openapi',
-    '/api-json',
-  ];
-
-  app.use((req, res, next) => {
-    if (
-      skipPaths.includes(req.path) ||
-      req.path.startsWith('/api/openapi') ||
-      req.path.startsWith('/api-json')
-    ) {
-      return next();
-    }
-    csrfProtection(req, res, next);
-  });
 
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new LoggingInterceptor());
