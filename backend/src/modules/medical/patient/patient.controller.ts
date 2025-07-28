@@ -46,12 +46,20 @@ export class PatientController {
     return res.status(HttpStatus.OK).json({ message: 'Patient deleted' });
   }
 
+  // แบบ updateOrCreate (Django style)
   @Post('upsert')
   async upsert(@Body() body: any, @Res() res: Response) {
     // สมมติ criteria คือ patient_code
     const result = await this.patientService.updateOrCreate(
-      { patient_code: body.patient_code },body
+      { patient_code: body.patient_code }, body
     );
-    return res.status(HttpStatus.OK).json(result);
+    return res.status(200).json(result);
+  }
+
+  // แบบ raw SQL
+  @Post('upsert-raw')
+  async upsertRaw(@Body() body: any, @Res() res: Response) {
+    const result = await this.patientService.upsertRaw(body);
+    return res.status(200).json(result);
   }
 }
