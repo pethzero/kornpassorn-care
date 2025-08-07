@@ -1,0 +1,40 @@
+<div class="calendar-container bg-white rounded-xl shadow p-4 max-w-lg mx-auto">
+  <div class="flex items-center justify-between mb-4">
+    <button (click)="prevMonth()" class="btn">&lt;</button>
+    <div class="font-bold text-lg">{{ monthName }} {{ year }}</div>
+    <button (click)="nextMonth()" class="btn">&gt;</button>
+  </div>
+  <div class="mb-2">
+    <label>
+      <input type="checkbox" [(ngModel)]="workweekOnly" />
+      แสดงเฉพาะวันทำงาน (จันทร์-ศุกร์)
+    </label>
+  </div>
+  <table class="w-full text-center border-collapse">
+    <thead>
+      <tr>
+        <th *ngIf="!workweekOnly" class="py-1">อา</th>
+        <th class="py-1">จ</th>
+        <th class="py-1">อ</th>
+        <th class="py-1">พ</th>
+        <th class="py-1">พฤ</th>
+        <th class="py-1">ศ</th>
+        <th *ngIf="!workweekOnly" class="py-1">ส</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let week of calendarMatrix">
+        <ng-container *ngIf="!workweekOnly; else workweek">
+          <td class="py-1" *ngFor="let day of week; let i = index" [ngClass]="{'bg-gray-100': !day}">
+            {{ day || '' }}
+          </td>
+        </ng-container>
+        <ng-template #workweek>
+          <td class="py-1" *ngFor="let day of week.slice(0,5); let i = index" [ngClass]="{'bg-gray-100': !day}">
+            {{ day || '' }}
+          </td>
+        </ng-template>
+      </tr>
+    </tbody>
+  </table>
+</div>
