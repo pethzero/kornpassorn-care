@@ -1,8 +1,64 @@
 /* You can add global styles to this file, and also import other style files */
 @use "tailwindcss";
 
-/* Tailwind directives removed. Import Tailwind CSS in a plain CSS file or via your build tool. */
+/* Angular Material Theme */
+@use '@angular/material' as mat;
 
+/* PrimeNG Theme Import (imported via angular.json) */
+/* Global styles for mixing Angular Material and PrimeNG */
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+html, body { 
+  height: 100%; 
+  margin: 0; 
+  font-family: Roboto, "Helvetica Neue", sans-serif; 
+}
+
+/* Global styles for better compatibility between PrimeNG and Angular Material */
+.p-component {
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+/* Ensure PrimeNG components work well with Angular Material */
+.p-inputtext, .p-dropdown, .p-calendar input {
+  font-family: inherit;
+}
+
+/* Custom CSS variables for theme consistency */
+:root {
+  --primary-color: #3f51b5;
+  --accent-color: #ff4081;
+  --warn-color: #f44336;
+  --success-color: #4caf50;
+  --info-color: #2196f3;
+  --warning-color: #ff9800;
+}
+
+/* Utility classes for spacing */
+.m-1 { margin: 0.25rem; }
+.m-2 { margin: 0.5rem; }
+.m-3 { margin: 1rem; }
+.m-4 { margin: 1.5rem; }
+.m-5 { margin: 3rem; }
+
+.p-1 { padding: 0.25rem; }
+.p-2 { padding: 0.5rem; }
+.p-3 { padding: 1rem; }
+.p-4 { padding: 1.5rem; }
+.p-5 { padding: 3rem; }
+
+/* Responsive utilities */
+.d-none { display: none; }
+.d-block { display: block; }
+.d-flex { display: flex; }
+.d-grid { display: grid; }
+
+/* Text utilities */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+/* Color utilities */
+.text-primary { color: var(--primary-color); }
+.text-accent { color: var(--accent-color); }
+.text-warn { color: var(--warn-color); }
+.text-success { color: var(--success-color); }

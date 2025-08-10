@@ -9,6 +9,8 @@ import { DatabaseModule } from './database/database.module';
 import databaseConfig from './config/database.config';
 import { DummyModule } from './modules/dummy/dummy.module';
 import { PatientModule } from './modules/medical/patient/patient.module';
+import { FinanceModule } from './modules/finance/finance.module';
+import { ProtectedModule } from './modules/protected/protected.module';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { PatientModule } from './modules/medical/patient/patient.module';
     DatabaseModule,
     // DummyModule,
     PatientModule,
+    FinanceModule,
+    ProtectedModule,
   ],
   controllers: [AppController, ProfileController],
   providers: [AppService],

@@ -28,8 +28,8 @@ export const PAGE_MENUS: Record<string, PageMenuItem[]> = {
       icon: 'bar_chart',
       expanded: true,
       children: [
-        { path: '/dashboard/reports/daily', label: 'รายวัน', icon: 'today' },
-        { path: '/dashboard/reports/monthly', label: 'รายเดือน', icon: 'date_range' }
+        { path: '/finance', label: 'รายรับ-รายจ่าย', icon: 'today' },
+        // { path: '/dashboard/reports/monthly', label: 'รายเดือน', icon: 'date_range' }
       ]
     }
   ],
@@ -45,6 +45,37 @@ export const PAGE_MENUS: Record<string, PageMenuItem[]> = {
       label: 'เพิ่มคนไข้',
       icon: 'person_add',
       expanded: false,
+    }
+  ],
+  '/finance': [
+    {
+      path: '/finance/summary',
+      label: 'สรุปการเงิน',
+      icon: 'account_balance',
+      expanded: false,
+    },
+    {
+      path: '/finance/list',
+      label: 'รายการการเงิน',
+      icon: 'receipt_long',
+      expanded: false,
+    },
+    {
+      path: '/finance/add',
+      label: 'เพิ่มรายการ',
+      icon: 'add_circle',
+      expanded: false,
+    },
+    {
+      path: '/finance',
+      label: 'จัดการการเงิน',
+      icon: 'account_balance_wallet',
+      expanded: true,
+      children: [
+        { path: '/finance/summary', label: 'สรุปการเงิน', icon: 'bar_chart' },
+        { path: '/finance/list', label: 'รายการทั้งหมด', icon: 'list' },
+        { path: '/finance/add', label: 'เพิ่มรายการ', icon: 'add' }
+      ]
     }
   ]
   // เพิ่มเมนูอื่นๆ ตาม path ได้

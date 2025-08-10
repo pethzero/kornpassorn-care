@@ -5,14 +5,21 @@ import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtStrategy } from './jwt.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../../database/entities/user.entity'; // ปรับ path ให้ตรงกับที่เก็บ entity
 import { DatabaseModule } from '../../database/database.module';
 import { UserToken } from '../../database/entities/user-token.entity';
 import { LoginLog } from '../../database/entities/login-log.entity';
-import { JwtAuthGuard } from './jwt-auth.guard';
 
+// Import strategies from new location
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { BearerTokenStrategy } from './strategies/bearer-token.strategy';
+import { CookieJwtStrategy } from './strategies/cookie-jwt.strategy';
+
+// Import guards from new location
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { BearerTokenGuard } from './guards/bearer-token.guard';
+import { CookieJwtGuard } from './guards/cookie-jwt.guard';
 
 @Module({
   imports: [
@@ -30,7 +37,22 @@ import { JwtAuthGuard } from './jwt-auth.guard';
     DatabaseModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, JwtAuthGuard], // <-- เพิ่ม JwtAuthGuard
-  exports: [JwtModule, JwtAuthGuard], // <-- export JwtAuthGuard ถ้าต้องใช้ข้าม module
+  providers: [
+    AuthService, 
+    // Strategies
+    JwtStrategy, 
+    BearerTokenStrategy,
+    CookieJwtStrategy,
+    // Guards
+    JwtAuthGuard,
+    BearerTokenGuard,
+    CookieJwtGuard,
+  ],
+  exports: [
+    JwtModule, 
+    JwtAuthGuard, // Original guard
+    BearerTokenGuard, // For API endpoints
+    CookieJwtGuard, // For web endpoints
+  ],
 })
 export class AuthModule { }

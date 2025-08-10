@@ -2,7 +2,7 @@ import { Controller, Post, Req, Res, Body, Get, Param, UseGuards } from '@nestjs
 import { AuthService } from './auth.service';
 import { Response, Request } from 'express';
 import { LoginDto } from './dto/login.dto';
-import { JwtAuthGuard } from './jwt-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -66,6 +66,36 @@ export class AuthController {
     }
     res.clearCookie('token');
     return res.json({ message: 'Logged out' });
+  }
+
+  // API สำหรับขอ token โดยใช้ username/password (สำหรับ API users)
+  @Post('token')
+  async getApiToken(@Body() body: { username?: string; password?: string }, @Req() req: Request, @Res() res: Response) {
+    // ตรวจสอบ username และ password ใน request body
+    if (!body || !body.username || !body.password) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณาระบุ username และ password ใน request body'
+      });
+    }
+
+    const result = await this.authService.getTokenByCredentials(body.username, body.password, req);
+    console.log('API Token Request:', body.username, result);
+    
+    if (!result.success) {
+      return res.status(401).json({
+        success: false,
+        message: result.message
+      });
+    }
+
+    return res.json({
+      success: true,
+      access_token: result.access_token,
+      expires_in: result.expires_in,
+      token_type: 'Bearer',
+      user_role: result.user_role
+    });
   }
 
   // Admin revoke ทุก token ของ user

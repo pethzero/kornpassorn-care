@@ -27,6 +27,7 @@ export class AuthService {
 
     if (!user) return null;
     const isMatch = await bcrypt.compare(password, user.passwordHash);
+    console.log('Password match:', isMatch);
     if (!isMatch) return null;
     return user;
   }
@@ -89,6 +90,177 @@ export class AuthService {
 
   async revokeAllTokensOfUser(userId: string) {
     await this.userTokenRepo.update({ user: { id: userId } }, { revoked: true });
+  }
+
+  // ✅ API สำหรับขอ token ด้วย username/password (สำหรับ API users)
+  async getTokenByCredentials(username: string, password: string, req: any) {
+    try {
+      // ตรวจสอบ username และ password ว่าถูกส่งมาหรือไม่
+      if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
+        await this.logApiKeyUsage(null, false, req, 'Username or password is missing or invalid type');
+        return {
+          success: false,
+          message: 'Username และ Password จำเป็นต้องระบุ'
+        };
+      }
+
+      // ตรวจสอบ username format (ต้องขึ้นต้นด้วย api_)
+      // if (!username.startsWith('api_')) {
+      //   await this.logApiKeyUsage(null, false, req, 'Invalid API username format');
+      //   return {
+      //     success: false,
+      //     message: 'รูปแบบ API username ไม่ถูกต้อง (ต้องขึ้นต้นด้วย api_)'
+      //   };
+      // }
+
+      // หา API user ในฐานข้อมูล
+      const apiUser = await this.databaseService.findUserByUsername(username);
+      
+      if (!apiUser || apiUser.role !== 'api') {
+        await this.logApiKeyUsage(null, false, req, 'API user not found or invalid role');
+        return {
+          success: false,
+          message: 'API user ไม่ถูกต้องหรือไม่มีสิทธิ์'
+        };
+      }
+
+      if (!apiUser.isActive) {
+        await this.logApiKeyUsage(apiUser, false, req, 'API user is inactive');
+        return {
+          success: false,
+          message: 'API user ถูกปิดการใช้งาน'
+        };
+      }
+
+      // ตรวจสอบ password
+      const isPasswordValid = await bcrypt.compare(password, apiUser.passwordHash);
+      if (!isPasswordValid) {
+        await this.logApiKeyUsage(apiUser, false, req, 'Invalid password');
+        return {
+          success: false,
+          message: 'Password ไม่ถูกต้อง'
+        };
+      }
+
+      // สร้าง JWT token
+      const payload = {
+        sub: apiUser.id,
+        username: apiUser.username,
+        role: apiUser.role,
+        api_token: true, // ระบุว่าเป็น token จาก API credentials
+      };
+
+      const expiresIn = '24h'; // API token อายุ 24 ชั่วโมง
+      const token = this.jwtService.sign(payload, { expiresIn });
+
+      // บันทึก token
+      const expiredAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await this.saveToken(apiUser, token, expiredAt);
+
+      // บันทึก log สำเร็จ
+      await this.logApiKeyUsage(apiUser, true, req);
+
+      return {
+        success: true,
+        access_token: token,
+        expires_in: 86400, // 24 hours in seconds
+        user_role: apiUser.role
+      };
+
+    } catch (error) {
+      console.error('Error in getTokenByCredentials:', error);
+      await this.logApiKeyUsage(null, false, req, `System error: ${error.message}`);
+      return {
+        success: false,
+        message: 'เกิดข้อผิดพลาดภายในระบบ'
+      };
+    }
+  }
+
+  // ✅ API สำหรับขอ token ด้วย API key (เก่า - เก็บไว้เผื่อใช้)
+  async getTokenByApiKey(apiKey: string, req: any) {
+    try {
+      // ตรวจสอบ API key ว่าถูกส่งมาหรือไม่
+      if (!apiKey || typeof apiKey !== 'string') {
+        await this.logApiKeyUsage(null, false, req, 'API key is missing or invalid type');
+        return {
+          success: false,
+          message: 'API key จำเป็นต้องระบุ'
+        };
+      }
+
+      // ตรวจสอบ API key format
+      if (!apiKey.startsWith('api_')) {
+        await this.logApiKeyUsage(null, false, req, 'Invalid API key format');
+        return {
+          success: false,
+          message: 'รูปแบบ API key ไม่ถูกต้อง (ต้องขึ้นต้นด้วย api_)'
+        };
+      }
+
+      // หา API user ในฐานข้อมูล
+      const apiUser = await this.databaseService.findUserByUsername(apiKey);
+      
+      if (!apiUser || apiUser.role !== 'api') {
+        await this.logApiKeyUsage(null, false, req, 'API key not found or invalid role');
+        return {
+          success: false,
+          message: 'API key ไม่ถูกต้องหรือไม่มีสิทธิ์'
+        };
+      }
+
+      if (!apiUser.isActive) {
+        await this.logApiKeyUsage(apiUser, false, req, 'API key is inactive');
+        return {
+          success: false,
+          message: 'API key ถูกปิดการใช้งาน'
+        };
+      }
+
+      // สร้าง JWT token
+      const payload = {
+        sub: apiUser.id,
+        username: apiUser.username,
+        role: apiUser.role,
+        api_key: true, // ระบุว่าเป็น token จาก API key
+      };
+
+      const expiresIn = '24h'; // API token อายุ 24 ชั่วโมง
+      const token = this.jwtService.sign(payload, { expiresIn });
+
+      // บันทึก token
+      const expiredAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await this.saveToken(apiUser, token, expiredAt);
+
+      // บันทึก log สำเร็จ
+      await this.logApiKeyUsage(apiUser, true, req);
+
+      return {
+        success: true,
+        access_token: token,
+        expires_in: 86400, // 24 hours in seconds
+        user_role: apiUser.role
+      };
+
+    } catch (error) {
+      console.error('Error in getTokenByApiKey:', error);
+      await this.logApiKeyUsage(null, false, req, `System error: ${error.message}`);
+      return {
+        success: false,
+        message: 'เกิดข้อผิดพลาดภายในระบบ'
+      };
+    }
+  }
+
+  // บันทึก log การใช้ API key
+  async logApiKeyUsage(user: User | null, success: boolean, req: any, failReason?: string) {
+    await this.loginLogRepo.save({
+      user: user || undefined,
+      ip_address: req.ip,
+      user_agent: req.headers['user-agent'],
+      success,
+      fail_reason: failReason || undefined,
+    });
   }
 }
 
