@@ -6,11 +6,10 @@ import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { ProfileController } from './modules/profile/profile.controller';
 import { DatabaseModule } from './database/database.module';
-import databaseConfig from './config/database.config';
-import { DummyModule } from './modules/dummy/dummy.module';
 import { PatientModule } from './modules/medical/patient/patient.module';
 import { FinanceModule } from './modules/finance/finance.module';
 import { ProtectedModule } from './modules/protected/protected.module';
+import { databaseConfig } from './database/data-source';
 
 @Module({
   imports: [
@@ -18,10 +17,9 @@ import { ProtectedModule } from './modules/protected/protected.module';
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV || 'dev'}`,
     }),
-    TypeOrmModule.forRoot(databaseConfig()),
+    TypeOrmModule.forRoot(databaseConfig()), // เพิ่ม forRoot สำหรับ default database
     AuthModule,
     DatabaseModule,
-    // DummyModule,
     PatientModule,
     FinanceModule,
     ProtectedModule,
@@ -29,5 +27,5 @@ import { ProtectedModule } from './modules/protected/protected.module';
   controllers: [AppController, ProfileController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
 
