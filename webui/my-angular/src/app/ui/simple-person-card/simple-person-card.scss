@@ -1,0 +1,126 @@
+// Simple Person Card - Clean & Minimal Design
+.simple-person-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid #e5e7eb;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1rem;
+
+    .icon-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      i {
+        font-size: 1.5rem;
+        color: white;
+      }
+
+      &.bg-blue {
+        background: #3b82f6;
+      }
+
+      &.bg-green {
+        background: #10b981;
+      }
+
+      &.bg-pink {
+        background: #ec4899;
+      }
+
+      &.bg-orange {
+        background: #f59e0b;
+      }
+
+      &.bg-purple {
+        background: #8b5cf6;
+      }
+
+      &.bg-red {
+        background: #ef4444;
+      }
+    }
+
+    .card-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #374151;
+      line-height: 1.4;
+    }
+  }
+
+  .card-body {
+    text-align: center;
+    margin-bottom: 1rem;
+
+    .number {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #111827;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      color: #6b7280;
+      line-height: 1.4;
+    }
+  }
+
+  .card-footer {
+    text-align: center;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f3f4f6;
+
+    .status-text {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #059669;
+      background: #dcfce7;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .simple-person-card {
+    padding: 1rem;
+
+    .card-header {
+      .icon-circle {
+        width: 40px;
+        height: 40px;
+
+        i {
+          font-size: 1.25rem;
+        }
+      }
+
+      .card-title {
+        font-size: 0.85rem;
+      }
+    }
+
+    .card-body .number {
+      font-size: 2rem;
+    }
+  }
+}

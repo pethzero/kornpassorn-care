@@ -9,6 +9,13 @@ import { TagModule } from 'primeng/tag';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { ChartModule } from 'primeng/chart';
 
+// Custom components
+import { StatCardComponent } from '../../ui/stat-card/stat-card';
+import { PersonCardComponent } from '../../ui/person-card/person-card';
+import { SimplePersonCardComponent } from '../../ui/simple-person-card/simple-person-card';
+
+
+
 export interface Patient {
   id: number;
   name: string;
@@ -38,7 +45,10 @@ export interface FinanceRecord {
     ButtonModule, 
     TagModule, 
     ProgressBarModule,
-    ChartModule
+    ChartModule,
+    // StatCardComponent,
+    // PersonCardComponent,
+    SimplePersonCardComponent
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
@@ -49,6 +59,16 @@ export class DashboardComponent implements OnInit {
     newPatientsToday: 23,
     appointmentsToday: 45,
     inExamRoom: 5,
+    // Finance stats
+    totalIncome: 125000,
+    totalExpenses: 75000,
+    netProfit: 50000,
+    totalTransactions: 152,
+    // Person-related stats
+    activePatients: 23,
+    doctorsOnDuty: 8,
+    nursesOnDuty: 15,
+    waitingQueue: 7
   };
 
   patients: Patient[] = [
@@ -148,6 +168,22 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit() {
     this.initCharts();
+    this.calculateFinanceStats();
+  }
+
+  calculateFinanceStats() {
+    const income = this.financeRecords
+      .filter(record => record.type === 'income')
+      .reduce((sum, record) => sum + record.amount, 0);
+    
+    const expenses = this.financeRecords
+      .filter(record => record.type === 'expense')
+      .reduce((sum, record) => sum + record.amount, 0);
+
+    this.stats.totalIncome = income;
+    this.stats.totalExpenses = expenses;
+    this.stats.netProfit = income - expenses;
+    this.stats.totalTransactions = this.financeRecords.length;
   }
 
   initCharts() {
