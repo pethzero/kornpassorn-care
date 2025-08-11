@@ -1,0 +1,195 @@
+<div class="finance-list-container">
+  <!-- Header -->
+  <div class="list-header">
+    <h2>📋 รายการการเงิน</h2>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="navigateToAdd()">
+        ➕ เพิ่มรายการใหม่
+      </button>
+      <button class="btn btn-secondary" (click)="navigateToSummary()">
+        📊 ดูสรุป
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label>ประเภท:</label>
+        <select [(ngModel)]="queryParams.category" (change)="onFilterChange()" class="form-control">
+          <option value="">ทั้งหมด</option>
+          <option value="income">รายรับ</option>
+          <option value="expense">รายจ่าย</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>ค้นหา:</label>
+        <input 
+          type="text" 
+          [(ngModel)]="queryParams.search" 
+          (input)="onSearchChange()"
+          placeholder="ค้นหาชื่อรายการ..."
+          class="form-control">
+      </div>
+
+      <div class="filter-group">
+        <label>จากวันที่:</label>
+        <input 
+          type="date" 
+          [(ngModel)]="queryParams.start_date" 
+          (change)="onFilterChange()"
+          class="form-control">
+      </div>
+
+      <div class="filter-group">
+        <label>ถึงวันที่:</label>
+        <input 
+          type="date" 
+          [(ngModel)]="queryParams.end_date" 
+          (change)="onFilterChange()"
+          class="form-control">
+      </div>
+
+      <button class="btn btn-info" (click)="clearFilters()">🔄 รีเซ็ต</button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>กำลังโหลดข้อมูล...</p>
+    </div>
+  }
+
+  <!-- Records Table -->
+  @if (!loading) {
+    <div class="table-container">
+      <div class="table-header">
+        <div class="table-info">
+          <span>แสดง {{ records.length }} รายการ จากทั้งหมด {{ totalRecords }} รายการ</span>
+        </div>
+        <div class="sort-controls">
+          <label>เรียงตาม:</label>
+          <select [(ngModel)]="queryParams.sort_by" (change)="onFilterChange()" class="form-control">
+            <option value="created_at">วันที่สร้าง</option>
+            <option value="record_date">วันที่บันทึก</option>
+            <option value="amount">จำนวนเงิน</option>
+            <option value="item_name">ชื่อรายการ</option>
+          </select>
+          <select [(ngModel)]="queryParams.sort_order" (change)="onFilterChange()" class="form-control">
+            <option value="DESC">มากไปน้อย</option>
+            <option value="ASC">น้อยไปมาก</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>วันที่</th>
+              <th>ประเภท</th>
+              <th>รายการ</th>
+              <th>จำนวนเงิน</th>
+              <th>คำอธิบาย</th>
+              <th>การดำเนินการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (record of records; track record.id) {
+              <tr class="table-row">
+                <td>{{ formatDate(record.record_date) }}</td>
+                <td>
+                  <span class="badge" [class.income]="record.category === 'income'" [class.expense]="record.category === 'expense'">
+                    {{ record.category === 'income' ? '💰 รายรับ' : '💸 รายจ่าย' }}
+                  </span>
+                </td>
+                <td class="item-name">{{ record.item_name }}</td>
+                <td class="amount" [class.income]="record.category === 'income'" [class.expense]="record.category === 'expense'">
+                  {{ formatCurrency(record.amount) }}
+                </td>
+                <td class="description">{{ record.description || '-' }}</td>
+                <td>
+                  <div class="action-buttons">
+                    <button class="btn-action edit" (click)="editRecord(record)" title="แก้ไข">
+                      ✏️
+                    </button>
+                    <button class="btn-action delete" (click)="deleteRecord(record)" title="ลบ">
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <!-- Empty State -->
+        @if (records.length === 0) {
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <h3>ไม่พบข้อมูลรายการการเงิน</h3>
+            <p>ลองปรับเปลี่ยนตัวกรองหรือเพิ่มรายการใหม่</p>
+            <button class="btn btn-primary" (click)="navigateToAdd()">
+              ➕ เพิ่มรายการแรก
+            </button>
+          </div>
+        }
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages > 1) {
+        <div class="pagination-container">
+          <div class="pagination-info">
+            หน้า {{ currentPage }} จาก {{ totalPages }}
+          </div>
+          <div class="pagination-controls">
+            <button 
+              class="btn btn-secondary" 
+              [disabled]="currentPage === 1"
+              (click)="goToPage(currentPage - 1)">
+              ← ก่อนหน้า
+            </button>
+            
+            <div class="page-numbers">
+              @for (page of getPageNumbers(); track page) {
+                <button 
+                  class="page-btn"
+                  [class.active]="page === currentPage"
+                  (click)="goToPage(page)">
+                  {{ page }}
+                </button>
+              }
+            </div>
+
+            <button 
+              class="btn btn-secondary" 
+              [disabled]="currentPage === totalPages"
+              (click)="goToPage(currentPage + 1)">
+              ถัดไป →
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Error Message -->
+</div>
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteModal) {
+  <div class="modal-overlay" (click)="cancelDelete()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3>ยืนยันการลบ</h3>
+      <p>คุณต้องการลบรายการ "<strong>{{ recordToDelete?.item_name }}</strong>" ใช่หรือไม่?</p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="cancelDelete()">ยกเลิก</button>
+        <button class="btn btn-danger" (click)="confirmDelete()">ลบ</button>
+      </div>
+    </div>
+  </div>
+}

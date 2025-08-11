@@ -1,0 +1,29 @@
+kornpassorn-care/
+├── backend/
+│   ├── nestjs/                    # Backend เดิม (NestJS)
+│   │   ├── src/
+│   │   ├── package.json
+│   │   ├── Dockerfile
+│   │   └── ...
+│   └── golang/                    # Backend ใหม่ (Golang)
+│       ├── main.go
+│       ├── go.mod
+│       ├── Dockerfile
+│       └── ...
+├── frontend/
+│   ├── angular/                   # Frontend เดิม (Angular)
+│   │   ├── src/
+│   │   ├── package.json
+│   │   ├── Dockerfile
+│   │   └── ...
+│   └── react/                     # Frontend ใหม่ (React)
+│       ├── src/
+│       ├── package.json
+│       ├── Dockerfile
+│       └── ...
+├── docker-compose.yml             # สำหรับรัน all services
+├── docker-compose.dev.yml         # สำหรับ development
+├── docker-compose.prod.yml        # สำหรับ production
+├── scripts/                       # Build/deploy scripts
+├── docs/                          # Documentation
+└── README.md

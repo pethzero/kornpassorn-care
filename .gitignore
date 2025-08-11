@@ -1,4 +1,108 @@
-# ✅ Node modules
+# ==============================
+# 🚀 KORNPASSORN CARE PROJECT
+# ==============================
+
+# ✅ Dependencies
+node_modules/
+**/node_modules/
+
+# ✅ Build outputs
+dist/
+build/
+**/dist/
+**/build/
+**/.angular/
+**/out-tsc/
+**/.next/
+
+# ✅ Environment files
+.env
+.env.*
+!.env.example
+
+# ✅ Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# ✅ Testing & Coverage
+/coverage/
+/.nyc_output/
+**/.pytest_cache/
+
+# ✅ Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# ✅ Temporary files
+.temp/
+.tmp/
+*.tmp
+
+# ✅ OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ✅ Editor / IDE
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ✅ Angular specific
+.angular/
+**/.angular/cache/
+
+# ✅ React specific
+.next/
+**/.next/
+
+# ✅ NestJS specific
+/backend/.scannerwork/
+
+# ✅ Golang specific
+# If you're using Go modules
+**/go.sum
+**/*.exe
+**/*.exe~
+**/*.dll
+**/*.so
+**/*.dylib
+**/*.test
+**/*.out
+
+# ✅ Database
+*.sqlite
+*.sqlite3
+*.db
+
+# ✅ Docker
+.docker/
+**/.docker/
+
+# ✅ Package managers
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ✅ Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json# ✅ Node modules
 node_modules/
 **/node_modules/
 

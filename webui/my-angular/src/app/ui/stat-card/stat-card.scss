@@ -1,0 +1,36 @@
+// KRONPASSORN Stat Card Styles
+.stat-card {
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.3s ease !important;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+  }
+
+  .p-card-body {
+    padding: 1.5rem !important;
+  }
+
+  .stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .stat-card {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+    border-color: #475569 !important;
+    color: #f1f5f9 !important;
+  }
+}
