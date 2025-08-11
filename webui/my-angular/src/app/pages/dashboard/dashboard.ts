@@ -20,7 +20,7 @@ export interface Patient {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, MatCardModule, BaseChartDirective, PatientList, MatIconModule, CalendarComponent],
+  imports: [CommonModule, MatCardModule, BaseChartDirective, MatIconModule],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
 })

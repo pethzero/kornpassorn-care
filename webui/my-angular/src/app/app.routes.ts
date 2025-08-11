@@ -26,12 +26,6 @@ export const routes: Routes = [
         data: { roles: ['guest', 'user', 'admin'] } // ให้ user และ admin เข้าได้
       },
       {
-        path: 'finance',
-        loadChildren: () => import('./features/finance/finance-routing.module').then(m => m.FinanceRoutingModule),
-        canActivate: [AuthGuard],
-        data: { roles: ['user', 'admin', 'api'] } // ให้ user, admin และ api เข้าได้
-      },
-      {
         path: 'admin',
         canActivateChild: [AuthGuard],
         data: { roles: ['admin'] },

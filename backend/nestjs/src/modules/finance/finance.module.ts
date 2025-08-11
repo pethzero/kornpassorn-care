@@ -1,13 +1,18 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { FinanceService } from './finance.service';
 import { FinanceController } from './finance.controller';
-import { FinanceRecord } from '../../database/entities/finance-record.entity';
+import { AuthModule } from '../auth/auth.module';
+import { DatabaseModule } from '../../database/database.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([FinanceRecord])],
+  imports: [
+    DatabaseModule, // Provides FinanceRecord entity via TypeOrmModule
+    AuthModule, // Import AuthModule เพื่อใช้ authentication guards
+  ],
   controllers: [FinanceController],
-  providers: [FinanceService],
+  providers: [
+    FinanceService,
+  ],
   exports: [FinanceService], // Export เพื่อใช้ใน modules อื่น
 })
 export class FinanceModule {}

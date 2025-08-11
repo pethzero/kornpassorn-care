@@ -23,10 +23,11 @@ export class AuthService {
   async validateUser(username: string, password: string): Promise<User | null> {
     const user = await this.databaseService.findUserByUsername(username);
     console.log('Validating user:', username);
+    console.log('Validating password:', password);
     console.log('User found:', user);
 
     if (!user) return null;
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    const isMatch = await bcrypt.compare(password, user.password_hash);
     console.log('Password match:', isMatch);
     if (!isMatch) return null;
     return user;
@@ -133,7 +134,7 @@ export class AuthService {
       }
 
       // ตรวจสอบ password
-      const isPasswordValid = await bcrypt.compare(password, apiUser.passwordHash);
+      const isPasswordValid = await bcrypt.compare(password, apiUser.password_hash);
       if (!isPasswordValid) {
         await this.logApiKeyUsage(apiUser, false, req, 'Invalid password');
         return {

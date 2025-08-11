@@ -1,25 +1,34 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
 
-@Entity({ name: 'users' })
+@Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true, length: 100 })
+  @Column({ type: 'varchar', length: 100, unique: true })
   username: string;
 
-  @Column({ name: 'password_hash' })
-  passwordHash: string;
+  @Column({ type: 'varchar' })
+  password_hash: string;
 
-  @Column({ nullable: true })
-  email: string;
+  @Column({ type: 'varchar', nullable: true })
+  email?: string;
 
-  @Column({ default: true })
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  first_name?: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  last_name?: string;
+
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  phone_number?: string;
+
+  @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
-  @Column({ type: 'timestamptz', default: () => 'now()' })
+  @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @Column({ default: 'user' })
+  @Column({ type: 'varchar', default: 'user' })
   role: string;
 }

@@ -21,6 +21,7 @@
     "@angular/platform-browser": "^20.0.0",
     "@angular/router": "^20.0.0",
     "@ng-select/ng-select": "^20.0.1",
+    "@primeng/themes": "^20.0.1",
     "@tailwindcss/cli": "^4.1.11",
     "@tailwindcss/postcss": "^4.1.11",
     "angular-calendar": "^0.31.1",

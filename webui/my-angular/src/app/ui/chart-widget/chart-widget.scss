@@ -1,0 +1,218 @@
+// Chart Widget Styles
+.chart-widget {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  height: 100%;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  }
+
+  .p-card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px 8px 0 0;
+    border-bottom: none;
+
+    h3 {
+      color: white;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    p {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.85rem;
+    }
+  }
+
+  .p-card-content {
+    padding: 1.5rem;
+  }
+}
+
+.chart-controls {
+  select {
+    padding: 0.5rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 0.85rem;
+    min-width: 120px;
+
+    option {
+      background: #667eea;
+      color: white;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: rgba(255, 255, 255, 0.5);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+    }
+  }
+}
+
+.dashboard-chart {
+  height: 300px;
+  
+  canvas {
+    border-radius: 8px;
+  }
+}
+
+.chart-summary {
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-top: 1rem;
+
+  .grid {
+    margin: 0;
+  }
+
+  .col-6, .col-3 {
+    padding: 0.5rem;
+  }
+
+  .text-center {
+    text-align: center;
+
+    .text-2xl {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #2d3748;
+      margin-bottom: 0.25rem;
+    }
+
+    .text-sm {
+      font-size: 0.875rem;
+      color: #718096;
+      font-weight: 500;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .chart-widget {
+    .p-card-header {
+      .flex {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+    }
+
+    .chart-controls {
+      select {
+        min-width: 100px;
+        font-size: 0.8rem;
+      }
+    }
+  }
+
+  .dashboard-chart {
+    height: 250px;
+  }
+
+  .chart-summary {
+    .col-6 {
+      flex: 0 0 auto;
+      width: 50%;
+    }
+
+    .col-3 {
+      flex: 0 0 auto;
+      width: 50%;
+    }
+  }
+}
+
+// Dark Mode Support
+[data-theme="dark"] {
+  .chart-widget {
+    background: linear-gradient(135deg, rgba(45, 55, 72, 0.95) 0%, rgba(26, 32, 44, 0.95) 100%);
+    border-color: rgba(74, 85, 104, 0.8);
+    color: #e2e8f0;
+
+    .p-card-header {
+      background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+    }
+
+    .chart-summary {
+      background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+      border-color: #4a5568;
+
+      .text-2xl {
+        color: #e2e8f0;
+      }
+
+      .text-sm {
+        color: #a0aec0;
+      }
+    }
+  }
+}
+
+// Animation Enhancements
+.chart-widget {
+  .p-card-content {
+    animation: fadeInUp 0.5s ease-out;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Chart Specific Enhancements
+.chart-widget {
+  .p-chart {
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: -5px;
+      right: -5px;
+      bottom: -5px;
+      background: linear-gradient(45deg, transparent 30%, rgba(102, 126, 234, 0.1) 50%, transparent 70%);
+      border-radius: 12px;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    &:hover::before {
+      opacity: 1;
+    }
+  }
+}
+
+// Accessibility
+.chart-widget {
+  &:focus-within {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+  }
+}
+
+.chart-controls select {
+  &:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+  }
+}

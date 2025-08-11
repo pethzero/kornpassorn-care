@@ -14,11 +14,13 @@ export class FinanceService {
   ) {}
 
   // สร้างรายการใหม่
-  async create(createFinanceRecordDto: CreateFinanceRecordDto): Promise<FinanceRecord> {
+  async create(createFinanceRecordDto: CreateFinanceRecordDto, currentUser?: string): Promise<FinanceRecord> {
     try {
       const financeRecord = this.financeRepository.create({
         ...createFinanceRecordDto,
         record_date: new Date(createFinanceRecordDto.record_date),
+        create_by: currentUser || 'system',
+        // create_date จะถูกตั้งค่าอัตโนมัติจาก @CreateDateColumn
       });
       
       return await this.financeRepository.save(financeRecord);
@@ -36,7 +38,7 @@ export class FinanceService {
       page = 1,
       limit = 10,
       search,
-      sort_by = 'created_at',
+      sort_by = 'create_date',
       sort_order = 'DESC'
     } = query;
 
@@ -100,13 +102,17 @@ export class FinanceService {
   }
 
   // อัปเดตข้อมูล
-  async update(id: number, updateFinanceRecordDto: UpdateFinanceRecordDto): Promise<FinanceRecord> {
+  async update(id: number, updateFinanceRecordDto: UpdateFinanceRecordDto, currentUser?: string): Promise<FinanceRecord> {
     const record = await this.findOne(id);
     
     const updateData: any = { ...updateFinanceRecordDto };
     if (updateFinanceRecordDto.record_date) {
       updateData.record_date = new Date(updateFinanceRecordDto.record_date);
     }
+    
+    // เพิ่มข้อมูลผู้แก้ไข
+    updateData.modify_by = currentUser || 'system';
+    // modify_date จะถูกตั้งค่าอัตโนมัติจาก @UpdateDateColumn
 
     Object.assign(record, updateData);
     

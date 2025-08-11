@@ -33,8 +33,8 @@ export class QueryFinanceRecordDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(['id', 'item_name', 'amount', 'record_date', 'created_at'])
-  sort_by?: string = 'created_at';
+  @IsIn(['id', 'item_name', 'amount', 'record_date', 'create_date', 'create_by'])
+  sort_by?: string = 'create_date';
 
   @IsOptional()
   @IsString()

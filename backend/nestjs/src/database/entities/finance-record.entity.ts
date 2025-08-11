@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('finance_records')
 export class FinanceRecord {
@@ -17,6 +17,19 @@ export class FinanceRecord {
   @Column({ type: 'date' })
   record_date: Date;
 
+  // ผู้สร้างข้อมูล
+  @Column({ type: 'varchar', length: 50 })
+  create_by: string;
+
+  // วันที่สร้าง (วัน+เวลา)
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  created_at: Date;
+  create_date: Date;
+
+  // ผู้แก้ไขล่าสุด
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  modify_by: string | null;
+
+  // วันที่แก้ไขล่าสุด
+  @UpdateDateColumn({ type: 'timestamp', nullable: true })
+  modify_date: Date | null;
 }

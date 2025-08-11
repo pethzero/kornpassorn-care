@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Patient, MedicalRecord } from '../../../database/entities/medical.entity';
 import { PatientService } from './patient.service';
 import { PatientController } from './patient.controller';
+import { DatabaseModule } from '../../../database/database.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Patient, MedicalRecord])],
+  imports: [DatabaseModule], // Provides Patient and MedicalRecord entities
   providers: [PatientService],
   controllers: [PatientController],
   exports: [PatientService],

@@ -5,11 +5,7 @@ import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from '../../database/entities/user.entity'; // ปรับ path ให้ตรงกับที่เก็บ entity
 import { DatabaseModule } from '../../database/database.module';
-import { UserToken } from '../../database/entities/user-token.entity';
-import { LoginLog } from '../../database/entities/login-log.entity';
 
 // Import strategies from new location
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -20,12 +16,12 @@ import { CookieJwtStrategy } from './strategies/cookie-jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { BearerTokenGuard } from './guards/bearer-token.guard';
 import { CookieJwtGuard } from './guards/cookie-jwt.guard';
+import { FlexibleAuthGuard } from './guards/flexible-auth.guard';
 
 @Module({
   imports: [
     ConfigModule,
     PassportModule,
-    TypeOrmModule.forFeature([User, UserToken, LoginLog]), // <-- มี UserToken แล้ว
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -34,7 +30,7 @@ import { CookieJwtGuard } from './guards/cookie-jwt.guard';
         signOptions: { expiresIn: config.get('JWT_EXPIRES_IN') || '1d' },
       }),
     }),
-    DatabaseModule,
+    DatabaseModule, // This provides all the entities via TypeOrmModule
   ],
   controllers: [AuthController],
   providers: [
@@ -47,12 +43,15 @@ import { CookieJwtGuard } from './guards/cookie-jwt.guard';
     JwtAuthGuard,
     BearerTokenGuard,
     CookieJwtGuard,
+    FlexibleAuthGuard,
   ],
   exports: [
     JwtModule, 
     JwtAuthGuard, // Original guard
     BearerTokenGuard, // For API endpoints
     CookieJwtGuard, // For web endpoints
+    FlexibleAuthGuard, // For flexible authentication
+    AuthService, // Export AuthService
   ],
 })
 export class AuthModule { }

@@ -94,7 +94,7 @@ export class FinanceService {
   }
 
   // สร้างรายการการเงินใหม่
-  createFinanceRecord(record: Omit<FinanceRecord, 'id' | 'created_at' | 'updated_at'>): Observable<{ success: boolean; message: string; data: FinanceRecord }> {
+  createFinanceRecord(record: Omit<FinanceRecord, 'id'>): Observable<{ success: boolean; message: string; data: FinanceRecord }> {
     return this.http.post<{ success: boolean; message: string; data: FinanceRecord }>(this.apiUrl, record);
   }
 

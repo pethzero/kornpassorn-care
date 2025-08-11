@@ -8,6 +8,8 @@ import { FinanceService, FinanceSummary } from '../../../core/services/finance.s
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 
 // PrimeNG Imports
 import { CardModule } from 'primeng/card';
@@ -16,6 +18,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { PanelModule } from 'primeng/panel';
 import { TagModule } from 'primeng/tag';
 import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
 
 @Component({
   selector: 'app-finance-summary',
@@ -27,162 +30,281 @@ import { MessageModule } from 'primeng/message';
     CardModule,
     ButtonModule,
     ProgressSpinnerModule,
-    MessageModule,
-    TagModule,
     PanelModule,
+    TagModule,
+    MessageModule,
+    SelectModule,
     // Angular Material
     MatCardModule,
     MatButtonModule,
-    MatIconModule
+    MatIconModule,
+    MatFormFieldModule,
+    MatInputModule
   ],
   template: `
-    <div class="finance-summary-container">
-      <!-- Header with Angular Material -->
-      <mat-card class="header-card">
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon>account_balance</mat-icon>
-            สรุปการเงิน
-          </mat-card-title>
-          <div class="header-actions">
-            <button mat-raised-button color="primary" (click)="navigateToAdd()">
-              <mat-icon>add</mat-icon>
-              เพิ่มรายการ
-            </button>
-            <button mat-raised-button color="accent" (click)="navigateToList()">
-              <mat-icon>list</mat-icon>
-              ดูรายการทั้งหมด
-            </button>
-          </div>
-        </mat-card-header>
-      </mat-card>
+    <div class="finance-dashboard">
+      <!-- Header Section -->
+      <div class="dashboard-header">
+        <h1 class="page-title">💰 Finance Dashboard</h1>
+        <div class="header-actions">
+          <button mat-raised-button color="primary" (click)="navigateToAdd()">
+            <mat-icon>add</mat-icon>
+            Add Transaction
+          </button>
+          <mat-icon class="settings-icon">settings</mat-icon>
+        </div>
+      </div>
 
-      <!-- Date Filter with PrimeNG -->
-      <p-panel header="🔍 ตัวกรองข้อมูล" [collapsed]="false" [toggleable]="true">
-        <div class="date-filter">
-          <div class="p-field p-col-12 p-md-4">
-            <label for="startDate">จากวันที่:</label>
-            <input 
-              type="date" 
-              id="startDate"
-              [(ngModel)]="startDate" 
-              (change)="onDateChange()"
-              class="form-control">
+      <!-- Stats Cards Row -->
+      <div class="stats-grid">
+        <!-- Income Card -->
+        <div class="stat-card income-card">
+          <div class="stat-header">
+            <h3>Income</h3>
+            <div class="growth positive">
+              <span class="percentage">+12%</span>
+              <mat-icon>trending_up</mat-icon>
+            </div>
           </div>
-          <div class="p-field p-col-12 p-md-4">
-            <label for="endDate">ถึงวันที่:</label>
-            <input 
-              type="date" 
-              id="endDate"
-              [(ngModel)]="endDate" 
-              (change)="onDateChange()"
-              class="form-control">
-          </div>
-          <div class="p-field p-col-12 p-md-4">
-            <p-button 
-              label="รีเซ็ต" 
-              icon="pi pi-refresh" 
-              [outlined]="true"
-              (onClick)="clearFilter()">
-            </p-button>
+          <div class="stat-value">{{ formatCurrency(summary?.income?.total || 45000) }}</div>
+          <div class="mini-chart income-chart">
+            <!-- Mini line chart would go here -->
+            <svg width="100" height="30" viewBox="0 0 100 30">
+              <path d="M5,25 Q25,15 45,20 T85,10" stroke="#4caf50" stroke-width="2" fill="none"/>
+            </svg>
           </div>
         </div>
-      </p-panel>
 
-      <!-- Loading with PrimeNG -->
-      <div *ngIf="loading" class="loading-container">
-        <p-progressSpinner styleClass="w-4rem h-4rem"></p-progressSpinner>
-        <p>กำลังโหลดข้อมูล...</p>
+        <!-- Expense Card -->
+        <div class="stat-card expense-card">
+          <div class="stat-header">
+            <h3>Expenses</h3>
+            <div class="growth negative">
+              <span class="percentage">+24%</span>
+              <mat-icon>trending_down</mat-icon>
+            </div>
+          </div>
+          <div class="stat-value">{{ formatCurrency(summary?.expense?.total || 28000) }}</div>
+          <div class="mini-chart expense-chart">
+            <svg width="100" height="30" viewBox="0 0 100 30">
+              <path d="M5,15 Q25,25 45,10 T85,20" stroke="#f44336" stroke-width="2" fill="none"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Net Income Card -->
+        <div class="stat-card net-card">
+          <div class="stat-header">
+            <h3>Net Income</h3>
+            <div class="growth positive">
+              <span class="percentage">+18%</span>
+              <mat-icon>trending_up</mat-icon>
+            </div>
+          </div>
+          <div class="stat-value">{{ formatCurrency(summary?.net_income || 17000) }}</div>
+          <div class="mini-chart net-chart">
+            <svg width="100" height="30" viewBox="0 0 100 30">
+              <path d="M5,20 Q25,10 45,15 T85,8" stroke="#2196f3" stroke-width="2" fill="none"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Savings Card -->
+        <div class="stat-card savings-card">
+          <div class="stat-header">
+            <h3>Savings</h3>
+            <div class="progress-ring">
+              <div class="progress-value">85%</div>
+            </div>
+          </div>
+          <div class="stat-value">{{ formatCurrency(12750) }}</div>
+          <div class="savings-goal">
+            <div class="goal-text">Goal: {{ formatCurrency(15000) }}</div>
+          </div>
+        </div>
       </div>
 
-      <!-- Summary Cards with mix of both libraries -->
-      <div *ngIf="!loading && summary" class="summary-grid">
-        <!-- Income Card - PrimeNG -->
-        <p-card header="💰 รายรับ" [style]="{'background': 'linear-gradient(135deg, #c8e6c9, #a5d6a7)'}">
-          <div class="summary-content">
-            <div class="amount-display income">{{ formatCurrency(summary.income.total) }}</div>
-            <div class="details">
-              <p><strong>จำนวนรายการ:</strong> {{ summary.income.count }} รายการ</p>
-              <p><strong>เฉลี่ย:</strong> {{ formatCurrency(summary.income.average) }}</p>
+      <!-- Main Content Grid -->
+      <div class="main-content-grid">
+        <!-- Left Column -->
+        <div class="left-column">
+          <!-- Finance Overview Chart -->
+          <p-card class="chart-card">
+            <ng-template pTemplate="header">
+              <div class="card-header">
+                <h3>Finance Overview</h3>
+                <select [(ngModel)]="selectedPeriod" class="period-select">
+                  <option *ngFor="let option of periodOptions" [value]="option.value">
+                    {{ option.label }}
+                  </option>
+                </select>
+              </div>
+            </ng-template>
+            <div class="chart-container">
+              <!-- Bar Chart Area -->
+              <div class="chart-legend">
+                <div class="legend-item">
+                  <div class="legend-color income-color"></div>
+                  <span>Income</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color expense-color"></div>
+                  <span>Expense</span>
+                </div>
+              </div>
+              <div class="bar-chart">
+                <div class="chart-bars">
+                  <div class="day-bar" *ngFor="let day of weeklyData">
+                    <div class="bar-group">
+                      <div class="bar income-bar" [style.height.%]="day.incomePercent"></div>
+                      <div class="bar expense-bar" [style.height.%]="day.expensePercent"></div>
+                    </div>
+                    <div class="day-label">{{ day.day }}</div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <p-tag severity="success" value="รายรับ" icon="pi pi-arrow-up"></p-tag>
-          </div>
-        </p-card>
+          </p-card>
 
-        <!-- Expense Card - Angular Material -->
-        <mat-card class="expense-card">
-          <mat-card-header>
-            <mat-card-title>💸 รายจ่าย</mat-card-title>
-            <mat-icon class="header-icon">trending_down</mat-icon>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="amount-display expense">{{ formatCurrency(summary.expense.total) }}</div>
-            <div class="details">
-              <p><strong>จำนวนรายการ:</strong> {{ summary.expense.count }} รายการ</p>
-              <p><strong>เฉลี่ย:</strong> {{ formatCurrency(summary.expense.average) }}</p>
+          <!-- Recent Transactions -->
+          <p-card class="transactions-card">
+            <ng-template pTemplate="header">
+              <div class="card-header">
+                <h3>Recent Transactions</h3>
+                <div class="header-actions">
+                  <mat-form-field appearance="outline" class="search-field">
+                    <mat-icon matPrefix>search</mat-icon>
+                    <input matInput placeholder="Search" [(ngModel)]="searchTerm">
+                  </mat-form-field>
+                  <button mat-icon-button color="primary">
+                    <mat-icon>download</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </ng-template>
+            <div class="transactions-table">
+              <div class="table-header">
+                <div class="header-cell">Name</div>
+                <div class="header-cell">Category</div>
+                <div class="header-cell">Amount</div>
+                <div class="header-cell">Status</div>
+                <div class="header-cell">Actions</div>
+              </div>
+              <div class="table-row" *ngFor="let transaction of recentTransactions">
+                <div class="cell name-cell">
+                  <div class="transaction-info">
+                    <div class="transaction-name">{{ transaction.description }}</div>
+                    <div class="transaction-date">{{ transaction.date | date:'MMM dd' }}</div>
+                  </div>
+                </div>
+                <div class="cell">
+                  <span class="category-badge" [class]="transaction.category">
+                    {{ transaction.category }}
+                  </span>
+                </div>
+                <div class="cell amount-cell" [class.income]="transaction.type === 'income'" [class.expense]="transaction.type === 'expense'">
+                  {{ formatCurrency(transaction.amount) }}
+                </div>
+                <div class="cell">
+                  <span class="status-badge" [class]="transaction.status">
+                    {{ transaction.status }}
+                  </span>
+                </div>
+                <div class="cell actions-cell">
+                  <button mat-icon-button>
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                </div>
+              </div>
             </div>
-          </mat-card-content>
-        </mat-card>
+          </p-card>
+        </div>
 
-        <!-- Net Income Card - PrimeNG -->
-        <p-card header="💼 กำไรสุทธิ" 
-                [style]="{'background': summary.net_income >= 0 ? 'linear-gradient(135deg, #bbdefb, #90caf9)' : 'linear-gradient(135deg, #ffcdd2, #f8bbd9)'}">
-          <div class="summary-content">
-            <div class="amount-display" [class.profit]="summary.net_income >= 0" [class.loss]="summary.net_income < 0">
-              {{ formatCurrency(summary.net_income) }}
+        <!-- Right Column -->
+        <div class="right-column">
+          <!-- Category Breakdown -->
+          <p-card class="category-card">
+            <ng-template pTemplate="header">
+              <h3>Expenses by Category</h3>
+            </ng-template>
+            <div class="category-chart">
+              <!-- Pie Chart -->
+              <div class="pie-chart">
+                <svg width="150" height="150" viewBox="0 0 150 150">
+                  <circle cx="75" cy="75" r="60" fill="#6366f1" stroke="#fff" stroke-width="2"/>
+                  <circle cx="75" cy="75" r="60" fill="#8b5cf6" stroke="#fff" stroke-width="2" 
+                          stroke-dasharray="94.2 283.7" stroke-dashoffset="0" transform="rotate(-90 75 75)"/>
+                  <circle cx="75" cy="75" r="60" fill="#06b6d4" stroke="#fff" stroke-width="2" 
+                          stroke-dasharray="75.4 302.5" stroke-dashoffset="-94.2" transform="rotate(-90 75 75)"/>
+                </svg>
+                <div class="chart-center">
+                  <div class="center-percentage">65%</div>
+                  <div class="center-label">Total</div>
+                </div>
+              </div>
+              <div class="category-legend">
+                <div class="legend-item">
+                  <div class="legend-dot" style="background: #6366f1;"></div>
+                  <span class="legend-label">Food & Dining</span>
+                  <span class="legend-value">40%</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot" style="background: #8b5cf6;"></div>
+                  <span class="legend-label">Transportation</span>
+                  <span class="legend-value">25%</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot" style="background: #06b6d4;"></div>
+                  <span class="legend-label">Shopping</span>
+                  <span class="legend-value">20%</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot" style="background: #f59e0b;"></div>
+                  <span class="legend-label">Others</span>
+                  <span class="legend-value">15%</span>
+                </div>
+              </div>
             </div>
-            <div class="details">
-              <p><strong>สถานะ:</strong> {{ summary.net_income >= 0 ? '✅ กำไร' : '❌ ขาดทุน' }}</p>
-              <p><strong>ช่วงเวลา:</strong> {{ getDateRangeText() }}</p>
+          </p-card>
+
+          <!-- Top Categories -->
+          <p-card class="top-categories-card">
+            <ng-template pTemplate="header">
+              <h3>Top Spending Categories</h3>
+            </ng-template>
+            <div class="top-categories">
+              <div class="category-item" *ngFor="let category of topCategories">
+                <div class="category-info">
+                  <div class="category-icon">
+                    <img [src]="category.icon" [alt]="category.name" width="40" height="40">
+                  </div>
+                  <div class="category-details">
+                    <div class="category-name">{{ category.name }}</div>
+                    <div class="category-count">{{ category.transactionCount }} transactions</div>
+                  </div>
+                </div>
+                <div class="category-amount">
+                  {{ formatCurrency(category.amount) }}
+                </div>
+              </div>
             </div>
-            <p-tag 
-              [severity]="summary.net_income >= 0 ? 'info' : 'warning'" 
-              [value]="summary.net_income >= 0 ? 'กำไร' : 'ขาดทุน'"
-              [icon]="summary.net_income >= 0 ? 'pi pi-check' : 'pi pi-exclamation-triangle'">
-            </p-tag>
-          </div>
-        </p-card>
+          </p-card>
+        </div>
       </div>
 
-      <!-- Quick Actions with Angular Material -->
-      <mat-card class="quick-actions-card">
-        <mat-card-header>
-          <mat-card-title>⚡ การดำเนินการด่วน</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="action-grid">
-            <button mat-fab extended color="primary" (click)="quickAddIncome()">
-              <mat-icon>add</mat-icon>
-              เพิ่มรายรับ
-            </button>
-            <button mat-fab extended color="warn" (click)="quickAddExpense()">
-              <mat-icon>remove</mat-icon>
-              เพิ่มรายจ่าย
-            </button>
-            <button mat-fab extended color="accent" (click)="viewReports()">
-              <mat-icon>bar_chart</mat-icon>
-              ดูรายงาน
-            </button>
-          </div>
-        </mat-card-content>
-      </mat-card>
+      <!-- Loading State -->
+      <div *ngIf="loading" class="loading-overlay">
+        <p-progressSpinner></p-progressSpinner>
+        <p>Loading financial data...</p>
+      </div>
 
-      <!-- Error Message with PrimeNG -->
+      <!-- Error Messages -->
       <p-message 
         *ngIf="errorMessage" 
         severity="error" 
         [text]="errorMessage"
         [closable]="true"
         (onClose)="errorMessage = ''">
-      </p-message>
-
-      <!-- Success Message with PrimeNG -->
-      <p-message 
-        *ngIf="successMessage" 
-        severity="success" 
-        [text]="successMessage"
-        [closable]="true"
-        (onClose)="successMessage = ''">
       </p-message>
     </div>
   `,
@@ -195,6 +317,74 @@ export class FinanceSummaryComponent implements OnInit {
   loading = false;
   errorMessage = '';
   successMessage = '';
+  
+  // New properties for dashboard
+  searchTerm = '';
+  selectedPeriod = 'Last Week';
+  periodOptions = [
+    { label: 'Last Week', value: 'Last Week' },
+    { label: 'Last Month', value: 'Last Month' },
+    { label: 'Last 3 Months', value: 'Last 3 Months' },
+    { label: 'Last Year', value: 'Last Year' }
+  ];
+  
+  weeklyData = [
+    { day: 'MON', incomePercent: 65, expensePercent: 45 },
+    { day: 'TUE', incomePercent: 55, expensePercent: 35 },
+    { day: 'WED', incomePercent: 80, expensePercent: 60 },
+    { day: 'THU', incomePercent: 85, expensePercent: 50 },
+    { day: 'FRI', incomePercent: 75, expensePercent: 40 },
+    { day: 'SAT', incomePercent: 90, expensePercent: 65 },
+    { day: 'SUN', incomePercent: 70, expensePercent: 30 }
+  ];
+  
+  recentTransactions = [
+    {
+      description: 'Salary Payment',
+      category: 'income',
+      amount: 45000,
+      type: 'income',
+      status: 'completed',
+      date: new Date()
+    },
+    {
+      description: 'Grocery Shopping',
+      category: 'food',
+      amount: -1200,
+      type: 'expense',
+      status: 'completed',
+      date: new Date()
+    },
+    {
+      description: 'Gas Station',
+      category: 'transport',
+      amount: -800,
+      type: 'expense',
+      status: 'completed',
+      date: new Date()
+    }
+  ];
+  
+  topCategories = [
+    {
+      name: 'Food & Dining',
+      amount: 12500,
+      transactionCount: 24,
+      icon: '/assets/picture/food-icon.png'
+    },
+    {
+      name: 'Transportation',
+      amount: 8500,
+      transactionCount: 18,
+      icon: '/assets/picture/transport-icon.png'
+    },
+    {
+      name: 'Shopping',
+      amount: 6200,
+      transactionCount: 15,
+      icon: '/assets/picture/shopping-icon.png'
+    }
+  ];
 
   constructor(
     private financeService: FinanceService,
