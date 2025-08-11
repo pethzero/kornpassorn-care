@@ -1,10 +1,69 @@
-<div class="finance-list-container">
-  <!-- Header -->
-  <div class="page-header">
-    <h1 class="page-title">
-      💰 การจัดการรายการการเงิน
+<div class="finance-list-container p-6 bg-gray-50 min-h-screen">
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Total Transactions -->
+    <p-card styleClass="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm font-medium opacity-90">รายการทั้งหมด</div>
+          <div class="text-3xl font-bold mt-1">{{ totalRecords | number }}</div>
+          <div class="text-sm opacity-75 mt-1">{{ getNewTransactionsToday() }} รายการใหม่วันนี้</div>
+        </div>
+        <div class="bg-white bg-opacity-20 p-3 rounded-full">
+          <i class="pi pi-list text-2xl"></i>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Total Income -->
+    <p-card styleClass="bg-gradient-to-br from-green-500 to-green-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm font-medium opacity-90">รายรับ</div>
+          <div class="text-3xl font-bold mt-1">{{ getTotalIncome() | currency:'THB':'symbol':'1.0-0' }}</div>
+          <div class="text-sm opacity-75 mt-1">+{{ getIncomeGrowth() }}% จากเมื่อเดือนที่แล้ว</div>
+        </div>
+        <div class="bg-white bg-opacity-20 p-3 rounded-full">
+          <i class="pi pi-arrow-up text-2xl"></i>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Total Expenses -->
+    <p-card styleClass="bg-gradient-to-br from-red-500 to-red-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm font-medium opacity-90">รายจ่าย</div>
+          <div class="text-3xl font-bold mt-1">{{ getTotalExpenses() | currency:'THB':'symbol':'1.0-0' }}</div>
+          <div class="text-sm opacity-75 mt-1">-{{ getExpenseGrowth() }}% จากเมื่อเดือนที่แล้ว</div>
+        </div>
+        <div class="bg-white bg-opacity-20 p-3 rounded-full">
+          <i class="pi pi-arrow-down text-2xl"></i>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Net Balance -->
+    <p-card styleClass="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm font-medium opacity-90">ยอดคงเหลือสุทธิ</div>
+          <div class="text-3xl font-bold mt-1">{{ getNetBalance() | currency:'THB':'symbol':'1.0-0' }}</div>
+          <div class="text-sm opacity-75 mt-1">อัปเดตล่าสุด: วันนี้</div>
+        </div>
+        <div class="bg-white bg-opacity-20 p-3 rounded-full">
+          <i class="pi pi-wallet text-2xl"></i>
+        </div>
+      </div>
+    </p-card>
+  </div>
+
+  <!-- Header Actions -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">
+      💰 รายการการเงิน
     </h1>
-    <div class="header-actions">
+    <div class="flex gap-3">
       <p-button 
         label="เพิ่มรายการ" 
         icon="pi pi-plus" 
@@ -21,12 +80,12 @@
     </div>
   </div>
 
-  <!-- Filter Card -->
-  <p-card header="🔍 ตัวกรองข้อมูล" styleClass="mb-4">
+  <!-- Filter Section -->
+  <p-card header="🔍 ตัวกรองข้อมูล" styleClass="shadow-lg border-0 mb-6">
     <div class="filter-grid">
       <!-- Search Field -->
       <div class="field">
-        <label for="search">ค้นหา</label>
+        <label for="search" class="block text-sm font-medium text-gray-700 mb-1">ค้นหา</label>
         <div class="p-inputgroup">
           <input 
             id="search"
@@ -34,7 +93,8 @@
             pInputText 
             [(ngModel)]="searchTerm"
             placeholder="ชื่อรายการ หรือ คำอธิบาย..."
-            (keyup.enter)="onSearch()">
+            (keyup.enter)="onSearch()"
+            class="w-full">
           <p-button 
             icon="pi pi-search" 
             (onClick)="onSearch()">
@@ -44,12 +104,12 @@
 
       <!-- Category Filter -->
       <div class="field">
-        <label for="category">ประเภท</label>
+        <label for="category" class="block text-sm font-medium text-gray-700 mb-1">ประเภท</label>
         <select 
           id="category"
           [(ngModel)]="selectedCategory"
           (change)="onFilterChange()"
-          class="form-select">
+          class="form-select w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
           <option value="">ทุกประเภท</option>
           <option value="income">💰 รายรับ</option>
           <option value="expense">💸 รายจ่าย</option>
@@ -58,27 +118,27 @@
 
       <!-- Date Range -->
       <div class="field">
-        <label for="startDate">วันที่เริ่มต้น</label>
+        <label for="startDate" class="block text-sm font-medium text-gray-700 mb-1">วันที่เริ่มต้น</label>
         <input 
           type="date"
           id="startDate"
           [(ngModel)]="startDate"
           (change)="onDateRangeChange()"
-          class="form-input">
+          class="form-input w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
       </div>
 
       <div class="field">
-        <label for="endDate">วันที่สิ้นสุด</label>
+        <label for="endDate" class="block text-sm font-medium text-gray-700 mb-1">วันที่สิ้นสุด</label>
         <input 
           type="date"
           id="endDate"
           [(ngModel)]="endDate"
           (change)="onDateRangeChange()"
-          class="form-input">
+          class="form-input w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
       </div>
 
       <!-- Clear Filters -->
-      <div class="field filter-actions">
+      <div class="field filter-actions flex items-end">
         <p-button 
           label="ล้างตัวกรอง" 
           icon="pi pi-filter-slash" 
@@ -90,21 +150,19 @@
     </div>
   </p-card>
 
-  <!-- Data Table -->
-  <p-card header="📊 รายการข้อมูล" styleClass="table-card">
+  <!-- Recent Transactions Table -->
+  <p-card header="รายการการเงินล่าสุด" styleClass="shadow-lg border-0">
     <p-table 
       [value]="financeRecords" 
       [loading]="loading"
       [paginator]="true" 
       [rows]="pageSize"
       [totalRecords]="totalRecords"
-      [lazy]="false"
       [showCurrentPageReport]="true" 
       currentPageReportTemplate="แสดง {first} ถึง {last} จาก {totalRecords} รายการ"
       [rowsPerPageOptions]="[5, 10, 25, 50]"
-      styleClass="p-datatable-gridlines"
-      [tableStyle]="{ 'min-width': '50rem' }"
-      [globalFilterFields]="['item_name', 'description']">
+      styleClass="p-datatable-sm"
+      [tableStyle]="{ 'min-width': '50rem' }">
       
       <!-- Loading Template -->
       <ng-template pTemplate="loading">
@@ -117,88 +175,80 @@
       <!-- Table Header -->
       <ng-template pTemplate="header">
         <tr>
-          <th pSortableColumn="id">
-            ID <p-sortIcon field="id"></p-sortIcon>
-          </th>
-          <th pSortableColumn="record_date">
-            วันที่ <p-sortIcon field="record_date"></p-sortIcon>
-          </th>
+          <th style="width: 80px;">รูปภาพ</th>
           <th pSortableColumn="item_name">
             รายการ <p-sortIcon field="item_name"></p-sortIcon>
-          </th>
-          <th pSortableColumn="category">
-            ประเภท <p-sortIcon field="category"></p-sortIcon>
           </th>
           <th pSortableColumn="amount" class="text-right">
             จำนวนเงิน <p-sortIcon field="amount"></p-sortIcon>
           </th>
-          <th>คำอธิบาย</th>
-          <th class="text-center">จัดการ</th>
+          <th class="text-center" style="width: 120px;">ดูข้อมูล</th>
         </tr>
       </ng-template>
 
       <!-- Table Body -->
       <ng-template pTemplate="body" let-record>
-        <tr>
-          <!-- ID -->
+        <tr class="hover:bg-gray-50">
+          <!-- Image/Icon -->
           <td>
-            <span class="font-mono text-sm">#{{ record.id }}</span>
-          </td>
-          
-          <!-- Date -->
-          <td>
-            <div class="date-info">
-              <i class="pi pi-calendar text-muted"></i>
-              <span class="ml-2">{{ formatDate(record.record_date) }}</span>
+            <div class="flex items-center justify-center w-12 h-12 rounded-lg" 
+                 [class.bg-green-100]="record.category === 'income'"
+                 [class.bg-red-100]="record.category === 'expense'">
+              <i [class]="record.category === 'income' ? 'pi pi-arrow-up text-green-600' : 'pi pi-arrow-down text-red-600'" 
+                 class="text-xl"></i>
             </div>
           </td>
           
-          <!-- Item Name -->
+          <!-- Transaction Details -->
           <td>
-            <div class="item-info">
-              <div class="font-semibold">{{ record.item_name }}</div>
+            <div class="flex flex-col">
+              <span class="font-medium text-gray-900">{{ record.item_name }}</span>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-sm text-gray-500">{{ formatDate(record.record_date) }}</span>
+                <p-tag 
+                  [value]="getCategoryLabel(record.category)"
+                  [severity]="getCategorySeverity(record.category)"
+                  class="text-xs">
+                </p-tag>
+              </div>
+              <span class="text-sm text-gray-400 mt-1" *ngIf="record.description">
+                {{ truncateText(record.description, 50) }}
+              </span>
             </div>
-          </td>
-          
-          <!-- Category -->
-          <td>
-            <p-tag 
-              [value]="getCategoryLabel(record.category)"
-              [severity]="getCategorySeverity(record.category)"
-              [icon]="record.category === 'income' ? 'pi pi-arrow-up' : 'pi pi-arrow-down'">
-            </p-tag>
           </td>
           
           <!-- Amount -->
           <td class="text-right">
             <span 
-              class="font-bold text-lg"
+              class="font-semibold text-lg"
               [class.text-green-600]="record.category === 'income'"
               [class.text-red-600]="record.category === 'expense'">
-              {{ formatCurrency(record.amount) }}
-            </span>
-          </td>
-          
-          <!-- Description -->
-          <td>
-            <span 
-              class="text-muted"
-              [title]="record.description">
-              {{ truncateText(record.description, 30) }}
+              {{ record.category === 'income' ? '+' : '-' }}{{ formatCurrency(record.amount) }}
             </span>
           </td>
           
           <!-- Actions -->
           <td class="text-center">
-            <div class="action-buttons">
+            <div class="flex justify-center gap-2">
               <p-button 
-                icon="pi pi-pencil" 
+                icon="pi pi-eye" 
                 size="small"
                 severity="info"
                 [outlined]="true"
+                (onClick)="viewRecord(record)"
+                pTooltip="ดูรายละเอียด"
+                tooltipPosition="top"
+                [rounded]="true">
+              </p-button>
+              <p-button 
+                icon="pi pi-pencil" 
+                size="small"
+                severity="warn"
+                [outlined]="true"
                 (onClick)="editRecord(record)"
                 pTooltip="แก้ไข"
-                tooltipPosition="top">
+                tooltipPosition="top"
+                [rounded]="true">
               </p-button>
               <p-button 
                 icon="pi pi-trash" 
@@ -208,7 +258,7 @@
                 (onClick)="confirmDelete(record)"
                 pTooltip="ลบ"
                 tooltipPosition="top"
-                class="ml-2">
+                [rounded]="true">
               </p-button>
             </div>
           </td>
@@ -218,11 +268,11 @@
       <!-- Empty State -->
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="7" class="text-center">
+          <td colspan="4" class="text-center py-8">
             <div class="empty-state">
-              <i class="pi pi-inbox text-6xl text-muted mb-4"></i>
-              <h3>ไม่พบข้อมูล</h3>
-              <p>ยังไม่มีรายการการเงิน กรุณาเพิ่มรายการใหม่</p>
+              <i class="pi pi-inbox text-6xl text-gray-300 mb-4"></i>
+              <h3 class="text-lg font-medium text-gray-600 mb-2">ไม่พบข้อมูล</h3>
+              <p class="text-gray-500 mb-4">ยังไม่มีรายการการเงิน กรุณาเพิ่มรายการใหม่</p>
               <p-button 
                 label="เพิ่มรายการแรก" 
                 icon="pi pi-plus" 

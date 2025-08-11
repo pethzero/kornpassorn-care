@@ -234,4 +234,52 @@ export class FinanceListComponent implements OnInit {
     if (!text) return '-';
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   }
+
+  // Stats calculation methods
+  getTotalIncome(): number {
+    return this.financeRecords
+      .filter(record => record.category === 'income')
+      .reduce((sum, record) => sum + record.amount, 0);
+  }
+
+  getTotalExpenses(): number {
+    return this.financeRecords
+      .filter(record => record.category === 'expense')
+      .reduce((sum, record) => sum + record.amount, 0);
+  }
+
+  getNetBalance(): number {
+    return this.getTotalIncome() - this.getTotalExpenses();
+  }
+
+  getNewTransactionsToday(): number {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return this.financeRecords.filter(record => {
+      const recordDate = new Date(record.created_at || record.record_date);
+      recordDate.setHours(0, 0, 0, 0);
+      return recordDate.getTime() === today.getTime();
+    }).length;
+  }
+
+  getIncomeGrowth(): number {
+    // Simulate growth percentage - replace with actual calculation
+    return Math.floor(Math.random() * 20) + 5;
+  }
+
+  getExpenseGrowth(): number {
+    // Simulate growth percentage - replace with actual calculation
+    return Math.floor(Math.random() * 15) + 3;
+  }
+
+  viewRecord(record: FinanceRecord): void {
+    // Navigate to view detail page or show modal
+    console.log('View record:', record);
+    this.messageService.add({
+      severity: 'info',
+      summary: 'ข้อมูลรายการ',
+      detail: `ID: ${record.id} - ${record.item_name}`
+    });
+  }
 }
