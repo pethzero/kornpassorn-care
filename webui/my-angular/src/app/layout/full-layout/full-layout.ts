@@ -36,7 +36,7 @@ export class FullLayoutComponent implements AfterViewInit {
   }
 
   ngAfterViewInit() {
-    // ปิด sidebar ถ้าเป็นมือถือหลัง view init
+    // ตั้งค่า sidebar ตามขนาดหน้าจอ
     if (this.isMobile) {
       this.sidenav.close();
     } else {
@@ -46,16 +46,26 @@ export class FullLayoutComponent implements AfterViewInit {
 
   @HostListener('window:resize')
   checkScreenWidth() {
-    this.isMobile = window.innerWidth < 768; // breakpoint สำหรับมือถือ
+    const wasMobile = this.isMobile;
+    this.isMobile = window.innerWidth < 768;
+    
+    // ถ้าเปลี่ยนจาก mobile เป็น desktop หรือกลับกัน
+    if (wasMobile !== this.isMobile && this.sidenav) {
+      if (this.isMobile) {
+        this.sidenav.close();
+      } else {
+        this.sidenav.open();
+      }
+    }
   }
 
   toggleSidebar() {
     this.sidenav.toggle();
   }
 
-  // เพิ่ม method ปิด sidebar (ใช้จาก sidebar เมื่อเลือกเมนู)
+  // ปิด sidebar เมื่อเลือกเมนูใน mobile
   closeSidebarOnMobile() {
-    if (this.isMobile) {
+    if (this.isMobile && this.sidenav.opened) {
       this.sidenav.close();
     }
   }

@@ -4,7 +4,7 @@
 }
 
 .sidenav {
-  width: 250px;
+  // width: 250px;
   background: #fff;
   box-shadow: 2px 0 8px 0 rgba(25, 118, 210, 0.04);
 }
@@ -21,15 +21,48 @@
   box-shadow: 0 2px 8px rgba(25, 118, 210, 0.03);
   overflow-y: scroll;
   box-sizing: border-box;
+  
+  // ซ่อน scrollbar
+  &::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+  
+  // สำหรับ Firefox
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 mat-sidenav-container {
   height: 100vh;        // ให้ container ครอบคลุมเต็มจอ
+  
+  &.sidenav-container {
+    background: #f5f7fa;
+  }
+  
+  // Mobile backdrop
+  @media (max-width: 768px) {
+    .mat-drawer-backdrop {
+      background-color: rgba(0, 0, 0, 0.6) !important;
+      backdrop-filter: blur(2px);
+    }
+  }
 }
 
 mat-sidenav {
-  background: white;
-  width: 240px;         // กำหนดความกว้าง sidebar
+  background: transparent;
+  width: 240px;         // กำหนดความกว้าง sidebar ให้ตรงกับ modern-sidebar
+  box-shadow: none;     // ลบ shadow เพราะ modern-sidebar มี shadow เอง
+  border-right: none;   // ลบ border
+  
+  // Mobile responsive
+  @media (max-width: 768px) {
+    width: 100vw !important; // เต็มจอในมือถือ
+  }
 }
 
 mat-sidenav-content {
@@ -38,12 +71,51 @@ mat-sidenav-content {
   flex-direction: column;
   height: 100vh;        // เต็มความสูง
   background: #f5fcff;
+  overflow: hidden;     // ซ่อน scrollbar ของ sidenav-content
+  
+  // ซ่อน scrollbar ทั้งหมดใน mat-sidenav-content
+  &::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+  
+  // สำหรับ Firefox
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 main.content {
   // padding-top: 56px;
   flex-grow: 1;
-  overflow-y: scroll;
+  overflow-y: auto;     // เปลี่ยนเป็น auto
   min-height: calc(100vh - 56px);
   box-sizing: border-box;
+  
+  // Custom scrollbar สีอ่อนและเล็ก
+  &::-webkit-scrollbar {
+    width: 6px;          // ขนาดเล็ก
+    background: rgba(0, 0, 0, 0.02);  // พื้นหลังอ่อนมาก
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.02);  // track สีอ่อน
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);   // thumb สีอ่อน
+    border-radius: 3px;
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.15); // เข้มขึ้นนิดเมื่อ hover
+    }
+  }
+  
+  // สำหรับ Firefox - scrollbar บางและอ่อน
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.02);
 }

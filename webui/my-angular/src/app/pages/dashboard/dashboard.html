@@ -1,68 +1,157 @@
-<div class="dashboard-container min-h-screen p-6 bg-gray-100">
-  <!-- สรุปสถิติ -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
-    <!-- การ์ด: คนไข้ทั้งหมด -->
-    <div class="rounded-2xl bg-gradient-to-br from-white via-blue-50 to-gray-100 shadow-lg p-6 flex flex-col items-start hover:shadow-xl transition">
-      <div class="flex items-center mb-2">
-        <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 mr-3">
-          <span class="material-icons text-blue-500 text-2xl">groups</span>
-        </span>
-        <span class="text-lg font-bold text-gray-700">คนไข้ทั้งหมด</span>
+<div class="dashboard-container p-6 bg-gray-50 min-h-screen">
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Card: Total Patients -->
+    <p-card styleClass="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm font-medium opacity-90">คนไข้ทั้งหมด</div>
+          <div class="text-3xl font-bold mt-1">{{ stats.totalPatients | number }}</div>
+        </div>
+        <div class="bg-white bg-opacity-20 p-3 rounded-full">
+          <i class="pi pi-users text-2xl"></i>
+        </div>
       </div>
-      <div class="text-3xl font-extrabold text-blue-600">{{ stats.totalPatients }}</div>
-    </div>
-    <!-- การ์ด: คนไข้ใหม่วันนี้ -->
-    <div class="rounded-2xl bg-gradient-to-br from-white via-green-50 to-gray-100 shadow-lg p-6 flex flex-col items-start hover:shadow-xl transition">
-      <div class="flex items-center mb-2">
-        <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-green-100 mr-3">
-          <span class="material-icons text-green-500 text-2xl">person_add</span>
-        </span>
-        <span class="text-lg font-bold text-gray-700">คนไข้ใหม่วันนี้</span>
+    </p-card>
+
+    <!-- Card: New Patients Today -->
+    <p-card styleClass="bg-gradient-to-br from-green-500 to-green-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm font-medium opacity-90">คนไข้ใหม่วันนี้</div>
+          <div class="text-3xl font-bold mt-1">{{ stats.newPatientsToday | number }}</div>
+        </div>
+        <div class="bg-white bg-opacity-20 p-3 rounded-full">
+          <i class="pi pi-user-plus text-2xl"></i>
+        </div>
       </div>
-      <div class="text-3xl font-extrabold text-green-600">{{ stats.newPatientsToday }}</div>
-    </div>
-    <!-- การ์ด: นัดหมายวันนี้ -->
-    <div class="rounded-2xl bg-gradient-to-br from-white via-purple-50 to-gray-100 shadow-lg p-6 flex flex-col items-start hover:shadow-xl transition">
-      <div class="flex items-center mb-2">
-        <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-purple-100 mr-3">
-          <span class="material-icons text-purple-500 text-2xl">event</span>
-        </span>
-        <span class="text-lg font-bold text-gray-700">นัดหมายวันนี้</span>
+    </p-card>
+
+    <!-- Card: Appointments Today -->
+    <p-card styleClass="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm font-medium opacity-90">นัดหมายวันนี้</div>
+          <div class="text-3xl font-bold mt-1">{{ stats.appointmentsToday | number }}</div>
+        </div>
+        <div class="bg-white bg-opacity-20 p-3 rounded-full">
+          <i class="pi pi-calendar text-2xl"></i>
+        </div>
       </div>
-      <div class="text-3xl font-extrabold text-purple-600">{{ stats.appointmentsToday }}</div>
-    </div>
-    <!-- การ์ด: อยู่ในห้องตรวจ -->
-    <div class="rounded-2xl bg-gradient-to-br from-white via-red-50 to-gray-100 shadow-lg p-6 flex flex-col items-start hover:shadow-xl transition">
-      <div class="flex items-center mb-2">
-        <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-red-100 mr-3">
-          <span class="material-icons text-red-500 text-2xl">local_hospital</span>
-        </span>
-        <span class="text-lg font-bold text-gray-700">อยู่ในห้องตรวจ</span>
+    </p-card>
+
+    <!-- Card: In Exam Room -->
+    <p-card styleClass="bg-gradient-to-br from-red-500 to-red-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm font-medium opacity-90">อยู่ในห้องตรวจ</div>
+          <div class="text-3xl font-bold mt-1">{{ stats.inExamRoom | number }}</div>
+        </div>
+        <div class="bg-white bg-opacity-20 p-3 rounded-full">
+          <i class="pi pi-heart text-2xl"></i>
+        </div>
       </div>
-      <div class="text-3xl font-extrabold text-red-600">{{ stats.inExamRoom }}</div>
-    </div>
+    </p-card>
   </div>
 
-  <!-- กราฟ -->
-  <div class="charts-container grid grid-cols-1 sm:grid-cols-2 gap-6 mt-8">
-    <div class="rounded-2xl bg-white shadow-lg p-6">
-      <div class="text-gray-800 text-lg font-semibold mb-4">สัดส่วนเพศคนไข้</div>
-      <canvas baseChart [data]="chartData" [options]="chartOptions" [type]="chartType"
-        class="dashboard-chart"></canvas>
-    </div>
-    <div class="rounded-2xl bg-white shadow-lg p-6">
-      <div class="text-gray-800 text-lg font-semibold mb-4">ยอดผู้ป่วยรายเดือน</div>
-      <canvas baseChart [data]="chartData2" [options]="chartOptions2" [type]="chartType2"
-        class="dashboard-chart"></canvas>
-    </div>
+  <!-- Charts Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Gender Distribution Chart -->
+    <p-card header="สัดส่วนเพศผู้ป่วย" styleClass="shadow-lg border-0">
+      <p-chart type="pie" [data]="patientGenderChart" [options]="{
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }" width="100%" height="300px"></p-chart>
+    </p-card>
+
+    <!-- Monthly Patients Chart -->
+    <p-card header="ผู้ป่วยรายเดือน" styleClass="shadow-lg border-0">
+      <p-chart type="bar" [data]="monthlyPatientsChart" [options]="{
+        responsive: true,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 10
+            }
+          }
+        }
+      }" width="100%" height="300px"></p-chart>
+    </p-card>
   </div>
 
-  <!-- ตารางรายชื่อคนไข้ -->
-  <!-- <div>
-    <app-patient-list></app-patient-list>
-  </div>
+  <!-- Tables Section -->
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <!-- Patients Table -->
+    <p-card header="ผู้ป่วยวันนี้" styleClass="shadow-lg border-0">
+      <p-table [value]="patients" [paginator]="true" [rows]="5" [showCurrentPageReport]="true"
+               currentPageReportTemplate="แสดง {first} ถึง {last} จาก {totalRecords} รายการ"
+               styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>ชื่อ-นามสกุล</th>
+            <th>อายุ</th>
+            <th>แผนก</th>
+            <th>สถานะ</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-patient>
+          <tr>
+            <td class="font-medium">{{ patient.name }}</td>
+            <td>{{ patient.age }} ปี</td>
+            <td>{{ patient.department }}</td>
+            <td>
+              <p-tag [value]="patient.status" [severity]="getStatusSeverity(patient.status)"></p-tag>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="4" class="text-center py-4 text-gray-500">ไม่มีข้อมูลผู้ป่วย</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
 
-  <div>
-    <app-calendar></app-calendar>
-  </div> -->
+    <!-- Finance Records Table -->
+    <p-card header="รายการเงินเข้า-ออกล่าสุด" styleClass="shadow-lg border-0">
+      <p-table [value]="financeRecords" [paginator]="true" [rows]="5" [showCurrentPageReport]="true"
+               currentPageReportTemplate="แสดง {first} ถึง {last} จาก {totalRecords} รายการ"
+               styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>วันที่</th>
+            <th>รายการ</th>
+            <th>จำนวนเงิน</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-record>
+          <tr>
+            <td>{{ record.date }}</td>
+            <td>
+              <div class="font-medium">{{ record.description }}</div>
+              <div class="text-sm text-gray-500">{{ record.category }}</div>
+            </td>
+            <td [class]="getAmountClass(record.type)">
+              {{ formatAmount(record.amount, record.type) }}
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="3" class="text-center py-4 text-gray-500">ไม่มีข้อมูลการเงิน</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  </div>
 </div>
