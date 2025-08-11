@@ -1,13 +1,13 @@
-import { Component, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
-import { BaseChartDirective } from 'ng2-charts';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { PatientList } from '../../features/patient/patient-list/patient-list';
-import { MatIconModule } from '@angular/material/icon';
-import{ CalendarComponent } from '../../shared/components/calendar/calendar';
+
+// PrimeNG imports
+import { CardModule } from 'primeng/card';
+import { TableModule } from 'primeng/table';
+import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { ChartModule } from 'primeng/chart';
 
 export interface Patient {
   id: number;
@@ -15,16 +15,35 @@ export interface Patient {
   age: number;
   gender: string;
   appointmentDate: string;
+  status: string;
+  department: string;
+}
+
+export interface FinanceRecord {
+  id: number;
+  date: string;
+  description: string;
+  category: string;
+  amount: number;
+  type: 'income' | 'expense';
 }
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, MatCardModule, BaseChartDirective, MatIconModule],
+  imports: [
+    CommonModule, 
+    CardModule, 
+    TableModule, 
+    ButtonModule, 
+    TagModule, 
+    ProgressBarModule,
+    ChartModule
+  ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
   stats = {
     totalPatients: 2345,
     newPatientsToday: 23,
@@ -32,59 +51,152 @@ export class DashboardComponent {
     inExamRoom: 5,
   };
 
-  public chartData = {
-    labels: ['ชาย', 'หญิง'],
-    datasets: [
-      {
-        label: 'จำนวนคนไข้',
-        data: [60, 40],
-        backgroundColor: ['#3b82f6', '#ec4899'], // น้ำเงิน - ชมพู
-        borderWidth: 1,
-      },
-    ],
-  };
+  patients: Patient[] = [
+    {
+      id: 1,
+      name: 'นายสมชาย ใจดี',
+      age: 35,
+      gender: 'ชาย',
+      appointmentDate: '2025-08-11 09:00',
+      status: 'รอตรวจ',
+      department: 'อายุรกรรม'
+    },
+    {
+      id: 2,
+      name: 'นางสาวสมหญิง สุขใจ',
+      age: 28,
+      gender: 'หญิง',
+      appointmentDate: '2025-08-11 10:30',
+      status: 'กำลังตรวจ',
+      department: 'ศัลยกรรม'
+    },
+    {
+      id: 3,
+      name: 'นายวิชัย มั่นคง',
+      age: 42,
+      gender: 'ชาย',
+      appointmentDate: '2025-08-11 11:00',
+      status: 'เสร็จแล้ว',
+      department: 'ออร์โธปิดิกส์'
+    },
+    {
+      id: 4,
+      name: 'นางรัตนา เจริญสุข',
+      age: 56,
+      gender: 'หญิง',
+      appointmentDate: '2025-08-11 14:00',
+      status: 'รอตรวจ',
+      department: 'โรคหัวใจ'
+    },
+    {
+      id: 5,
+      name: 'นายปรีชา วิทยาศรี',
+      age: 31,
+      gender: 'ชาย',
+      appointmentDate: '2025-08-11 15:30',
+      status: 'รอตรวจ',
+      department: 'ตา หู คอ จมูก'
+    }
+  ];
 
-  public chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: { position: 'bottom' as const },
+  financeRecords: FinanceRecord[] = [
+    {
+      id: 1,
+      date: '2025-08-11',
+      description: 'ค่าตรวจรักษา - นายสมชาย',
+      category: 'รายได้การรักษา',
+      amount: 1500,
+      type: 'income'
     },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          stepSize: 10,
-        },
-      },
+    {
+      id: 2,
+      date: '2025-08-11',
+      description: 'ค่ายา - นางสาวสมหญิง',
+      category: 'รายได้ค่ายา',
+      amount: 850,
+      type: 'income'
     },
-  };
-  public chartType: 'bar' = 'bar';
+    {
+      id: 3,
+      date: '2025-08-11',
+      description: 'ค่าซื้ออุปกรณ์การแพทย์',
+      category: 'อุปกรณ์',
+      amount: 12000,
+      type: 'expense'
+    },
+    {
+      id: 4,
+      date: '2025-08-10',
+      description: 'ค่าตรวจเอกซเรย์',
+      category: 'รายได้การตรวจ',
+      amount: 600,
+      type: 'income'
+    },
+    {
+      id: 5,
+      date: '2025-08-10',
+      description: 'ค่าไฟฟ้า',
+      category: 'ค่าสาธารณูปโภค',
+      amount: 3200,
+      type: 'expense'
+    }
+  ];
 
-  public chartData2 = {
-    labels: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม'],
-    datasets: [
-      {
-        label: 'ยอดผู้ป่วยรายเดือน',
-        data: [30, 45, 28, 50, 42],
-        backgroundColor: '#10b981', // สีเขียว
-        borderWidth: 1,
-      },
-    ],
-  };
-  
-  public chartOptions2 = {
-    responsive: true,
-    plugins: {
-      legend: { position: 'top' as const },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: { stepSize: 10 },
-      },
-    },
-  };
-  
-  public chartType2: 'bar' = 'bar';
-  
+  // Chart data for PrimeNG
+  patientGenderChart: any;
+  monthlyPatientsChart: any;
+
+  ngOnInit() {
+    this.initCharts();
+  }
+
+  initCharts() {
+    // Patient Gender Chart
+    this.patientGenderChart = {
+      labels: ['ชาย', 'หญิง'],
+      datasets: [
+        {
+          data: [60, 40],
+          backgroundColor: ['#3B82F6', '#EC4899'],
+          hoverBackgroundColor: ['#2563EB', '#DB2777']
+        }
+      ]
+    };
+
+    // Monthly Patients Chart
+    this.monthlyPatientsChart = {
+      labels: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม'],
+      datasets: [
+        {
+          label: 'ผู้ป่วยรายเดือน',
+          data: [30, 45, 28, 50, 42],
+          backgroundColor: '#10B981',
+          borderColor: '#059669',
+          borderWidth: 1
+        }
+      ]
+    };
+  }
+
+  getStatusSeverity(status: string): 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast' | undefined {
+    switch (status) {
+      case 'เสร็จแล้ว':
+        return 'success';
+      case 'กำลังตรวจ':
+        return 'warning';
+      case 'รอตรวจ':
+        return 'info';
+      default:
+        return 'secondary';
+    }
+  }
+
+  getAmountClass(type: 'income' | 'expense'): string {
+    return type === 'income' ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold';
+  }
+
+  formatAmount(amount: number, type: 'income' | 'expense'): string {
+    const prefix = type === 'income' ? '+' : '-';
+    return `${prefix}${amount.toLocaleString('th-TH')} ฿`;
+  }
 }

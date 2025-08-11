@@ -1,54 +1,136 @@
-<mat-nav-list [@slideInOut]="isSidebarOpen ? 'in' : 'out'">
-  <div class="menu-name">{{ menu.name || 'เมนู' }}</div>
-  <mat-divider></mat-divider>
+<div class="modern-sidebar" [@slideInOut]="isSidebarOpen ? 'in' : 'out'">
+  <!-- Brand Header -->
+  <div class="sidebar-header">
+    <div class="brand-logo">
+      <div class="logo-icon">
+        <mat-icon>local_hospital </mat-icon>
+      </div>
+      <div class="brand-text">
+        <h2>KORNPASSORN</h2>
+        <span>Care Management System</span>
+      </div>
+    </div>
+  </div>
 
-  <ng-container *ngFor="let item of pageMenu">
-    <!-- เมนูหลัก (internal link) -->
-    <a
-      *ngIf="!item.children && !item.external"
-      [routerLink]="item.path"
-      class="sidebar-link flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-blue-50 transition"
-    >
-      <mat-icon class="text-xl align-middle">{{ item.icon }}</mat-icon>
-      <span class="align-middle font-medium">{{ item.label }}</span>
-    </a>
-    <!-- เมนูหลัก (external link) -->
-    <a
-      *ngIf="!item.children && item.external"
-      [href]="item.path"
-      target="_blank"
-      rel="noopener"
-      class="sidebar-link flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-blue-50 transition"
-    >
-      <mat-icon class="text-xl align-middle">{{ item.icon }}</mat-icon>
-      <span class="align-middle font-medium">{{ item.label }}</span>
-    </a>
-    <!-- เมนูที่มีลูก -->
-    <mat-expansion-panel *ngIf="item.children" class="sidebar-expansion" [expanded]="item.expanded">
-      <mat-expansion-panel-header>
-        <mat-icon class="text-xl align-middle">{{ item.icon }}</mat-icon>
-        <span class="align-middle font-medium ml-2">{{ item.label }}</span>
-      </mat-expansion-panel-header>
-      <ng-container *ngFor="let child of item.children">
-        <a
-          *ngIf="!child.external"
-          [routerLink]="child.path"
-          class="sidebar-link flex items-center gap-3 py-2 px-8 rounded-lg hover:bg-blue-50 transition"
-        >
-          <mat-icon class="text-base align-middle">{{ child.icon }}</mat-icon>
-          <span class="align-middle font-normal">{{ child.label }}</span>
+  <!-- Navigation Menu -->
+  <nav class="sidebar-nav">
+    <!-- Dashboard Section -->
+    <div class="nav-section">
+      <div class="section-title">DASHBOARDS</div>
+      <div class="nav-items">
+        <a routerLink="/dashboard" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
+          <mat-icon>dashboard</mat-icon>
+          <span>Dashboard</span>
         </a>
-        <a
-          *ngIf="child.external"
-          [href]="child.path"
-          target="_blank"
-          rel="noopener"
-          class="sidebar-link flex items-center gap-3 py-2 px-8 rounded-lg hover:bg-blue-50 transition"
-        >
-          <mat-icon class="text-base align-middle">{{ child.icon }}</mat-icon>
-          <span class="align-middle font-normal">{{ child.label }}</span>
+        <a routerLink="/finance" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
+          <mat-icon>account_balance</mat-icon>
+          <span>Finance Management</span>
         </a>
-      </ng-container>
-    </mat-expansion-panel>
-  </ng-container>
-</mat-nav-list>
+        <a routerLink="/medical" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
+          <mat-icon>local_hospital</mat-icon>
+          <span>Medical System</span>
+        </a>
+        <a routerLink="/users" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
+          <mat-icon>group</mat-icon>
+          <span>User Management</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Apps Section -->
+    <div class="nav-section">
+      <div class="section-title">APPS</div>
+      <div class="nav-items">
+        <div class="nav-item expandable" (click)="toggleSubmenu('blog', $event)">
+          <div class="nav-item-content">
+            <mat-icon>article</mat-icon>
+            <span>Blog</span>
+            <mat-icon class="expand-icon" [class.expanded]="isSubmenuExpanded('blog')">expand_more</mat-icon>
+          </div>
+          <div class="submenu" [class.expanded]="isSubmenuExpanded('blog')">
+            <a routerLink="/blog/posts" class="submenu-item" (click)="onMenuClick()">
+              <mat-icon>post_add</mat-icon>
+              <span>Posts</span>
+            </a>
+            <a routerLink="/blog/categories" class="submenu-item" (click)="onMenuClick()">
+              <mat-icon>category</mat-icon>
+              <span>Categories</span>
+            </a>
+          </div>
+        </div>
+        
+        <a routerLink="/chat" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
+          <mat-icon>chat</mat-icon>
+          <span>Chat</span>
+        </a>
+        
+        <a routerLink="/files" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
+          <mat-icon>folder</mat-icon>
+          <span>Files</span>
+        </a>
+        
+        <a routerLink="/kanban" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
+          <mat-icon>view_kanban</mat-icon>
+          <span>Kanban</span>
+        </a>
+        
+        <div class="nav-item expandable" (click)="toggleSubmenu('mail', $event)">
+          <div class="nav-item-content">
+            <mat-icon>mail</mat-icon>
+            <span>Mail</span>
+            <mat-icon class="expand-icon" [class.expanded]="isSubmenuExpanded('mail')">expand_more</mat-icon>
+          </div>
+          <div class="submenu" [class.expanded]="isSubmenuExpanded('mail')">
+            <a routerLink="/mail/inbox" class="submenu-item" (click)="onMenuClick()">
+              <mat-icon>inbox</mat-icon>
+              <span>Inbox</span>
+            </a>
+            <a routerLink="/mail/sent" class="submenu-item" (click)="onMenuClick()">
+              <mat-icon>send</mat-icon>
+              <span>Sent</span>
+            </a>
+          </div>
+        </div>
+        
+        <a routerLink="/tasks" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
+          <mat-icon>task</mat-icon>
+          <span>Task List</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- UI Kit Section -->
+    <div class="nav-section">
+      <div class="section-title">UI KIT</div>
+      <div class="nav-items">
+        <a routerLink="/ui/forms" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
+          <mat-icon>input</mat-icon>
+          <span>Form Layout</span>
+        </a>
+        <a routerLink="/ui/inputs" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
+          <mat-icon>text_fields</mat-icon>
+          <span>Input</span>
+        </a>
+        <a routerLink="/ui/buttons" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
+          <mat-icon>smart_button</mat-icon>
+          <span>Button</span>
+        </a>
+        <a routerLink="/ui/tables" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
+          <mat-icon>table_chart</mat-icon>
+          <span>Table</span>
+        </a>
+        <a routerLink="/ui/lists" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
+          <mat-icon>list</mat-icon>
+          <span>List</span>
+        </a>
+        <div class="nav-item expandable" (click)="toggleSubmenu('tree', $event)">
+          <div class="nav-item-content">
+            <mat-icon>account_tree</mat-icon>
+            <span>Tree</span>
+            <mat-icon class="expand-icon" [class.expanded]="isSubmenuExpanded('tree')">expand_more</mat-icon>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+</div>

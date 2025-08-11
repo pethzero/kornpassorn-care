@@ -35,6 +35,7 @@ export class SidebarComponent {
   userRole: string;
   currentPath: string = '';
   pageMenu: PageMenuItem[] = [];
+  expandedMenus: { [key: string]: boolean } = {};
 
   constructor(private auth: AuthService, private router: Router) {
     this.userRole = this.auth.getCurrentUser()?.role || 'guest';
@@ -52,14 +53,26 @@ export class SidebarComponent {
     this.pageMenu = PAGE_MENUS[mainPath] || [];
   }
 
-  onMenuClick() {
+  onMenuClick(event?: Event) {
+    // ป้องกันการปิด sidebar เมื่อกด expand menu
+    if (event && (event.target as HTMLElement).closest('.expandable')) {
+      return;
+    }
     this.closeSidebar.emit();
+  }
+
+  toggleSubmenu(key: string, event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.expandedMenus[key] = !this.expandedMenus[key];
+  }
+
+  isSubmenuExpanded(key: string): boolean {
+    return !!this.expandedMenus[key];
   }
 
   @Input() isSidebarOpen = true;
   @Output() closeSidebar = new EventEmitter<void>();
   
-
-menu = {name: 'KRONPASSORN',};
-
+  menu = {name: 'KRONPASSORN'};
 }
