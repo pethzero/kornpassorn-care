@@ -6,10 +6,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-import { InputTextareaModule } from 'primeng/inputtextarea';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { DropdownModule } from 'primeng/dropdown';
-import { CalendarModule } from 'primeng/calendar';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 
@@ -33,10 +30,7 @@ interface FinanceRecord {
     CardModule,
     ButtonModule,
     InputTextModule,
-    InputTextareaModule,
     InputNumberModule,
-    DropdownModule,
-    CalendarModule,
     ToastModule
   ],
   templateUrl: './finance-form.component.html',

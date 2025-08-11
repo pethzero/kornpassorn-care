@@ -1,28 +1,41 @@
-// src/app/pages/people/people-routing.module.ts
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { FinanceSummaryComponent } from './finance-summary/finance-summary.component';
-// import { Finance
 import { AuthGuard } from '../../core/guards/auth-guard';
 
 export const routes: Routes = [
   {
-    path: 'summary',
-    component: FinanceSummaryComponent,
+    path: '',
+    redirectTo: 'list',
+    pathMatch: 'full'
+  },
+  {
+    path: 'list',
+    loadComponent: () => import('./finance-list/finance-list.component').then(m => m.FinanceListComponent),
     canActivate: [AuthGuard],
-    data: { roles: ['user', 'admin'] }
+    data: { roles: ['user', 'admin'] },
+    title: 'รายการการเงิน'
+  },
+  {
+    path: 'form',
+    loadComponent: () => import('./finance-form/finance-form.component').then(m => m.FinanceFormComponent),
+    canActivate: [AuthGuard],
+    data: { roles: ['user', 'admin'] },
+    title: 'เพิ่มรายการการเงิน'
+  },
+  {
+    path: 'form/:id',
+    loadComponent: () => import('./finance-form/finance-form.component').then(m => m.FinanceFormComponent),
+    canActivate: [AuthGuard],
+    data: { roles: ['user', 'admin'] },
+    title: 'แก้ไขรายการการเงิน'
+  },
+  {
+    path: 'summary',
+    loadComponent: () => import('./finance-summary/finance-summary.component').then(m => m.FinanceSummaryComponent),
+    canActivate: [AuthGuard],
+    data: { roles: ['user', 'admin'] },
+    title: 'สรุปการเงิน'
   }
-//   ,{
-//     path: 'list',
-//     component: FinanceListComponent,
-//     canActivate: [AuthGuard],
-//     data: { roles: ['user', 'admin'] }
-//   },{
-//     path: 'detail/:id',
-//     component: FinanceDetailComponent,
-//     canActivate: [AuthGuard],
-//     data: { roles: ['user', 'admin'] }
-//   }
 ];
 
 @NgModule({

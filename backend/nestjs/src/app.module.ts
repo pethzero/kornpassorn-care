@@ -10,6 +10,7 @@ import { DummyModule } from './modules/dummy/dummy.module';
 import { PatientModule } from './modules/medical/patient/patient.module';
 import { FinanceModule } from './modules/finance/finance.module';
 import { ProtectedModule } from './modules/protected/protected.module';
+import { databaseConfig } from './database/data-source';
 
 @Module({
   imports: [
@@ -17,10 +18,9 @@ import { ProtectedModule } from './modules/protected/protected.module';
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV || 'dev'}`,
     }),
-    TypeOrmModule.forRoot(databaseConfig()),
+    TypeOrmModule.forRoot(databaseConfig()), // เพิ่ม forRoot สำหรับ default database
     AuthModule,
     DatabaseModule,
-    // DummyModule,
     PatientModule,
     FinanceModule,
     ProtectedModule,
@@ -28,9 +28,5 @@ import { ProtectedModule } from './modules/protected/protected.module';
   controllers: [AppController, ProfileController],
   providers: [AppService],
 })
-export class AppModule {}
-
-function databaseConfig(): import("@nestjs/typeorm").TypeOrmModuleOptions | undefined {
-  throw new Error('Function not implemented.');
-}
+export class AppModule { }
 

@@ -1,195 +1,244 @@
 <div class="finance-list-container">
   <!-- Header -->
-  <div class="list-header">
-    <h2>📋 รายการการเงิน</h2>
+  <div class="page-header">
+    <h1 class="page-title">
+      💰 การจัดการรายการการเงิน
+    </h1>
     <div class="header-actions">
-      <button class="btn btn-primary" (click)="navigateToAdd()">
-        ➕ เพิ่มรายการใหม่
-      </button>
-      <button class="btn btn-secondary" (click)="navigateToSummary()">
-        📊 ดูสรุป
-      </button>
+      <p-button 
+        label="เพิ่มรายการ" 
+        icon="pi pi-plus" 
+        (onClick)="navigateToAdd()"
+        severity="success">
+      </p-button>
+      <p-button 
+        label="สรุปยอด" 
+        icon="pi pi-chart-bar" 
+        (onClick)="navigateToSummary()"
+        severity="info"
+        [outlined]="true">
+      </p-button>
     </div>
   </div>
 
-  <!-- Filters -->
-  <div class="filters-section">
-    <div class="filter-row">
-      <div class="filter-group">
-        <label>ประเภท:</label>
-        <select [(ngModel)]="queryParams.category" (change)="onFilterChange()" class="form-control">
-          <option value="">ทั้งหมด</option>
-          <option value="income">รายรับ</option>
-          <option value="expense">รายจ่าย</option>
+  <!-- Filter Card -->
+  <p-card header="🔍 ตัวกรองข้อมูล" styleClass="mb-4">
+    <div class="filter-grid">
+      <!-- Search Field -->
+      <div class="field">
+        <label for="search">ค้นหา</label>
+        <div class="p-inputgroup">
+          <input 
+            id="search"
+            type="text" 
+            pInputText 
+            [(ngModel)]="searchTerm"
+            placeholder="ชื่อรายการ หรือ คำอธิบาย..."
+            (keyup.enter)="onSearch()">
+          <p-button 
+            icon="pi pi-search" 
+            (onClick)="onSearch()">
+          </p-button>
+        </div>
+      </div>
+
+      <!-- Category Filter -->
+      <div class="field">
+        <label for="category">ประเภท</label>
+        <select 
+          id="category"
+          [(ngModel)]="selectedCategory"
+          (change)="onFilterChange()"
+          class="form-select">
+          <option value="">ทุกประเภท</option>
+          <option value="income">💰 รายรับ</option>
+          <option value="expense">💸 รายจ่าย</option>
         </select>
       </div>
 
-      <div class="filter-group">
-        <label>ค้นหา:</label>
+      <!-- Date Range -->
+      <div class="field">
+        <label for="startDate">วันที่เริ่มต้น</label>
         <input 
-          type="text" 
-          [(ngModel)]="queryParams.search" 
-          (input)="onSearchChange()"
-          placeholder="ค้นหาชื่อรายการ..."
-          class="form-control">
+          type="date"
+          id="startDate"
+          [(ngModel)]="startDate"
+          (change)="onDateRangeChange()"
+          class="form-input">
       </div>
 
-      <div class="filter-group">
-        <label>จากวันที่:</label>
+      <div class="field">
+        <label for="endDate">วันที่สิ้นสุด</label>
         <input 
-          type="date" 
-          [(ngModel)]="queryParams.start_date" 
-          (change)="onFilterChange()"
-          class="form-control">
+          type="date"
+          id="endDate"
+          [(ngModel)]="endDate"
+          (change)="onDateRangeChange()"
+          class="form-input">
       </div>
 
-      <div class="filter-group">
-        <label>ถึงวันที่:</label>
-        <input 
-          type="date" 
-          [(ngModel)]="queryParams.end_date" 
-          (change)="onFilterChange()"
-          class="form-control">
+      <!-- Clear Filters -->
+      <div class="field filter-actions">
+        <p-button 
+          label="ล้างตัวกรอง" 
+          icon="pi pi-filter-slash" 
+          (onClick)="clearFilters()"
+          severity="secondary"
+          [outlined]="true">
+        </p-button>
       </div>
-
-      <button class="btn btn-info" (click)="clearFilters()">🔄 รีเซ็ต</button>
     </div>
-  </div>
+  </p-card>
 
-  <!-- Loading -->
-  @if (loading) {
-    <div class="loading">
-      <div class="spinner"></div>
-      <p>กำลังโหลดข้อมูล...</p>
-    </div>
-  }
-
-  <!-- Records Table -->
-  @if (!loading) {
-    <div class="table-container">
-      <div class="table-header">
-        <div class="table-info">
-          <span>แสดง {{ records.length }} รายการ จากทั้งหมด {{ totalRecords }} รายการ</span>
+  <!-- Data Table -->
+  <p-card header="📊 รายการข้อมูล" styleClass="table-card">
+    <p-table 
+      [value]="financeRecords" 
+      [loading]="loading"
+      [paginator]="true" 
+      [rows]="pageSize"
+      [totalRecords]="totalRecords"
+      [lazy]="false"
+      [showCurrentPageReport]="true" 
+      currentPageReportTemplate="แสดง {first} ถึง {last} จาก {totalRecords} รายการ"
+      [rowsPerPageOptions]="[5, 10, 25, 50]"
+      styleClass="p-datatable-gridlines"
+      [tableStyle]="{ 'min-width': '50rem' }"
+      [globalFilterFields]="['item_name', 'description']">
+      
+      <!-- Loading Template -->
+      <ng-template pTemplate="loading">
+        <div class="loading-container">
+          <p-progressSpinner></p-progressSpinner>
+          <p>กำลังโหลดข้อมูล...</p>
         </div>
-        <div class="sort-controls">
-          <label>เรียงตาม:</label>
-          <select [(ngModel)]="queryParams.sort_by" (change)="onFilterChange()" class="form-control">
-            <option value="created_at">วันที่สร้าง</option>
-            <option value="record_date">วันที่บันทึก</option>
-            <option value="amount">จำนวนเงิน</option>
-            <option value="item_name">ชื่อรายการ</option>
-          </select>
-          <select [(ngModel)]="queryParams.sort_order" (change)="onFilterChange()" class="form-control">
-            <option value="DESC">มากไปน้อย</option>
-            <option value="ASC">น้อยไปมาก</option>
-          </select>
-        </div>
-      </div>
+      </ng-template>
 
-      <div class="table-responsive">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>วันที่</th>
-              <th>ประเภท</th>
-              <th>รายการ</th>
-              <th>จำนวนเงิน</th>
-              <th>คำอธิบาย</th>
-              <th>การดำเนินการ</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (record of records; track record.id) {
-              <tr class="table-row">
-                <td>{{ formatDate(record.record_date) }}</td>
-                <td>
-                  <span class="badge" [class.income]="record.category === 'income'" [class.expense]="record.category === 'expense'">
-                    {{ record.category === 'income' ? '💰 รายรับ' : '💸 รายจ่าย' }}
-                  </span>
-                </td>
-                <td class="item-name">{{ record.item_name }}</td>
-                <td class="amount" [class.income]="record.category === 'income'" [class.expense]="record.category === 'expense'">
-                  {{ formatCurrency(record.amount) }}
-                </td>
-                <td class="description">{{ record.description || '-' }}</td>
-                <td>
-                  <div class="action-buttons">
-                    <button class="btn-action edit" (click)="editRecord(record)" title="แก้ไข">
-                      ✏️
-                    </button>
-                    <button class="btn-action delete" (click)="deleteRecord(record)" title="ลบ">
-                      🗑️
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+      <!-- Table Header -->
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="id">
+            ID <p-sortIcon field="id"></p-sortIcon>
+          </th>
+          <th pSortableColumn="record_date">
+            วันที่ <p-sortIcon field="record_date"></p-sortIcon>
+          </th>
+          <th pSortableColumn="item_name">
+            รายการ <p-sortIcon field="item_name"></p-sortIcon>
+          </th>
+          <th pSortableColumn="category">
+            ประเภท <p-sortIcon field="category"></p-sortIcon>
+          </th>
+          <th pSortableColumn="amount" class="text-right">
+            จำนวนเงิน <p-sortIcon field="amount"></p-sortIcon>
+          </th>
+          <th>คำอธิบาย</th>
+          <th class="text-center">จัดการ</th>
+        </tr>
+      </ng-template>
 
-        <!-- Empty State -->
-        @if (records.length === 0) {
-          <div class="empty-state">
-            <div class="empty-icon">📭</div>
-            <h3>ไม่พบข้อมูลรายการการเงิน</h3>
-            <p>ลองปรับเปลี่ยนตัวกรองหรือเพิ่มรายการใหม่</p>
-            <button class="btn btn-primary" (click)="navigateToAdd()">
-              ➕ เพิ่มรายการแรก
-            </button>
-          </div>
-        }
-      </div>
-
-      <!-- Pagination -->
-      @if (totalPages > 1) {
-        <div class="pagination-container">
-          <div class="pagination-info">
-            หน้า {{ currentPage }} จาก {{ totalPages }}
-          </div>
-          <div class="pagination-controls">
-            <button 
-              class="btn btn-secondary" 
-              [disabled]="currentPage === 1"
-              (click)="goToPage(currentPage - 1)">
-              ← ก่อนหน้า
-            </button>
-            
-            <div class="page-numbers">
-              @for (page of getPageNumbers(); track page) {
-                <button 
-                  class="page-btn"
-                  [class.active]="page === currentPage"
-                  (click)="goToPage(page)">
-                  {{ page }}
-                </button>
-              }
+      <!-- Table Body -->
+      <ng-template pTemplate="body" let-record>
+        <tr>
+          <!-- ID -->
+          <td>
+            <span class="font-mono text-sm">#{{ record.id }}</span>
+          </td>
+          
+          <!-- Date -->
+          <td>
+            <div class="date-info">
+              <i class="pi pi-calendar text-muted"></i>
+              <span class="ml-2">{{ formatDate(record.record_date) }}</span>
             </div>
+          </td>
+          
+          <!-- Item Name -->
+          <td>
+            <div class="item-info">
+              <div class="font-semibold">{{ record.item_name }}</div>
+            </div>
+          </td>
+          
+          <!-- Category -->
+          <td>
+            <p-tag 
+              [value]="getCategoryLabel(record.category)"
+              [severity]="getCategorySeverity(record.category)"
+              [icon]="record.category === 'income' ? 'pi pi-arrow-up' : 'pi pi-arrow-down'">
+            </p-tag>
+          </td>
+          
+          <!-- Amount -->
+          <td class="text-right">
+            <span 
+              class="font-bold text-lg"
+              [class.text-green-600]="record.category === 'income'"
+              [class.text-red-600]="record.category === 'expense'">
+              {{ formatCurrency(record.amount) }}
+            </span>
+          </td>
+          
+          <!-- Description -->
+          <td>
+            <span 
+              class="text-muted"
+              [title]="record.description">
+              {{ truncateText(record.description, 30) }}
+            </span>
+          </td>
+          
+          <!-- Actions -->
+          <td class="text-center">
+            <div class="action-buttons">
+              <p-button 
+                icon="pi pi-pencil" 
+                size="small"
+                severity="info"
+                [outlined]="true"
+                (onClick)="editRecord(record)"
+                pTooltip="แก้ไข"
+                tooltipPosition="top">
+              </p-button>
+              <p-button 
+                icon="pi pi-trash" 
+                size="small"
+                severity="danger"
+                [outlined]="true"
+                (onClick)="confirmDelete(record)"
+                pTooltip="ลบ"
+                tooltipPosition="top"
+                class="ml-2">
+              </p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
 
-            <button 
-              class="btn btn-secondary" 
-              [disabled]="currentPage === totalPages"
-              (click)="goToPage(currentPage + 1)">
-              ถัดไป →
-            </button>
-          </div>
-        </div>
-      }
-    </div>
-  }
+      <!-- Empty State -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" class="text-center">
+            <div class="empty-state">
+              <i class="pi pi-inbox text-6xl text-muted mb-4"></i>
+              <h3>ไม่พบข้อมูล</h3>
+              <p>ยังไม่มีรายการการเงิน กรุณาเพิ่มรายการใหม่</p>
+              <p-button 
+                label="เพิ่มรายการแรก" 
+                icon="pi pi-plus" 
+                (onClick)="navigateToAdd()"
+                severity="success">
+              </p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
 
-  <!-- Error Message -->
+  <!-- Toast for notifications -->
+  <p-toast></p-toast>
+  
+  <!-- Confirmation Dialog -->
+  <p-confirmDialog></p-confirmDialog>
 </div>
-
-<!-- Delete Confirmation Modal -->
-@if (showDeleteModal) {
-  <div class="modal-overlay" (click)="cancelDelete()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <h3>ยืนยันการลบ</h3>
-      <p>คุณต้องการลบรายการ "<strong>{{ recordToDelete?.item_name }}</strong>" ใช่หรือไม่?</p>
-      <div class="modal-actions">
-        <button class="btn btn-secondary" (click)="cancelDelete()">ยกเลิก</button>
-        <button class="btn btn-danger" (click)="confirmDelete()">ลบ</button>
-      </div>
-    </div>
-  </div>
-}
