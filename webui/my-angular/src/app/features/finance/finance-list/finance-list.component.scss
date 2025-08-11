@@ -22,28 +22,74 @@
     }
   }
 
-  .filters-card {
-    margin-bottom: 24px;
+  // Filter Grid Layout
+  .filter-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr auto;
+    gap: 16px;
+    align-items: end;
+    margin-bottom: 16px;
 
-    .filters-row {
+    @media (max-width: 1200px) {
+      grid-template-columns: 1fr 1fr 1fr;
+      .filter-actions {
+        grid-column: 1 / -1;
+        justify-self: center;
+      }
+    }
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      .filter-actions {
+        grid-column: 1;
+        justify-self: stretch;
+      }
+    }
+
+    .field {
       display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      align-items: center;
+      flex-direction: column;
+      gap: 4px;
 
-      .search-field {
-        min-width: 250px;
+      label {
+        font-weight: 500;
+        color: #333;
+        font-size: 0.9em;
       }
 
-      .filter-actions {
+      .p-inputgroup {
         display: flex;
-        gap: 8px;
-        margin-left: auto;
+      }
+
+      // Custom form styles
+      .form-select, .form-input {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        background-color: #fff;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+
+        &:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        &:hover {
+          border-color: #9ca3af;
+        }
+      }
+
+      .form-select {
+        cursor: pointer;
       }
     }
   }
 
-  .results-card {
+  // Table specific styles
+  .table-card {
     .loading-container {
       display: flex;
       flex-direction: column;
@@ -52,77 +98,12 @@
       gap: 16px;
     }
 
-    .table-container {
-      .finance-table {
-        width: 100%;
-
-        .category-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          padding: 4px 8px;
-          border-radius: 12px;
-          font-size: 0.85em;
-          font-weight: 500;
-
-          &.income {
-            background-color: #e8f5e8;
-            color: #2e7d32;
-          }
-
-          &.expense {
-            background-color: #ffebee;
-            color: #c62828;
-          }
-
-          mat-icon {
-            font-size: 16px;
-          }
-        }
-
-        .item-info {
-          .item-name {
-            font-weight: 500;
-          }
-
-          .item-description {
-            font-size: 0.85em;
-            color: #666;
-            margin-top: 2px;
-          }
-        }
-
-        .amount {
-          font-weight: 600;
-
-          &.income {
-            color: #2e7d32;
-          }
-
-          &.expense {
-            color: #c62828;
-          }
-        }
-
-        .actions {
-          display: flex;
-          gap: 4px;
-        }
-      }
-    }
-
     .empty-state {
       text-align: center;
       padding: 60px 20px;
-
-      .empty-icon {
-        font-size: 64px;
-        color: #ccc;
-        margin-bottom: 16px;
-      }
-
+      
       h3 {
-        margin-bottom: 8px;
+        margin: 16px 0 8px 0;
         color: #666;
       }
 
@@ -131,11 +112,93 @@
         margin-bottom: 24px;
       }
     }
-  }
-}
 
-@media (max-width: 768px) {
-  .finance-list-container {
+    // Table row hover effect
+    ::ng-deep .p-datatable .p-datatable-tbody > tr:hover {
+      background-color: #f8fafc;
+    }
+
+    // Custom table cell styles
+    .font-mono {
+      font-family: 'Courier New', monospace;
+    }
+
+    .text-sm {
+      font-size: 0.875rem;
+    }
+
+    .text-muted {
+      color: #6b7280;
+    }
+
+    .ml-2 {
+      margin-left: 0.5rem;
+    }
+
+    .font-semibold {
+      font-weight: 600;
+    }
+
+    .font-bold {
+      font-weight: 700;
+    }
+
+    .text-lg {
+      font-size: 1.125rem;
+    }
+
+    .text-green-600 {
+      color: #059669;
+    }
+
+    .text-red-600 {
+      color: #dc2626;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .text-6xl {
+      font-size: 3.75rem;
+    }
+
+    .mb-4 {
+      margin-bottom: 1rem;
+    }
+
+    .date-info {
+      display: flex;
+      align-items: center;
+    }
+
+    .item-info {
+      .item-name {
+        font-weight: 500;
+        margin-bottom: 2px;
+      }
+
+      .item-description {
+        font-size: 0.85em;
+        color: #666;
+      }
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+  }
+
+  // Responsive adjustments
+  @media (max-width: 768px) {
+    padding: 10px;
+
     .page-header {
       flex-direction: column;
       gap: 16px;
@@ -146,14 +209,59 @@
       }
     }
 
-    .filters-row {
-      flex-direction: column;
-      align-items: stretch;
-
-      .filter-actions {
-        margin-left: 0;
-        justify-content: center;
-      }
+    // Hide less important columns on mobile
+    ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(1),
+    ::ng-deep .p-datatable .p-datatable-tbody > tr > td:nth-child(1),
+    ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(6),
+    ::ng-deep .p-datatable .p-datatable-tbody > tr > td:nth-child(6) {
+      display: none;
     }
+  }
+
+  // Custom PrimeNG overrides
+  ::ng-deep .p-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+  }
+
+  ::ng-deep .p-datatable {
+    .p-datatable-header {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+    }
+
+    .p-datatable-thead > tr > th {
+      background: #f1f5f9;
+      border: 1px solid #e5e7eb;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .p-datatable-tbody > tr > td {
+      border: 1px solid #e5e7eb;
+      padding: 12px;
+    }
+
+    .p-paginator {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-top: none;
+    }
+  }
+
+  ::ng-deep .p-button {
+    &.p-button-outlined {
+      border-width: 1px;
+    }
+
+    &.p-button-sm {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+  }
+
+  ::ng-deep .p-tag {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
   }
 }

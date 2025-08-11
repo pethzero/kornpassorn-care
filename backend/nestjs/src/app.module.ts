@@ -30,7 +30,3 @@ import { databaseConfig } from './database/data-source';
 })
 export class AppModule { }
 
-function databaseConfig(): import("@nestjs/typeorm").TypeOrmModuleOptions | undefined {
-  throw new Error('Function not implemented.');
-}
-

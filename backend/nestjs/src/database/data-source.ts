@@ -13,7 +13,7 @@ export const databaseConfig = (dbName?: string): TypeOrmModuleOptions => ({
   port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432,
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASS || '123456',
-  database: dbName || process.env.DB_NAME || 'kornpassorn_db',
+  database: dbName || process.env.DB_NAME || 'postgres', // ใช้ postgres เป็น default ตาม .env.dev
   entities: getEntitiesForDatabase(dbName), // ใช้ entities จาก registry
   autoLoadEntities: true,
   synchronize: true,
@@ -36,14 +36,14 @@ const createDataSourceConfig = (dbName?: string) => ({
 // DataSource instances cache
 const dataSourceCache = new Map<string, DataSource>();
 
-// Default DataSource (kornpassorn_db) - ใช้ databaseConfig setting
+// Default DataSource (postgres) - ใช้ databaseConfig setting
 const defaultDataSource = new DataSource({
   type: 'postgres' as const,
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432,
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASS || '123456',
-  database: process.env.DB_NAME || 'kornpassorn_db',
+  database: process.env.DB_NAME || 'postgres', // ใช้ postgres เป็น default ตาม .env.dev
   entities: getEntityPathsForDatabase('default'), // ใช้ default entities
   migrations: ['src/database/migrations/*.ts'],
   synchronize: true, // databaseConfig style
