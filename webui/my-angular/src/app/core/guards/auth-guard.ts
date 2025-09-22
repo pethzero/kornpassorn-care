@@ -14,10 +14,21 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class AuthGuard implements CanActivate, CanActivateChild, CanMatch {
-  constructor(private auth: AuthService, private router: Router) { }
+  constructor(private authService: AuthService, private router: Router) {}
+  // canActivate(route: ActivatedRouteSnapshot): boolean {
+  //   return this.checkAccess(route.data?.['roles']);
+  // }
+    canActivate(): boolean {
+    const token = localStorage.getItem('token');
+    const expiresAt = Number(localStorage.getItem('expires_at'));
 
-  canActivate(route: ActivatedRouteSnapshot): boolean {
-    return this.checkAccess(route.data?.['roles']);
+    // ถ้าไม่มี token หรือ token หมดอายุ
+    if (!token || (expiresAt && Date.now() > expiresAt)) {
+      this.authService.logout();
+      this.router.navigate(['/login']);
+      return false;
+    }
+    return true;
   }
 
   canActivateChild(childRoute: ActivatedRouteSnapshot): boolean {
@@ -29,10 +40,9 @@ export class AuthGuard implements CanActivate, CanActivateChild, CanMatch {
   }
 
   private checkAccess(allowedRoles?: string[]): boolean {
-    const user = this.auth.getCurrentUser();
+    const user = this.authService.getCurrentUser();
     // Logging สำหรับ debug
     // console.log('[AuthGuard] user:', user, 'allowedRoles:', allowedRoles);
-
     if (!user) {
       // ป้องกัน redirect loop
       if (this.router.url !== '/login') {

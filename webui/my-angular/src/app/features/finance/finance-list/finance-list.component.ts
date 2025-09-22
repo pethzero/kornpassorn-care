@@ -14,6 +14,7 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, ConfirmationService } from 'primeng/api';
+import { UIMoneyCard } from '../../../ui/money-card/money-card';
 
 interface FinanceRecord {
   id: number;
@@ -40,6 +41,7 @@ interface FinanceRecord {
     ProgressSpinnerModule,
     ToastModule,
     ConfirmDialogModule,
+    UIMoneyCard,
     TooltipModule
   ],
   templateUrl: './finance-list.component.html',

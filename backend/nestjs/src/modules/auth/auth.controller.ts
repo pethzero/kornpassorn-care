@@ -17,17 +17,43 @@ export class AuthController {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    // กำหนด expiresIn ตาม role
+    let expiresIn: string | undefined = undefined;
+    if (user.role !== 'admin') {
+      expiresIn = '1d';
+    } 
+
     const token = this.authService.generateJwt({
       sub: user.id,
       username: user.username,
       role: user.role,
-    });
+    }, expiresIn);
 
-    // บันทึก token
-    const expiredAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // ตัวอย่าง 1 วัน
-    await this.authService.saveToken(user, token, expiredAt);
+    // กำหนด expiredAt ตาม expiresIn
+    let expiredAt: Date | null = null;
+    if (expiresIn) {
+      // รองรับ d, h, m, s
+      function parseExpiresIn(str: string): number {
+        const match = str.match(/^(\d+)([dhms])$/);
+        if (!match) return 0;
+        const value = parseInt(match[1], 10);
+        switch (match[2]) {
+          case 'd': return value * 24 * 60 * 60;
+          case 'h': return value * 60 * 60;
+          case 'm': return value * 60;
+          case 's': return value;
+          default: return 0;
+        }
+      }
+      const expiresInSeconds = parseExpiresIn(expiresIn);
+      expiredAt = new Date(Date.now() + expiresInSeconds * 1000);
+    }
 
-    // บันทึก log สำเร็จ
+    // ส่ง expiredAt ถ้ามีค่า
+    if (expiredAt) {
+      await this.authService.saveToken(user, token, expiredAt);
+    }
+
     await this.authService.logLogin(user, true, req);
 
     res.cookie('token', token, {

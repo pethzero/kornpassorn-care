@@ -33,21 +33,25 @@ export class AuthService {
     return user;
   }
 
-  login(user: any) {
-    const payload = { sub: user.id, username: user.username, role: user.role };
-    let options = {};
-    if (user.role === 'admin') {
-      options = {}; // ไม่กำหนด expiresIn = ไม่หมดอายุ
-    } else {
-      options = { expiresIn: '1d' };
-    }
-    return {
-      access_token: this.jwtService.sign(payload, options),
-    };
-  }
+  // login(user: any) {
+  //   const payload = { sub: user.id, username: user.username, role: user.role };
+  //   let options = {};
+  //   if (user.role === 'admin') {
+  //     options = {}; // ไม่กำหนด expiresIn = ไม่หมดอายุ
+  //   } else {
+  //     // options = { expiresIn: '1d' };
+  //     options = { expiresIn: '10s' };
+  //   }
+  //   return {
+  //     access_token: this.jwtService.sign(payload, options),
+  //   };
+  // }
 
-  generateJwt(payload: any, expiresIn: string = '30m'): string {
-    return this.jwtService.sign(payload, { expiresIn });
+  generateJwt(payload: any, expiresIn?: string): string {
+    if (expiresIn) {
+      return this.jwtService.sign(payload, { expiresIn });
+    }
+    return this.jwtService.sign(payload);
   }
 
   // ✅ Guest Login แบบไม่เช็ค DB
@@ -105,15 +109,6 @@ export class AuthService {
         };
       }
 
-      // ตรวจสอบ username format (ต้องขึ้นต้นด้วย api_)
-      // if (!username.startsWith('api_')) {
-      //   await this.logApiKeyUsage(null, false, req, 'Invalid API username format');
-      //   return {
-      //     success: false,
-      //     message: 'รูปแบบ API username ไม่ถูกต้อง (ต้องขึ้นต้นด้วย api_)'
-      //   };
-      // }
-
       // หา API user ในฐานข้อมูล
       const apiUser = await this.databaseService.findUserByUsername(username);
       
@@ -151,11 +146,27 @@ export class AuthService {
         api_token: true, // ระบุว่าเป็น token จาก API credentials
       };
 
-      const expiresIn = '24h'; // API token อายุ 24 ชั่วโมง
+      const expiresIn = '10s'; // API token อายุ 24 ชั่วโมง
       const token = this.jwtService.sign(payload, { expiresIn });
 
+      // แปลง expiresIn เป็นวินาที (รองรับ h, d, m)
+      function parseExpiresIn(str: string): number {
+        const match = str.match(/^(\d+)([dhms])$/);
+        if (!match) return 0;
+        const value = parseInt(match[1], 10);
+        switch (match[2]) {
+          case 'd': return value * 24 * 60 * 60;
+          case 'h': return value * 60 * 60;
+          case 'm': return value * 60;
+          case 's': return value;
+          default: return 0;
+        }
+      }
+
+      const expiresInSeconds = parseExpiresIn(expiresIn);
+
       // บันทึก token
-      const expiredAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const expiredAt = new Date(Date.now() + expiresInSeconds * 1000);
       await this.saveToken(apiUser, token, expiredAt);
 
       // บันทึก log สำเร็จ
@@ -164,7 +175,7 @@ export class AuthService {
       return {
         success: true,
         access_token: token,
-        expires_in: 86400, // 24 hours in seconds
+        expires_in: expiresInSeconds,
         user_role: apiUser.role
       };
 
@@ -226,11 +237,27 @@ export class AuthService {
         api_key: true, // ระบุว่าเป็น token จาก API key
       };
 
-      const expiresIn = '24h'; // API token อายุ 24 ชั่วโมง
+      const expiresIn = '10s'; // API token อายุ 24 ชั่วโมง
       const token = this.jwtService.sign(payload, { expiresIn });
 
+      // แปลง expiresIn เป็นวินาที (รองรับ h, d, m)
+      function parseExpiresIn(str: string): number {
+        const match = str.match(/^(\d+)([dhms])$/);
+        if (!match) return 0;
+        const value = parseInt(match[1], 10);
+        switch (match[2]) {
+          case 'd': return value * 24 * 60 * 60;
+          case 'h': return value * 60 * 60;
+          case 'm': return value * 60;
+          case 's': return value;
+          default: return 0;
+        }
+      }
+
+      const expiresInSeconds = parseExpiresIn(expiresIn);
+
       // บันทึก token
-      const expiredAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const expiredAt = new Date(Date.now() + expiresInSeconds * 1000);
       await this.saveToken(apiUser, token, expiredAt);
 
       // บันทึก log สำเร็จ
@@ -239,7 +266,7 @@ export class AuthService {
       return {
         success: true,
         access_token: token,
-        expires_in: 86400, // 24 hours in seconds
+        expires_in: expiresInSeconds,
         user_role: apiUser.role
       };
 

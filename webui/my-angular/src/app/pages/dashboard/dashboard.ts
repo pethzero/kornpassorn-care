@@ -70,6 +70,7 @@ export class DashboardComponent implements OnInit {
     nursesOnDuty: 15,
     waitingQueue: 7
   };
+  isLoading: boolean = false;
 
   patients: Patient[] = [
     {
@@ -166,6 +167,40 @@ export class DashboardComponent implements OnInit {
   patientGenderChart: any;
   monthlyPatientsChart: any;
 
+  chartData: any;
+  chartOptions: any;
+
+    constructor() {
+    this.chartData = {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+      datasets: [
+        {
+          label: 'Revenue',
+          data: [1200, 1900, 1700, 2200, 2800, 3500],
+          fill: true,
+          borderColor: '#42A5F5',
+          tension: 0.4,
+          backgroundColor: 'rgba(66,165,245,0.2)'
+        }
+      ]
+    };
+
+    this.chartOptions = {
+      responsive: true,
+      plugins: {
+        legend: { display: false }
+      }
+    };
+  }
+  
+  orders = [
+    { id: 'ORD001', customer: 'John Doe', status: 'delivered' },
+    { id: 'ORD002', customer: 'Jane Smith', status: 'pending' },
+    { id: 'ORD003', customer: 'Michael Lee', status: 'cancelled' },
+    { id: 'ORD004', customer: 'Sara Connor', status: 'delivered' },
+    { id: 'ORD005', customer: 'Tom Hardy', status: 'pending' }
+  ];
+
   ngOnInit() {
     this.initCharts();
     this.calculateFinanceStats();
@@ -234,5 +269,10 @@ export class DashboardComponent implements OnInit {
   formatAmount(amount: number, type: 'income' | 'expense'): string {
     const prefix = type === 'income' ? '+' : '-';
     return `${prefix}${amount.toLocaleString('th-TH')} ฿`;
+  }
+
+  getTotalAmount(): number {
+    if (!this.financeRecords || this.financeRecords.length === 0) return 0;
+    return this.financeRecords.reduce((sum, record) => sum + record.amount, 0);
   }
 }

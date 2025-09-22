@@ -1,0 +1,38 @@
+:host ::ng-deep .p-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  padding: 1rem;
+  text-align: center;
+}
+
+.card-header {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.card-content .card-item-count {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.card-money {
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0.25rem 0;
+}
+
+.icon-money {
+  font-size: 1.2rem;
+}
+
+.card-money.positive {
+  color: #2ecc71; /* เขียว */
+}
+
+.card-money.negative {
+  color: #e74c3c; /* แดง */
+}
