@@ -41,8 +41,13 @@
 
   <!-- Charts Section -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <!-- Gender Distribution Chart -->
-    <p-card header="สัดส่วนเพศผู้ป่วย" styleClass="shadow-lg border-0">
+    <p-card styleClass="beautiful-chart-card">
+      <ng-template pTemplate="header">
+        <div class="chart-title">
+          <span class="emoji">📊</span>
+          สัดส่วนเพศผู้ป่วย
+        </div>
+      </ng-template>
       <p-chart type="pie" [data]="patientGenderChart" [options]="{
         responsive: true,
         plugins: {
@@ -53,8 +58,13 @@
       }" width="100%" height="300px"></p-chart>
     </p-card>
 
-    <!-- Monthly Patients Chart -->
-    <p-card header="ผู้ป่วยรายเดือน" styleClass="shadow-lg border-0">
+    <p-card styleClass="beautiful-chart-card">
+      <ng-template pTemplate="header">
+        <div class="chart-title">
+          <span class="emoji">📈</span>
+          ผู้ป่วยรายเดือน
+        </div>
+      </ng-template>
       <p-chart type="bar" [data]="monthlyPatientsChart" [options]="{
         responsive: true,
         plugins: {
@@ -74,67 +84,94 @@
     </p-card>
   </div>
 
-  <!-- Tables Section -->
-  <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-    <!-- Patients Table -->
-    <p-card header="ผู้ป่วยวันนี้" styleClass="shadow-lg border-0">
-      <p-table [value]="patients" [paginator]="true" [rows]="5" [showCurrentPageReport]="true"
-        currentPageReportTemplate="แสดง {first} ถึง {last} จาก {totalRecords} รายการ" styleClass="p-datatable-sm">
-        <ng-template pTemplate="header">
-          <tr>
-            <th>ชื่อ-นามสกุล</th>
-            <th>อายุ</th>
-            <th>แผนก</th>
-            <th>สถานะ</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-patient>
-          <tr>
-            <td class="font-medium">{{ patient.name }}</td>
-            <td>{{ patient.age }} ปี</td>
-            <td>{{ patient.department }}</td>
-            <td>
-              <p-tag [value]="patient.status" [severity]="getStatusSeverity(patient.status)"></p-tag>
-            </td>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="4" class="text-center py-4 text-gray-500">ไม่มีข้อมูลผู้ป่วย</td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </p-card>
+  
 
-    <!-- Finance Records Table -->
-    <p-card header="รายการเงินเข้า-ออกล่าสุด" styleClass="shadow-lg border-0">
-      <p-table [value]="financeRecords" [paginator]="true" [rows]="5" [showCurrentPageReport]="true"
-        currentPageReportTemplate="แสดง {first} ถึง {last} จาก {totalRecords} รายการ" styleClass="p-datatable-sm">
-        <ng-template pTemplate="header">
-          <tr>
-            <th>วันที่</th>
-            <th>รายการ</th>
-            <th>จำนวนเงิน</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-record>
-          <tr>
-            <td>{{ record.date }}</td>
-            <td>
-              <div class="font-medium">{{ record.description }}</div>
-              <div class="text-sm text-gray-500">{{ record.category }}</div>
-            </td>
-            <td [class]="getAmountClass(record.type)">
-              {{ formatAmount(record.amount, record.type) }}
-            </td>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="3" class="text-center py-4 text-gray-500">ไม่มีข้อมูลการเงิน</td>
-          </tr>
-        </ng-template>
-      </p-table>
+  <p-card styleClass="card-theme">
+  <div class="card-header">
+    <i class="pi pi-twitter text-blue-500"></i>
+    44,995 <span class="text-sm font-normal ml-2">Retweets</span>
+  </div>
+  <div class="card-subtitle">Target 10,000 | All Time Record 50,702</div>
+  <div class="card-content">
+    <!-- เนื้อหาอื่นๆ -->
+  </div>
+</p-card>
+
+</div>
+
+
+<div class="p-grid p-m-3 dashboard">
+
+  <!-- Card 1: Revenue -->
+  <div class="p-col-12 md:p-col-6 lg:p-col-3">
+    <p-card class="stat-card revenue">
+      <div class="stat-value">$12,500</div>
+      <div class="stat-label">Revenue</div>
     </p-card>
   </div>
+
+  <!-- Card 2: Orders -->
+  <div class="p-col-12 md:p-col-6 lg:p-col-3">
+    <p-card class="stat-card orders">
+      <div class="stat-value">1,245</div>
+      <div class="stat-label">Orders</div>
+    </p-card>
+  </div>
+
+  <!-- Card 3: Customers -->
+  <div class="p-col-12 md:p-col-6 lg:p-col-3">
+    <p-card class="stat-card customers">
+      <div class="stat-value">3,458</div>
+      <div class="stat-label">Customers</div>
+    </p-card>
+  </div>
+
+  <!-- Card 4: Feedback -->
+  <div class="p-col-12 md:p-col-6 lg:p-col-3">
+    <p-card class="stat-card feedback">
+      <div class="stat-value">92%</div>
+      <div class="stat-label">Positive Feedback</div>
+    </p-card>
+  </div>
+
+  <!-- Chart -->
+  <div class="p-col-12 md:p-col-8">
+    <p-card header="Revenue Chart">
+      <p-chart type="line" [data]="chartData" [options]="chartOptions"></p-chart>
+    </p-card>
+  </div>
+
+  <!-- Table -->
+ <p-card header="Recent Orders">
+  <p-table 
+    [value]="orders" 
+    [paginator]="true" 
+    [rows]="5" 
+    [rowsPerPageOptions]="[5,10,20]" 
+    responsiveLayout="scroll" 
+    class="custom-table"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Order ID</th>
+        <th>Customer</th>
+        <th>Status</th>
+        <th>Total</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-order>
+      <tr>
+        <td>{{ order.id }}</td>
+        <td>{{ order.customer }}</td>
+        <td>
+          <span [class]="'status-badge ' + order.status">
+            {{ order.status | titlecase }}
+          </span>
+        </td>
+        <td>\${{ order.total | number }}</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</p-card>
+
 </div>
