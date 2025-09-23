@@ -1,14 +1,22 @@
 <p-card [style]="{'width':'250px'}">
-  <ng-template pTemplate="header">
+  <!-- Header -->
+  <ng-template pTemplate="header" *ngIf="headtext">
     <div class="card-header">
-      รายการทั้งหมด
+      {{ headtext }}
     </div>
   </ng-template>
-  <div class="card-content">
-    <div class="card-item-count">
-      {{ totalItems }}
-    </div>
 
-   
+  <!-- Mid Content -->
+  <div class="card-content" *ngIf="midtext">
+    <div class="card-mid">
+      {{ midtext }}
+    </div>
   </div>
+
+  <!-- Footer -->
+  <ng-template pTemplate="footer" *ngIf="footxt">
+    <div class="card-footer">
+      {{ footxt }}
+    </div>
+  </ng-template>
 </p-card>

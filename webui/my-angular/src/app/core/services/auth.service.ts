@@ -51,51 +51,6 @@ private logoutTimer: any;
   }
 
 
-  // loginWithCredentials(username: string, password: string): Observable<boolean> {
-  //   return this.http.post<{ access_token: string }>(
-  //     `${environment.apiUrl}/auth/login`,
-  //     { username, password },
-  //     { withCredentials: true }
-  //   ).pipe(
-  //     tap(response => {
-  //       // ถ้าต้องการเก็บ access_token ใน localStorage (ถ้า backend ส่งกลับมา)
-  //       if (response.access_token) {
-  //         localStorage.setItem('token', response.access_token);
-  //         const user = this.decodeToken(response.access_token);
-  //         this.currentUserSubject.next(user);
-  //       }
-  //     }),
-  //     map(() => true),
-  //     catchError(() => of(false))
-  //   );
-  // }
-
-
-  // loginAsGuest(): Observable<boolean> {
-  //   return this.http.post<{ access_token: string }>(
-  //     `${environment.apiUrl}/auth/guest`,
-  //     {}
-  //   ).pipe(
-  //     tap(response => {
-  //       const token = response.access_token;
-  //       localStorage.setItem('token', token);
-  //       const user = this.decodeToken(token);
-  //       this.currentUserSubject.next(user);
-  //     }),
-  //     map(() => true),
-  //     catchError(err => {
-  //       console.error('Guest login failed', err);
-  //       this.logout();
-  //       return of(false);
-  //     })
-  //   );
-  // }
-
-  // logout(): void {
-  //   localStorage.removeItem('token');
-  //   this.currentUserSubject.next(null);
-  // }
-
 
   /////////////////////
     loginWithCredentials(username: string, password: string): Observable<boolean> {

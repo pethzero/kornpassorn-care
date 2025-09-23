@@ -5,34 +5,33 @@
   text-align: center;
 }
 
+/* Header */
 .card-header {
-  font-size: 1.5rem;
-  font-weight: 800;
+  font-size: 1.25rem;
+  font-weight: 700;
   margin-bottom: 0.5rem;
+  color: #2c3e50;
 }
 
-.card-content .card-item-count {
+/* Middle */
+.card-content .card-mid {
   font-size: 2rem;
-  margin-bottom: 0.5rem;
+  font-weight: 800;
+  margin: 0.75rem 0;
+  color: #34495e;
 }
 
-.card-money {
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  margin: 0.25rem 0;
+/* Footer */
+.card-footer {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin-top: 0.5rem;
 }
 
-.icon-money {
-  font-size: 1.2rem;
+/* Optional สี positive/negative */
+.card-mid.positive {
+  color: #2ecc71;
 }
-
-.card-money.positive {
-  color: #2ecc71; /* เขียว */
-}
-
-.card-money.negative {
-  color: #e74c3c; /* แดง */
+.card-mid.negative {
+  color: #e74c3c;
 }
