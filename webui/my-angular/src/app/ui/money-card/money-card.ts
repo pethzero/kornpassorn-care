@@ -10,7 +10,7 @@ import { CardModule } from 'primeng/card';
   styleUrls: ['./money-card.scss']
 })
 export class UIMoneyCard {
-  @Input() totalItems: number = 0;
-  @Input() incomeToday: number = 0;
-  @Input() expenseToday: number = 0;
+  @Input() headtext?: string;
+  @Input() midtext?: string | number;
+  @Input() footxt?: string;
 }
