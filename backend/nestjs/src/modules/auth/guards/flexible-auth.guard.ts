@@ -15,7 +15,7 @@ export class FlexibleAuthGuard implements CanActivate {
     
     // ตรวจสอบว่ามี Authorization header หรือไม่
     const authHeader = request.headers.authorization;
-    
+    console.log(authHeader)
     if (authHeader && authHeader.startsWith('Bearer ')) {
       // ถ้ามี Bearer token ใช้ BearerTokenGuard
       try {

@@ -1,4 +1,3 @@
-// src/auth/strategies/bearer-token.strategy.ts
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
@@ -6,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserToken } from '../../../database/entities/user-token.entity';
+
 
 @Injectable()
 export class BearerTokenStrategy extends PassportStrategy(Strategy, 'bearer-token') {
@@ -33,37 +33,46 @@ export class BearerTokenStrategy extends PassportStrategy(Strategy, 'bearer-toke
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         throw new UnauthorizedException('Authorization header must contain Bearer token');
       }
-      
+
       const token = authHeader.substring(7); // ตัด "Bearer " ออก
       if (!token) {
         throw new UnauthorizedException('Bearer token is required');
       }
 
-      // ตรวจสอบ token ในฐานข้อมูล
-      const tokenRecord = await this.userTokenRepo.findOne({ 
-        where: { token, revoked: false },
-        relations: ['user']
-      });
-      
-      if (!tokenRecord) {
-        throw new UnauthorizedException('Bearer token is invalid or revoked');
+      // เช็คว่า role เป็น admin หรือไม่ ถ้าใช่ไม่ต้องเช็ค expired_at
+      if (payload.role !== 'admin') {
+        // ตรวจสอบว่า token หมดอายุหรือยัง
+        const tokenRecord = await this.userTokenRepo.findOne({
+          where: { token, revoked: false },
+          relations: ['user']
+        });
+
+        if (!tokenRecord) {
+          throw new UnauthorizedException('Bearer token is invalid or revoked');
+        }
+
+        // ตรวจสอบ token หมดอายุ
+        if (tokenRecord.expired_at && tokenRecord.expired_at < new Date()) {
+          throw new UnauthorizedException('Bearer token has expired');
+        }
+
+        // ตรวจสอบ user ยัง active หรือไม่
+        if (!tokenRecord.user?.isActive) {
+          throw new UnauthorizedException('User account is inactive');
+        }
       }
 
-      // ตรวจสอบ token หมดอายุ
-      if (tokenRecord.expired_at && tokenRecord.expired_at < new Date()) {
-        throw new UnauthorizedException('Bearer token has expired');
-      }
+      // console.log(payload)
+      // // ตรวจสอบว่า user ที่ใช้ token ยัง active หรือไม่
+      // if (!payload.isActive) {
+      //   throw new UnauthorizedException('User account is inactive');
+      // }
 
-      // ตรวจสอบ user ยัง active หรือไม่
-      if (!tokenRecord.user?.isActive) {
-        throw new UnauthorizedException('User account is inactive');
-      }
-
-      return { 
-        userId: payload.sub, 
-        username: payload.username, 
+      // คืนค่าข้อมูลของ user
+      return {
+        userId: payload.sub,
+        username: payload.username,
         role: payload.role,
-        tokenId: tokenRecord.id,
         authType: 'bearer'
       };
     } catch (error) {

@@ -33,20 +33,6 @@ export class AuthService {
     return user;
   }
 
-  // login(user: any) {
-  //   const payload = { sub: user.id, username: user.username, role: user.role };
-  //   let options = {};
-  //   if (user.role === 'admin') {
-  //     options = {}; // ไม่กำหนด expiresIn = ไม่หมดอายุ
-  //   } else {
-  //     // options = { expiresIn: '1d' };
-  //     options = { expiresIn: '10s' };
-  //   }
-  //   return {
-  //     access_token: this.jwtService.sign(payload, options),
-  //   };
-  // }
-
   generateJwt(payload: any, expiresIn?: string): string {
     if (expiresIn) {
       return this.jwtService.sign(payload, { expiresIn });
@@ -138,6 +124,7 @@ export class AuthService {
         };
       }
 
+      console.log('Login')
       // สร้าง JWT token
       const payload = {
         sub: apiUser.id,
@@ -146,7 +133,7 @@ export class AuthService {
         api_token: true, // ระบุว่าเป็น token จาก API credentials
       };
 
-      const expiresIn = '10s'; // API token อายุ 24 ชั่วโมง
+      const expiresIn = '24h'; // API token อายุ 24 ชั่วโมง
       const token = this.jwtService.sign(payload, { expiresIn });
 
       // แปลง expiresIn เป็นวินาที (รองรับ h, d, m)
@@ -237,7 +224,7 @@ export class AuthService {
         api_key: true, // ระบุว่าเป็น token จาก API key
       };
 
-      const expiresIn = '10s'; // API token อายุ 24 ชั่วโมง
+      const expiresIn = '24h'; // API token อายุ 24 ชั่วโมง
       const token = this.jwtService.sign(payload, { expiresIn });
 
       // แปลง expiresIn เป็นวินาที (รองรับ h, d, m)
