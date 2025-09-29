@@ -87,6 +87,7 @@ export class AuthController {
   @Post('logout')
   async logout(@Req() req: Request, @Res() res: Response) {
     const token = req.cookies['token'];
+    console.log(token);
     if (token) {
       await this.authService.revokeToken(token);
     }

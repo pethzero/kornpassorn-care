@@ -22,9 +22,9 @@ export class AuthService {
 
   async validateUser(username: string, password: string): Promise<User | null> {
     const user = await this.databaseService.findUserByUsername(username);
-    console.log('Validating user:', username);
-    console.log('Validating password:', password);
-    console.log('User found:', user);
+    // console.log('Validating user:', username);
+    // console.log('Validating password:', password);
+    // console.log('User found:', user);
 
     if (!user) return null;
     const isMatch = await bcrypt.compare(password, user.password_hash);
@@ -76,6 +76,7 @@ export class AuthService {
 
   // logout
   async revokeToken(token: string) {
+    console.log('www')
     await this.userTokenRepo.update({ token }, { revoked: true });
   }
 
