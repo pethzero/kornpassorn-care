@@ -9,17 +9,12 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { FinanceService } from '../../../core/services/finance.service';
+import { Observable } from 'rxjs';
+import { FinanceRecord } from '../../../core/models/finance.model';
+  
 
-interface FinanceRecord {
-  id?: number;
-  item_name: string;
-  category: 'income' | 'expense';
-  amount: number;
-  record_date: Date;
-  description?: string;
-  created_at?: Date;
-  updated_at?: Date;
-}
+
 
 @Component({
   selector: 'app-finance-form',
@@ -52,7 +47,8 @@ export class FinanceFormComponent implements OnInit {
     private fb: FormBuilder,
     private router: Router,
     private route: ActivatedRoute,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private financeService:FinanceService,
   ) {
     this.financeForm = this.createForm();
   }
@@ -106,28 +102,43 @@ export class FinanceFormComponent implements OnInit {
     }, 1000);
   }
 
-  onSubmit(): void {
-    if (this.financeForm.invalid) {
-      this.markFormGroupTouched();
-      this.showError('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
-      return;
-    }
-
-    this.loading = true;
-    const formData = this.financeForm.value;
-
-    // Simulate API call - Replace with actual service call
-    setTimeout(() => {
-      if (this.isEditMode) {
-        this.showSuccess('แก้ไขรายการสำเร็จ');
-      } else {
-        this.showSuccess('เพิ่มรายการสำเร็จ');
-      }
-      
-      this.loading = false;
-      this.router.navigate(['/finance/list']);
-    }, 1500);
+onSubmit(): void {
+  if (this.financeForm.invalid) {
+    this.markFormGroupTouched();
+    this.showError('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
+    return;
   }
+
+  this.loading = true;
+  const formData = this.financeForm.value;
+
+  let request$: Observable<{ success: boolean; message: string; data: FinanceRecord }>;
+
+  if (this.isEditMode) {
+    request$ = this.financeService.updateFinanceRecord(this.recordId!, formData);
+  } else {
+    request$ = this.financeService.createFinanceRecord(formData);
+  }
+
+  request$.subscribe({
+    next: (res) => {
+      if (res.success) {
+        this.showSuccess(this.isEditMode ? 'แก้ไขรายการสำเร็จ' : 'เพิ่มรายการสำเร็จ');
+        this.router.navigate(['/finance/list']);
+      } else {
+        this.showError(res.message || 'เกิดข้อผิดพลาด');
+      }
+      this.loading = false;
+    },
+    error: (err) => {
+      console.error('API Error:', err);
+      this.showError('ไม่สามารถบันทึกรายการได้ กรุณาลองใหม่อีกครั้ง');
+      this.loading = false;
+    }
+  });
+}
+
+
 
   onCancel(): void {
     this.router.navigate(['/finance/list']);

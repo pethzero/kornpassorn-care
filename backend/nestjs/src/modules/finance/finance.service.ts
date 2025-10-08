@@ -16,6 +16,7 @@ export class FinanceService {
   // สร้างรายการใหม่
   async create(createFinanceRecordDto: CreateFinanceRecordDto, currentUser?: string): Promise<FinanceRecord> {
     try {
+      console.log('www')
       const financeRecord = this.financeRepository.create({
         ...createFinanceRecordDto,
         record_date: new Date(createFinanceRecordDto.record_date),
