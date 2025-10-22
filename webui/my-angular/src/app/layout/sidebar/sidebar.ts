@@ -10,6 +10,13 @@ import { MatExpansionModule } from '@angular/material/expansion';
 
 import { MenuService } from '../../features/menu/menu.service';
 import { MenuItem } from '../../features/menu/menu.model';
+import {
+  trigger,
+  state,
+  style,
+  animate,
+  transition,
+} from '@angular/animations';
 
 @Component({
   selector: 'app-sidebar',
@@ -17,6 +24,26 @@ import { MenuItem } from '../../features/menu/menu.model';
   imports: [CommonModule, RouterModule, MatListModule, MatIconModule, MatDividerModule, MatExpansionModule],
   templateUrl: './sidebar.html',
   styleUrls: ['./sidebar.scss'],
+   animations: [
+    trigger('slideInOut', [
+      state(
+        'in',
+        style({
+          transform: 'translateX(0)',
+          opacity: 1,
+        })
+      ),
+      state(
+        'out',
+        style({
+          transform: 'translateX(-100%)',
+          opacity: 0,
+        })
+      ),
+      transition('in => out', [animate('300ms ease-in-out')]),
+      transition('out => in', [animate('300ms ease-in-out')]),
+    ]),
+  ],
 })
 export class SidebarComponent {
   menus: MenuItem[] = [];

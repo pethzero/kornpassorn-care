@@ -22,9 +22,6 @@ export class AuthService {
 
   async validateUser(username: string, password: string): Promise<User | null> {
     const user = await this.databaseService.findUserByUsername(username);
-    // console.log('Validating user:', username);
-    // console.log('Validating password:', password);
-    // console.log('User found:', user);
 
     if (!user) return null;
     const isMatch = await bcrypt.compare(password, user.password_hash);
@@ -41,14 +38,46 @@ export class AuthService {
   }
 
   // ✅ Guest Login แบบไม่เช็ค DB
+  // auth.service.ts
   loginAsGuest() {
+    // 👉 ตั้งค่าระยะเวลาอายุ token (รองรับ s, m, h, d)
+    const expiresIn = '10s';
+
+    // 👉 แปลงเป็นวินาที
+    const parseExpiresIn = (str: string): number => {
+      const match = str.match(/^(\d+)([dhms])$/);
+      if (!match) return 0;
+
+      const value = parseInt(match[1], 10);
+      const unit = match[2];
+
+      switch (unit) {
+        case 'd': return value * 24 * 60 * 60;
+        case 'h': return value * 60 * 60;
+        case 'm': return value * 60;
+        case 's': return value;
+        default: return 0;
+      }
+    };
+
+    const expiresInSeconds = parseExpiresIn(expiresIn);
+    const expiredAt = new Date(Date.now() + expiresInSeconds * 1000);
+
+    // 👉 payload สำหรับ token
     const guestPayload = {
       sub: 'guest-id',
       username: 'guest',
       role: 'guest',
     };
+
+    // 👉 สร้าง token ที่ฝัง exp จริงใน JWT ด้วย
+    const access_token = this.jwtService.sign(guestPayload, { expiresIn });
+
+    // 👉 ส่งข้อมูลกลับให้ frontend ใช้ได้ทั้ง 2 แบบ
     return {
-      access_token: this.jwtService.sign(guestPayload, { expiresIn: '1d' }),
+      access_token,
+      expires_in: expiresInSeconds, // ใช้กับ Angular setTimeout / refresh
+      expired_at: expiredAt.toISOString(), // เผื่ออยากโชว์เวลาหมดอายุแบบอ่านง่าย
     };
   }
 
@@ -76,7 +105,6 @@ export class AuthService {
 
   // logout
   async revokeToken(token: string) {
-    console.log('www')
     await this.userTokenRepo.update({ token }, { revoked: true });
   }
 
@@ -98,7 +126,7 @@ export class AuthService {
 
       // หา API user ในฐานข้อมูล
       const apiUser = await this.databaseService.findUserByUsername(username);
-      
+
       if (!apiUser || apiUser.role !== 'api') {
         await this.logApiKeyUsage(null, false, req, 'API user not found or invalid role');
         return {
@@ -200,7 +228,7 @@ export class AuthService {
 
       // หา API user ในฐานข้อมูล
       const apiUser = await this.databaseService.findUserByUsername(apiKey);
-      
+
       if (!apiUser || apiUser.role !== 'api') {
         await this.logApiKeyUsage(null, false, req, 'API key not found or invalid role');
         return {

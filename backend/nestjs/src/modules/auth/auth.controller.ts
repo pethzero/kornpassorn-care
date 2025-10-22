@@ -8,6 +8,16 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 export class AuthController {
   constructor(private authService: AuthService) { }
 
+
+  @Get('csrf-token')
+  getCsrfToken(@Req() req: Request) {
+    if (req.csrfToken) {
+      return { csrfToken: req.csrfToken() };
+    } else {
+      return { message: 'CSRF protection not applied properly' };
+    }
+  }
+
   @Post('login')
   async login(@Body() body: LoginDto, @Req() req: Request, @Res() res: Response) {
     const user = await this.authService.validateUser(body.username, body.password);
@@ -21,7 +31,7 @@ export class AuthController {
     let expiresIn: string | undefined = undefined;
     if (user.role !== 'admin') {
       expiresIn = '1d';
-    } 
+    }
 
     const token = this.authService.generateJwt({
       sub: user.id,
@@ -64,24 +74,24 @@ export class AuthController {
     return res.json({ access_token: token });
   }
 
-  @Get('csrf-token')
-  getCsrfToken(@Req() req: Request) {
-    if (req.csrfToken) {
-      return { csrfToken: req.csrfToken() };
-    } else {
-      return { message: 'CSRF protection not applied properly' };
-    }
-  }
 
   @Post('guest')
   async loginAsGuest(@Res() res: Response) {
     const result = this.authService.loginAsGuest();
+
+    // ✅ ตั้ง cookie (token)
     res.cookie('token', result.access_token, {
       httpOnly: true,
       secure: false,
       sameSite: 'strict',
+      maxAge: result.expires_in * 1000, // ตั้งอายุ cookie ให้หมดพร้อม token
     });
-    return res.json({ access_token: result.access_token });
+    // ✅ ส่งข้อมูลครบกลับไปยัง frontend
+    return res.json({
+      access_token: result.access_token,
+      expires_in: result.expires_in,
+      expired_at: result.expired_at,
+    });
   }
 
   @Post('logout')
@@ -108,7 +118,7 @@ export class AuthController {
 
     const result = await this.authService.getTokenByCredentials(body.username, body.password, req);
     console.log('API Token Request:', body.username, result);
-    
+
     if (!result.success) {
       return res.status(401).json({
         success: false,

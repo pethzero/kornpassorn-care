@@ -10,13 +10,15 @@ import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
+import { Tag, TagModule } from 'primeng/tag';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, ConfirmationService } from 'primeng/api';
-
+import { PrimeIcons, MenuItem } from 'primeng/api';
+import { DatePickerModule } from 'primeng/datepicker';
+// import th from 'primeng/resources/locale/th.json';
 
 @Component({
   selector: 'app-finance-list',
@@ -32,7 +34,8 @@ import { MessageService, ConfirmationService } from 'primeng/api';
     ProgressSpinnerModule,
     ToastModule,
     ConfirmDialogModule,
-    TooltipModule
+    TooltipModule,
+    DatePickerModule
   ],
   templateUrl: './finance-list.component.html',
   styleUrls: ['./finance-list.component.scss'],
@@ -51,8 +54,10 @@ export class FinanceListComponent implements OnInit {
   searchTerm = '';
   selectedCategory: 'income' | 'expense' | '' = '';
   dateRange: Date[] = [];
-  startDate: string = '';
-  endDate: string = '';
+
+startDate: Date | null = null;
+endDate: Date | null = null;
+
 
   // Options
   categoryOptions = [
@@ -74,19 +79,38 @@ export class FinanceListComponent implements OnInit {
     console.log('ngOnInit called ✅');
     this.loadFinanceRecords();
     this.incomeGrowth = Math.floor(Math.random() * 20) + 5;
+    // const today = new Date();
+    // today.setHours(0, 0, 0, 0);
   }
+
+  formatDateToYYYYMMDD(date: Date | null): string | null {
+    if (!date) return null;
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d = date.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+
 
   loadFinanceRecords(queryParams: FinanceQueryParams = {}): void {
     console.log('loadFinanceRecords called ✅');
     this.loading = true;
+    console.log(this.selectedCategory)
+    console.log('startDate', this.startDate)
+    console.log('endDate', this.endDate)
+
+    const formattedStart = this.startDate ? this.formatDateToYYYYMMDD(this.startDate) : null;
+    const formattedEnd = this.endDate     ? this.formatDateToYYYYMMDD(this.endDate) : null;
+
 
     this.financeService.getFinanceRecords({
       page: this.currentPage + 1,
       limit: this.pageSize,
       search: this.searchTerm,
       category: this.selectedCategory || undefined,
-      start_date: this.startDate || undefined,
-      end_date: this.endDate || undefined,
+      start_date: formattedStart || undefined,
+      end_date: formattedEnd || undefined,
       ...queryParams
     }).subscribe({
       next: (res) => {
@@ -112,64 +136,6 @@ export class FinanceListComponent implements OnInit {
     this.loadFinanceRecords();
   }
 
-  loadData(): void {
-    this.loading = true;
-
-    // Simulate API call - Replace with actual service call
-    setTimeout(() => {
-      // Mock data for demonstration
-      this.financeRecords = [
-        {
-          id: 1,
-          item_name: 'เงินเดือน',
-          category: 'income',
-          amount: 50000,
-          record_date: new Date('2024-01-15'),
-          description: 'เงินเดือนเดือนมกราคม',
-          created_at: new Date('2024-01-15')
-        },
-        {
-          id: 2,
-          item_name: 'ค่าอาหาร',
-          category: 'expense',
-          amount: 250,
-          record_date: new Date('2024-01-16'),
-          description: 'อาหารกลางวัน',
-          created_at: new Date('2024-01-16')
-        },
-        {
-          id: 3,
-          item_name: 'ค่าเช่าบ้าน',
-          category: 'expense',
-          amount: 15000,
-          record_date: new Date('2024-01-01'),
-          description: 'ค่าเช่าบ้านเดือนมกราคม',
-          created_at: new Date('2024-01-01')
-        },
-        {
-          id: 4,
-          item_name: 'โบนัส',
-          category: 'income',
-          amount: 10000,
-          record_date: new Date('2024-01-20'),
-          description: 'โบนัสประจำปี',
-          created_at: new Date('2024-01-20')
-        },
-        {
-          id: 5,
-          item_name: 'ค่าน้ำมัน',
-          category: 'expense',
-          amount: 800,
-          record_date: new Date('2024-01-18'),
-          description: 'ค่าน้ำมันรถ',
-          created_at: new Date('2024-01-18')
-        }
-      ];
-
-      this.totalRecords = this.financeRecords.length;
-      this.loading = false;
-    }, 1000);
-  }
 
   navigateToAdd(): void {
     this.router.navigate(['/finance/form']);
@@ -183,34 +149,91 @@ export class FinanceListComponent implements OnInit {
     this.router.navigate(['/finance/form', record.id]);
   }
 
-  confirmDelete(record: FinanceRecord): void {
+  confirmDelete(event: Event, record: FinanceRecord): void {
     this.confirmationService.confirm({
+      target: event.target as EventTarget, // ✅ ให้ popup ลอยตรงปุ่ม
       message: `คุณต้องการลบรายการ "${record.item_name}" ใช่หรือไม่?`,
       header: 'ยืนยันการลบ',
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'ลบ',
-      rejectLabel: 'ยกเลิก',
+      rejectButtonProps: {
+        label: 'ยกเลิก',
+        severity: 'secondary',
+        outlined: true
+      },
+      acceptButtonProps: {
+        label: 'ลบ',
+        severity: 'danger'
+      },
       accept: () => {
         this.deleteRecord(record);
+        // this.messageService.add({
+        //   severity: 'success',
+        //   summary: 'สำเร็จ',
+        //   detail: 'ลบรายการเรียบร้อยแล้ว'
+        // });
+      },
+      reject: () => {
+        this.messageService.add({
+          severity: 'info',
+          summary: 'ยกเลิก',
+          detail: 'การลบถูกยกเลิก'
+        });
       }
     });
   }
 
+  // confirmDelete(record: FinanceRecord): void {
+  //   this.confirmationService.confirm({
+  //     message: `คุณต้องการลบรายการ "${record.item_name}" ใช่หรือไม่?`,
+  //     header: 'ยืนยันการลบ',
+  //     icon: 'pi pi-exclamation-triangle',
+  //     acceptLabel: 'ลบ',
+  //     rejectLabel: 'ยกเลิก',
+  //     accept: () => {
+  //       this.deleteRecord(record);
+  //     },
+  //     reject: () => {
+  //       // optional: ทำอะไรเพิ่มเวลายกเลิก
+  //     }
+  //   });
+  // }
+
+
   deleteRecord(record: FinanceRecord): void {
+    console.log(record);
+    console.log(record['id']);
+    const id: number = record?.['id'] ?? 0;
     this.loading = true;
+    this.financeService.deleteFinanceRecord(id).subscribe({
+      next: (res) => {
+        if (res.success) {
 
-    // Simulate API call - Replace with actual service call
-    setTimeout(() => {
-      this.financeRecords = this.financeRecords.filter(r => r.id !== record.id);
-      this.totalRecords = this.financeRecords.length;
-      this.loading = false;
+          //////////////  DATA //////////////
+          setTimeout(() => {
+            this.loadFinanceRecords();
+            this.messageService.add({
+              severity: 'success',
+              summary: 'สำเร็จ',
+              detail: 'ลบรายการเรียบร้อยแล้ว'
+            });
+          }, 1000);
+          ////////////////////////////////////
+        } else {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'ล้มเหลว',
+            detail: 'ข้อมูลผิดพลาด'
+          });
+          this.loading = false;
+        }
+      },
+      error: (err) => {
+        console.error('API Error:', err);
+        // this.showError('ไม่สามารถบันทึกรายการได้ กรุณาลองใหม่อีกครั้ง');
+        this.loading = false;
+      }
+    });
 
-      this.messageService.add({
-        severity: 'success',
-        summary: 'สำเร็จ',
-        detail: 'ลบรายการเรียบร้อยแล้ว'
-      });
-    }, 500);
   }
 
   onSearch(): void {
@@ -229,14 +252,16 @@ export class FinanceListComponent implements OnInit {
     this.searchTerm = '';
     this.selectedCategory = '';
     this.dateRange = [];
-    this.startDate = '';
-    this.endDate = '';
-    this.loadData();
+
+    this.startDate  = null;
+    this.endDate    = null;
+    
+    this.loadFinanceRecords();
   }
 
   private applyFilters(): void {
     // Apply filters logic here - For now just reload data
-    this.loadData();
+    this.loadFinanceRecords();
   }
 
   // Utility methods
@@ -244,10 +269,13 @@ export class FinanceListComponent implements OnInit {
     return category === 'income' ? 'รายรับ' : 'รายจ่าย';
   }
 
-  getCategorySeverity(category: string): string {
-    return category === 'income' ? 'success' : 'danger';
+  getCategorySeverity(category: string): NonNullable<Tag['severity']> {
+    switch (category) {
+      case 'income': return 'success';
+      case 'expense': return 'danger';
+      default: return 'info';
+    }
   }
-
   formatCurrency(amount: number): string {
     return new Intl.NumberFormat('th-TH', {
       style: 'currency',
@@ -285,27 +313,65 @@ export class FinanceListComponent implements OnInit {
     return this.getTotalIncome() - this.getTotalExpenses();
   }
 
-  getNewTransactionsToday(): number {
+
+  getTodaySummary() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    return this.financeRecords.filter(record => {
-      const recordDate = new Date(record.created_at || record.record_date);
+    let income = 0;
+    let expense = 0;
+
+    this.financeRecords.forEach(record => {
+      const recordDate = new Date(record.record_date);
       recordDate.setHours(0, 0, 0, 0);
-      return recordDate.getTime() === today.getTime();
-    }).length;
+
+      if (recordDate.getTime() === today.getTime()) {
+        if (record.category === 'income') {
+          income += record.amount;
+        } else if (record.category === 'expense') {
+          expense += record.amount;
+        }
+      }
+    });
+    return { income, expense, net: income - expense };
   }
 
-  // ทุกครั้งที่ Angular re-render มันจะ คำนวณใหม่ (เพราะ method ถูกเรียกจาก template โดยตรง) → เลยสุ่มค่าใหม่ตลอด ทำให้ Angular ตรวจครั้งแรกได้ 21 พอตรวจซ้ำเจอ 23 → error ทันที 🚨
-  getIncomeGrowth(): number {
-    // Simulate growth percentage - replace with actual calculation
-    return Math.floor(Math.random() * 20) + 5;
+  getLastMonthSummary() {
+    const now = new Date();
+
+    // หาวันแรกและวันสุดท้ายของเดือนที่แล้ว
+    const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0); // วันที่ 0 ของเดือนนี้ = วันสุดท้ายของเดือนที่แล้ว
+
+    // set เวลาให้ตรงกัน (ป้องกัน timezone)
+    firstDayLastMonth.setHours(0, 0, 0, 0);
+    lastDayLastMonth.setHours(23, 59, 59, 999);
+
+    let income = 0;
+    let expense = 0;
+
+    this.financeRecords.forEach(record => {
+      const recordDate = new Date(record.record_date);
+      recordDate.setHours(0, 0, 0, 0);
+
+      // ตรวจว่าข้อมูลอยู่ในช่วงเดือนที่แล้ว
+      if (recordDate >= firstDayLastMonth && recordDate <= lastDayLastMonth) {
+        if (record.category === 'income') {
+          income += record.amount;
+        } else if (record.category === 'expense') {
+          expense += record.amount;
+        }
+      }
+    });
+
+    return {
+      income,
+      expense,
+      net: income - expense,
+      period: `${firstDayLastMonth.toLocaleDateString()} - ${lastDayLastMonth.toLocaleDateString()}`
+    };
   }
 
-  getExpenseGrowth(): number {
-    // Simulate growth percentage - replace with actual calculation
-    return Math.floor(Math.random() * 15) + 3;
-  }
 
   viewRecord(record: FinanceRecord): void {
     // Navigate to view detail page or show modal

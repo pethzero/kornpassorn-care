@@ -21,20 +21,20 @@ export class AuthService {
 
   constructor(private http: HttpClient) {
     const token = localStorage.getItem('token');
-    const expiresAt = localStorage.getItem('expires_at');
+  const expiresAt = Number(localStorage.getItem('expires_at'));
 
-    if (token && expiresAt && Date.now() < +expiresAt) {
+    // if (token && expiresAt && Date.now() < expiresAt) {
+  if (token) { 
       try {
         const user = this.decodeToken(token);
         this.currentUserSubject.next(user);
-        this.setLogoutTimer(+expiresAt - Date.now());
-      } catch (error) {
-        console.error('Invalid token in localStorage, clearing it.', error);
+      } catch (e) {
         this.clearAuthState();
       }
     } else {
       this.clearAuthState();
     }
+
   }
 
   // ================== CSRF ==================
@@ -52,15 +52,15 @@ export class AuthService {
   }
 
   // ================== JWT Decode ==================
-private decodeToken(token: string): User {
-  const payload = JSON.parse(atob(token.split('.')[1]));
-  return {
-    userId: payload.sub,
-    username: payload.username,
-    name: payload.name,  // map name ถ้ามีใน payload
-    role: payload.role
-  };
-}
+  private decodeToken(token: string): User {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return {
+      userId: payload.sub,
+      username: payload.username,
+      name: payload.name,  // map name ถ้ามีใน payload
+      role: payload.role
+    };
+  }
 
   // ================== LOGIN ==================
   loginWithCredentials(username: string, password: string): Observable<boolean> {
@@ -80,7 +80,7 @@ private decodeToken(token: string): User {
   }
 
   loginAsGuest(): Observable<boolean> {
-    return this.http.post<{ access_token: string, expires_in?: number }>(
+    return this.http.post<{ access_token: string; expires_in?: number; expired_at?: string }>(
       `${environment.apiUrl}/auth/guest`,
       {},
       { withCredentials: true }
@@ -92,34 +92,25 @@ private decodeToken(token: string): User {
       }),
       map(() => true),
       catchError(err => {
-        console.error('Guest login failed', err);
         this.clearAuthState();
         return of(false);
       })
     );
   }
 
-  // ================== LOGOUT ==================
-  // logout(): void {
-  //   this.http.post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true })
-  //     .subscribe({
-  //       next: () => this.clearAuthState(),
-  //       error: () => this.clearAuthState()
-  //     });
-  // }
-logout(callback?: () => void): void {
-  this.http.post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true })
-    .subscribe({
-      next: () => {
-        this.clearAuthState();
-        if (callback) callback();
-      },
-      error: () => {
-        this.clearAuthState();
-        if (callback) callback();
-      }
-    });
-}
+  logout(callback?: () => void): void {
+    this.http.post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true })
+      .subscribe({
+        next: () => {
+          this.clearAuthState();
+          if (callback) callback();
+        },
+        error: () => {
+          this.clearAuthState();
+          if (callback) callback();
+        }
+      });
+  }
 
   // ================== State Helpers ==================
   private setAuthState(token: string, expiresIn?: number) {
@@ -134,16 +125,16 @@ logout(callback?: () => void): void {
     }
   }
 
-private clearAuthState(): void {
-  localStorage.removeItem('token');
-  localStorage.removeItem('expires_at');
-  this.currentUserSubject.next(null);
-
-  if (this.logoutTimer) {
-    clearTimeout(this.logoutTimer);
-    this.logoutTimer = null;
+  private clearAuthState(): void {
+    localStorage.removeItem('token');
+    localStorage.removeItem('expires_at');
+    this.currentUserSubject.next(null);
+    console.log('www')
+    if (this.logoutTimer) {
+      clearTimeout(this.logoutTimer);
+      this.logoutTimer = null;
+    }
   }
-}
   private setLogoutTimer(duration: number) {
     if (this.logoutTimer) {
       clearTimeout(this.logoutTimer);

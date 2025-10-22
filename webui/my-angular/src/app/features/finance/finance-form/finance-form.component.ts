@@ -12,8 +12,8 @@ import { ToastModule } from 'primeng/toast';
 import { FinanceService } from '../../../core/services/finance.service';
 import { Observable } from 'rxjs';
 import { FinanceRecord } from '../../../core/models/finance.model';
-  
-
+import { FormsModule } from '@angular/forms';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 
 @Component({
@@ -21,11 +21,13 @@ import { FinanceRecord } from '../../../core/models/finance.model';
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     ReactiveFormsModule,
     CardModule,
     ButtonModule,
     InputTextModule,
     InputNumberModule,
+    ProgressSpinnerModule,
     ToastModule
   ],
   templateUrl: './finance-form.component.html',
@@ -37,7 +39,7 @@ export class FinanceFormComponent implements OnInit {
   isEditMode = false;
   recordId: number | null = null;
   loading = false;
-  
+
   categoryOptions = [
     { label: '💰 รายรับ', value: 'income' },
     { label: '💸 รายจ่าย', value: 'expense' }
@@ -48,7 +50,7 @@ export class FinanceFormComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private messageService: MessageService,
-    private financeService:FinanceService,
+    private financeService: FinanceService,
   ) {
     this.financeForm = this.createForm();
   }
@@ -59,6 +61,8 @@ export class FinanceFormComponent implements OnInit {
         this.recordId = parseInt(params['id']);
         this.isEditMode = true;
         this.loadRecord();
+      } else {
+
       }
     });
   }
@@ -75,68 +79,90 @@ export class FinanceFormComponent implements OnInit {
 
   private loadRecord(): void {
     if (!this.recordId) return;
-    
     this.loading = true;
-    
-    // Simulate API call - Replace with actual service call
-    setTimeout(() => {
-      // Mock data for demonstration
-      const mockRecord: FinanceRecord = {
-        id: this.recordId!,
-        item_name: 'ค่าอาหาร',
-        category: 'expense',
-        amount: 250,
-        record_date: new Date(),
-        description: 'ค่าอาหารกลางวัน'
-      };
-      
-      this.financeForm.patchValue({
-        item_name: mockRecord.item_name,
-        category: mockRecord.category,
-        amount: mockRecord.amount,
-        record_date: mockRecord.record_date,
-        description: mockRecord.description
-      });
-      
-      this.loading = false;
-    }, 1000);
-  }
-
-onSubmit(): void {
-  if (this.financeForm.invalid) {
-    this.markFormGroupTouched();
-    this.showError('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
-    return;
-  }
-
-  this.loading = true;
-  const formData = this.financeForm.value;
-
-  let request$: Observable<{ success: boolean; message: string; data: FinanceRecord }>;
-
-  if (this.isEditMode) {
-    request$ = this.financeService.updateFinanceRecord(this.recordId!, formData);
-  } else {
-    request$ = this.financeService.createFinanceRecord(formData);
-  }
-
-  request$.subscribe({
-    next: (res) => {
-      if (res.success) {
-        this.showSuccess(this.isEditMode ? 'แก้ไขรายการสำเร็จ' : 'เพิ่มรายการสำเร็จ');
-        this.router.navigate(['/finance/list']);
-      } else {
-        this.showError(res.message || 'เกิดข้อผิดพลาด');
+    this.financeService.getFinanceRecord(this.recordId).subscribe({
+      next: (res) => {
+        const data = res.data;
+        setTimeout(() => {
+          this.financeForm.patchValue({
+            item_name: data.item_name,
+            category: data.category,
+            amount: data.amount,
+            record_date: data.record_date,
+            description: data.description
+          });
+          this.loading = false;
+        }, 2000)
+      },
+      error: (err) => {
+        console.error('Error loading finance records:', err);
+        this.loading = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'ผิดพลาด',
+          detail: 'ไม่สามารถโหลดข้อมูลได้'
+        });
       }
-      this.loading = false;
-    },
-    error: (err) => {
-      console.error('API Error:', err);
-      this.showError('ไม่สามารถบันทึกรายการได้ กรุณาลองใหม่อีกครั้ง');
-      this.loading = false;
+    });
+
+    // Simulate API call - Replace with actual service call
+    // setTimeout(() => {
+    //   // const mockRecord: FinanceRecord = {
+    //   //   id: this.recordId!,
+    //   //   item_name: 'ค่าอาหาร',
+    //   //   category: 'expense',
+    //   //   amount: 250,
+    //   //   record_date: new Date(),
+    //   //   description: 'ค่าอาหารกลางวัน'
+    //   // };
+
+    //   // this.financeForm.patchValue({
+    //   //   item_name: mockRecord.item_name,
+    //   //   category: mockRecord.category,
+    //   //   amount: mockRecord.amount,
+    //   //   record_date: mockRecord.record_date,
+    //   //   description: mockRecord.description
+    //   // });
+
+    //   this.loading = false;
+    // }, 2000);
+  }
+
+  onSubmit(): void {
+    if (this.financeForm.invalid) {
+      this.markFormGroupTouched();
+      this.showError('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
+      return;
     }
-  });
-}
+
+    this.loading = true;
+    const formData = this.financeForm.value;
+
+    let request$: Observable<{ success: boolean; message: string; data: FinanceRecord }>;
+
+    if (this.isEditMode) {
+      request$ = this.financeService.updateFinanceRecord(this.recordId!, formData);
+    } else {
+      request$ = this.financeService.createFinanceRecord(formData);
+    }
+
+    request$.subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.showSuccess(this.isEditMode ? 'แก้ไขรายการสำเร็จ' : 'เพิ่มรายการสำเร็จ');
+          this.router.navigate(['/finance/list']);
+        } else {
+          this.showError(res.message || 'เกิดข้อผิดพลาด');
+        }
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('API Error:', err);
+        this.showError('ไม่สามารถบันทึกรายการได้ กรุณาลองใหม่อีกครั้ง');
+        this.loading = false;
+      }
+    });
+  }
 
 
 

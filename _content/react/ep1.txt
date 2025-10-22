@@ -1,1 +1,23 @@
   npm start
+
+my-react-app/
+├─ public/                     # ไฟล์ static เช่น index.html, favicon, logo
+├─ src/
+│  ├─ assets/                  # รูปภาพ, icons, fonts
+│  ├─ components/              # Component ย่อย ๆ ที่ใช้ซ้ำได้ เช่น Button, Card
+│  ├─ pages/                   # หน้าเว็บหลัก เช่น Home, Dashboard, Login
+│  ├─ layouts/                 # โครงร่าง UI เช่น MainLayout, AuthLayout
+│  ├─ routes/                  # Routing config ของ react-router
+│  ├─ services/                # API call (axios/fetch) และจัดการ HTTP
+│  ├─ contexts/                # React Context เช่น AuthContext, ThemeContext
+│  ├─ hooks/                   # custom hooks เช่น useAuth, useFetch, useForm
+│  ├─ store/                   # global state (เช่น Redux, Zustand, Jotai)
+│  ├─ utils/                   # helper function เช่น formatDate, validateEmail
+│  ├─ styles/                  # CSS/Tailwind/SCSS/global theme
+│  ├─ App.tsx / App.jsx        # main app entry
+│  ├─ main.tsx / main.jsx      # root render (ReactDOM.createRoot)
+│  └─ vite-env.d.ts / index.css
+├─ .env                        # ตัวแปร environment (API_URL, etc.)
+├─ package.json
+├─ tsconfig.json               # (ถ้าใช้ TypeScript)
+└─ README.md

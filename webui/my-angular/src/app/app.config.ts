@@ -13,9 +13,29 @@ import { authInterceptor } from './core/interceptors/auth-interceptor';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 // import provideCharts + registerables
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { providePrimeNG } from 'primeng/config';
+import Aura from '@primeuix/themes/aura';
+
+import { provideNativeDateAdapter } from '@angular/material/core';
+import { MAT_DATE_LOCALE } from '@angular/material/core';
+
 
 export const appConfig: ApplicationConfig = {
   providers: [
+  { provide: MAT_DATE_LOCALE, useValue: 'th-TH' },
+    provideAnimationsAsync(),
+    providePrimeNG({
+      theme: { preset: Aura },
+      ripple: true,
+      inputVariant: 'filled',
+      zIndex: {
+        modal: 1100,
+        overlay: 2000, // ✅ รวม Toast ด้วย
+        menu: 1000,
+        tooltip: 1100,
+      }
+    }),
     provideCharts(withDefaultRegisterables()),
     provideBrowserGlobalErrorListeners(),
     provideAnimations(),
@@ -29,5 +49,6 @@ export const appConfig: ApplicationConfig = {
         errorInterceptor     // ดัก error response
       ])
     ),
+  provideNativeDateAdapter(),
   ]
 };
