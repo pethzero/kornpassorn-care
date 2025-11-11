@@ -1,4 +1,5 @@
 // src/auth/strategies/cookie-jwt.strategy.ts
+import * as crypto from 'crypto';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
@@ -7,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserToken } from '../../../database/entities/user-token.entity';
 import { Request } from 'express';
+// ...existing code...
 
 @Injectable()
 export class CookieJwtStrategy extends PassportStrategy(Strategy, 'cookie-jwt') {
@@ -32,7 +34,6 @@ export class CookieJwtStrategy extends PassportStrategy(Strategy, 'cookie-jwt') 
 
   async validate(req: any, payload: any) {
     try {
-      // ดึง token จาก cookie หรือ Authorization header
       let token = req?.cookies?.['token'];
       let authType = 'cookie';
       
@@ -48,22 +49,31 @@ export class CookieJwtStrategy extends PassportStrategy(Strategy, 'cookie-jwt') 
         throw new UnauthorizedException('JWT token is required (cookie or Bearer)');
       }
 
-      // ตรวจสอบ token ในฐานข้อมูล
-      const tokenRecord = await this.userTokenRepo.findOne({ 
-        where: { token, revoked: false },
-        relations: ['user']
-      });
-      
+      // lookup by jti then tokenHash
+      let tokenRecord = null as UserToken | null;
+      const jti: string | undefined = payload?.jti;
+      if (jti) {
+        tokenRecord = await this.userTokenRepo.findOne({ where: { jti, revoked: false }, relations: ['user'] });
+      }
+
+      if (!tokenRecord) {
+        const hash = crypto.createHash('sha256').update(token).digest('hex');
+        tokenRecord = await this.userTokenRepo.findOne({
+          where: [
+            { tokenHash: hash, revoked: false }
+          ],
+          relations: ['user'],
+        });
+      }
+
       if (!tokenRecord) {
         throw new UnauthorizedException('JWT token is invalid or revoked');
       }
 
-      // ตรวจสอบ token หมดอายุ
       if (tokenRecord.expired_at && tokenRecord.expired_at < new Date()) {
         throw new UnauthorizedException('JWT token has expired');
       }
 
-      // ตรวจสอบ user ยัง active หรือไม่
       if (!tokenRecord.user?.isActive) {
         throw new UnauthorizedException('User account is inactive');
       }

@@ -26,7 +26,8 @@ import { FlexibleAuthGuard } from './guards/flexible-auth.guard';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (config: ConfigService) => ({
-        secret: config.get('JWT_SECRET'),
+        // secret: config.get('JWT_SECRET'),
+        secret: process.env.JWT_SECRET || 'dev',
         signOptions: { expiresIn: config.get('JWT_EXPIRES_IN') || '1d' },
       }),
     }),

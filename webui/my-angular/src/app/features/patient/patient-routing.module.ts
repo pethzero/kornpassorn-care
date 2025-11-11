@@ -7,23 +7,17 @@ import { AuthGuard } from '../../core/guards/auth-guard';
 
 export const routes: Routes = [
   {
-    path: 'patient-list',
+    path: 'list',
     component: PatientList,
     canActivate: [AuthGuard],
     data: { roles: ['user', 'admin'] }
   },
   {
-    path: 'patient-form',
+    path: 'form',
     component: PatientFormComponent,
     canActivate: [AuthGuard],
     data: { roles: ['user', 'admin'] }
   },
-  // {
-  //   path: 'patient-questionnaire',
-  //   loadComponent: () => import('./patient-questionnaire/patient-questionnaire').then(m => m.PatientQuestionnaireComponent),
-  //   canActivate: [AuthGuard],
-  //   data: { roles: ['user', 'admin'] }
-  // }
 ];
 
 @NgModule({

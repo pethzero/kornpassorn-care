@@ -21,20 +21,39 @@ export class AuthService {
 
   constructor(private http: HttpClient) {
     const token = localStorage.getItem('token');
-  const expiresAt = Number(localStorage.getItem('expires_at'));
+    const expiresAt = Number(localStorage.getItem('expires_at'));
 
-    // if (token && expiresAt && Date.now() < expiresAt) {
-  if (token) { 
+    if (token && expiresAt && Date.now() < expiresAt) {
+      // Legacy / localStorage flow: still support decoding if token stored
       try {
         const user = this.decodeToken(token);
         this.currentUserSubject.next(user);
-      } catch (e) {
+        this.setLogoutTimer(expiresAt - Date.now());
+        return;
+      } catch {
         this.clearAuthState();
       }
-    } else {
-      this.clearAuthState();
     }
 
+    // If no readable token, try to get current user from server (cookie-based auth)
+    this.http.get<{ user?: any }>(`${environment.apiUrl}/auth/me`, { withCredentials: true })
+      .pipe(
+        catchError(() => of(null))
+      )
+      .subscribe(res => {
+        if (res && res.user) {
+          // map server user to local User interface
+          const u: User = {
+            userId: res.user.id,
+            username: res.user.username,
+            name: res.user.name,
+            role: res.user.role
+          };
+          this.currentUserSubject.next(u);
+        } else {
+          this.clearAuthState();
+        }
+      });
   }
 
   // ================== CSRF ==================
@@ -69,9 +88,17 @@ export class AuthService {
       { username, password },
       { withCredentials: true }
     ).pipe(
-      tap(response => {
-        if (response.access_token) {
+      tap(async response => {
+        // If backend returned token in body (legacy), store it; otherwise rely on cookie + /auth/me
+        if (response?.access_token) {
           this.setAuthState(response.access_token, response.expires_in);
+        } else {
+          // populate user via /auth/me
+          const me = await this.http.get<any>(`${environment.apiUrl}/auth/me`, { withCredentials: true }).toPromise();
+          if (me?.user) {
+            const u: User = { userId: me.user.id, username: me.user.username, name: me.user.name, role: me.user.role };
+            this.currentUserSubject.next(u);
+          }
         }
       }),
       map(() => true),
@@ -85,9 +112,16 @@ export class AuthService {
       {},
       { withCredentials: true }
     ).pipe(
-      tap(response => {
-        if (response.access_token) {
+      tap(async response => {
+        if (response?.access_token) {
           this.setAuthState(response.access_token, response.expires_in);
+        } else {
+          // cookie-only guest: call /auth/me to get user info (or derive guest)
+          const me = await this.http.get<any>(`${environment.apiUrl}/auth/me`, { withCredentials: true }).toPromise();
+          if (me?.user) {
+            const u: User = { userId: me.user.id, username: me.user.username, name: me.user.name, role: me.user.role };
+            this.currentUserSubject.next(u);
+          }
         }
       }),
       map(() => true),
@@ -114,9 +148,16 @@ export class AuthService {
 
   // ================== State Helpers ==================
   private setAuthState(token: string, expiresIn?: number) {
-    localStorage.setItem('token', token);
-    const user = this.decodeToken(token);
-    this.currentUserSubject.next(user);
+    // Store token locally only if provided (legacy). If server uses httpOnly cookie, token param may be undefined.
+    if (token) {
+      localStorage.setItem('token', token);
+      try {
+        const user = this.decodeToken(token);
+        this.currentUserSubject.next(user);
+      } catch {
+        this.currentUserSubject.next(null);
+      }
+    }
 
     if (expiresIn) {
       const expiresAt = Date.now() + expiresIn * 1000;
@@ -129,7 +170,6 @@ export class AuthService {
     localStorage.removeItem('token');
     localStorage.removeItem('expires_at');
     this.currentUserSubject.next(null);
-    console.log('www')
     if (this.logoutTimer) {
       clearTimeout(this.logoutTimer);
       this.logoutTimer = null;

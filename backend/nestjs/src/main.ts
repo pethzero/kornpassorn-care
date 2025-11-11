@@ -14,8 +14,23 @@ async function bootstrap() {
   app.use(json());
   app.use(csrfExcludeMiddleware);
   app.enableCors({
-    origin: 'http://localhost:4200',
+    origin: true, // ✅ อนุญาตทุก origin
     credentials: true,
+    // origin: 'http://localhost:4200',
+    // credentials: true,
+    // origin: [
+    //   'http://localhost:4200',
+    //   'https://3ec7464f696c.ngrok-free.app', // 👈 เพิ่ม ngrok URL
+    // ],
+    // credentials: true,
+    // origin: (origin, callback) => {
+    //   if (!origin || origin.includes('localhost') || origin.includes('ngrok-free.app')) {
+    //     callback(null, true);
+    //   } else {
+    //     callback(new Error('Not allowed by CORS'));
+    //   }
+    // },
+    // credentials: true,
   });
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe());
