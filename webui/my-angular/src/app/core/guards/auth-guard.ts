@@ -14,11 +14,8 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class AuthGuard implements CanActivate, CanActivateChild, CanMatch {
-  constructor(private authService: AuthService, private router: Router) {}
-  // canActivate(route: ActivatedRouteSnapshot): boolean {
-  //   return this.checkAccess(route.data?.['roles']);
-  // }
-    canActivate(): boolean {
+  constructor(private authService: AuthService, private router: Router) { }
+  canActivate(): boolean {
     const token = localStorage.getItem('token');
     const expiresAt = Number(localStorage.getItem('expires_at'));
 
@@ -40,29 +37,47 @@ export class AuthGuard implements CanActivate, CanActivateChild, CanMatch {
   }
 
   private checkAccess(allowedRoles?: string[]): boolean {
-    const user = this.authService.getCurrentUser();
-    // Logging สำหรับ debug
-    // console.log('[AuthGuard] user:', user, 'allowedRoles:', allowedRoles);
+    let user = this.authService.getCurrentUser();
+
+    // ถ้ายังไม่มี user แต่ token ยังมีอยู่ ให้ decode
     if (!user) {
-      // ป้องกัน redirect loop
-      if (this.router.url !== '/login') {
+      const token = localStorage.getItem('token');
+      const expiresAt = Number(localStorage.getItem('expires_at'));
+
+      if (token && expiresAt && Date.now() < expiresAt) {
+        try {
+          // decode token
+          user = (this.authService as any).decodeToken(token);
+          // เซ็ต currentUserSubject
+          (this.authService as any).currentUserSubject.next(user);
+        } catch (err) {
+          console.error('[AuthGuard] Invalid token', err);
+          this.authService.logout();
+          this.router.navigate(['/login']);
+          return false;
+        }
+      } else {
+        // token หมดอายุ
+        this.authService.logout();
         this.router.navigate(['/login']);
+        return false;
       }
-      return false;
     }
 
+    // ถ้า allowedRoles ไม่กำหนด -> เข้าได้
     if (!allowedRoles || allowedRoles.length === 0) {
       return true;
     }
 
-    if (allowedRoles.includes(user.role)) {
+    // เช็ก role
+    if (user && allowedRoles.includes(user.role)) {
       return true;
     }
 
-    // ป้องกัน redirect loop
-    if (this.router.url !== '/unauthorized') {
-      this.router.navigate(['/unauthorized']);
-    }
+    // ไม่ตรง role -> redirect unauthorized
+    this.router.navigate(['/unauthorized']);
     return false;
   }
+
+
 }

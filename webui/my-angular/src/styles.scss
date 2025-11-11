@@ -1,18 +1,19 @@
-/* You can add global styles to this file, and also import other style files */
+/* Tailwind ต้องมาก่อน เพราะมันจะ reset CSS */
 @use "tailwindcss";
-/* Tailwind directives removed. Import Tailwind CSS in a plain CSS file or via your build tool. */
 
+@import 'primeicons/primeicons.css';
 
+/* Global custom styles */
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
-/* global theme styles */
-/* Theme White สำหรับ PrimeNG p-card */
 p-card.theme-white {
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
   padding: 1rem;
-  // text-align: center;
   background: #fff;
 }
 
+.p-toast {
+  z-index: 2000 !important;
+}

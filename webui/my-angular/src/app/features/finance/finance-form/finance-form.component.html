@@ -1,4 +1,9 @@
 <div class="finance-form-container">
+  @if (loading) {
+  <div class="overlay">
+    <p-progress-spinner ariaLabel="loading"></p-progress-spinner>
+  </div>
+  } @else {
   <p-card class="theme-white form-card">
     <ng-template pTemplate="header">
       <div class="card-header">
@@ -6,15 +11,17 @@
       </div>
     </ng-template>
 
-    <form [formGroup]="financeForm" (ngSubmit)="onSubmit()">
+    <form [formGroup]="financeForm">
       <!-- ชื่อรายการ -->
       <div class="field">
         <label for="item_name">ชื่อรายการ <span class="required">*</span></label>
         <input id="item_name" type="text" pInputText formControlName="item_name" placeholder="กรอกชื่อรายการ"
           class="full-width" [class.ng-invalid]="isFieldInvalid('item_name')" />
-        <small class="error-message" *ngIf="isFieldInvalid('item_name')">
+        @if (isFieldInvalid('item_name')) {
+        <small class="error-message">
           {{ getFieldError('item_name') }}
         </small>
+        }
       </div>
 
       <!-- ประเภท -->
@@ -23,13 +30,15 @@
         <select id="category" formControlName="category" class="full-width"
           [class.ng-invalid]="isFieldInvalid('category')">
           <option value="">เลือกประเภท</option>
-          <option *ngFor="let option of categoryOptions" [value]="option.value">
-            {{ option.label }}
-          </option>
+          @for (option of categoryOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+          }
         </select>
-        <small class="error-message" *ngIf="isFieldInvalid('category')">
+        @if (isFieldInvalid('category')) {
+        <small class="error-message">
           {{ getFieldError('category') }}
         </small>
+        }
       </div>
 
       <!-- จำนวนเงิน -->
@@ -37,9 +46,11 @@
         <label for="amount">จำนวนเงิน <span class="required">*</span></label>
         <p-inputNumber id="amount" formControlName="amount" mode="currency" currency="THB" locale="th-TH"
           placeholder="0.00" class="full-width" [class.ng-invalid]="isFieldInvalid('amount')"></p-inputNumber>
-        <small class="error-message" *ngIf="isFieldInvalid('amount')">
+        @if (isFieldInvalid('amount')) {
+        <small class="error-message">
           {{ getFieldError('amount') }}
         </small>
+        }
       </div>
 
       <!-- วันที่ -->
@@ -47,9 +58,11 @@
         <label for="record_date">วันที่ <span class="required">*</span></label>
         <input id="record_date" type="date" formControlName="record_date" class="full-width"
           [class.ng-invalid]="isFieldInvalid('record_date')" />
-        <small class="error-message" *ngIf="isFieldInvalid('record_date')">
+        @if (isFieldInvalid('record_date')) {
+        <small class="error-message">
           {{ getFieldError('record_date') }}
         </small>
+        }
       </div>
 
       <!-- รายละเอียด -->
@@ -61,27 +74,26 @@
 
       <!-- ปุ่มควบคุม -->
       <div class="form-actions">
-        <!-- ยกเลิก -->
         <button pButton type="button" label="ยกเลิก" class="p-button-secondary" (click)="onCancel()"></button>
-
-        <!-- รีเซ็ต -->
         <button pButton type="button" label="รีเซ็ต" class="p-button-secondary" (click)="onReset()"
           [disabled]="financeForm.pristine"></button>
-
-        <!-- บันทึก / อัปเดต -->
-      <button pButton type="submit"
-  class="p-button-success"
-  [loading]="loading"
-  [disabled]="financeForm.invalid || loading">
-  <i class="pi pi-check" pButtonIcon></i>
-  <span pButtonLabel>{{ isEditMode ? 'อัปเดต' : 'บันทึก' }}</span>
-</button>
-
+        <button pButton type="button" class="p-button-success" (click)="onSubmit()"
+          [disabled]="financeForm.invalid || loading">
+          <i class="pi pi-check" pButtonIcon></i>
+          <span pButtonLabel>{{ isEditMode ? 'อัปเดต' : 'บันทึก' }}</span>
+        </button>
+        <!-- <button pButton type="submit" class="p-button-success" [loading]="loading"
+          [disabled]="financeForm.invalid || loading">
+          <i class="pi pi-check" pButtonIcon></i>
+          <span pButtonLabel>
+            {{ isEditMode ? 'อัปเดต' : 'บันทึก' }}
+          </span>
+        </button> -->
       </div>
-
     </form>
   </p-card>
+  }
+
 </div>
 
-<!-- Toast -->
 <p-toast></p-toast>

@@ -14,123 +14,34 @@
 
   <!-- Navigation Menu -->
   <nav class="sidebar-nav">
-    <!-- Dashboard Section -->
     <div class="nav-section">
-      <div class="section-title">DASHBOARDS</div>
+      <div class="section-title">MENU</div>
       <div class="nav-items">
-        <a routerLink="/dashboard" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
-          <mat-icon>dashboard</mat-icon>
-          <span>Dashboard</span>
-        </a>
-        <a routerLink="/finance" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
-          <mat-icon>account_balance</mat-icon>
-          <span>Finance Management</span>
-        </a>
-        <!-- <a routerLink="/medical" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
-          <mat-icon>local_hospital</mat-icon>
-          <span>Medical System</span>
-        </a>
-        <a routerLink="/users" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
-          <mat-icon>group</mat-icon>
-          <span>User Management</span>
-        </a> -->
+        <ng-container *ngFor="let menu of menus">
+          <a *ngIf="!menu.children" [routerLink]="menu.route" class="nav-item" routerLinkActive="active"
+            (click)="onMenuClick()">
+            <mat-icon>{{menu.icon}}</mat-icon>
+            <span>{{menu.label}}</span>
+          </a>
+
+          <div *ngIf="menu.children" class="nav-item expandable" (click)="toggleSubmenu(menu.label, $event)">
+            <div class="nav-item-content">
+              <mat-icon>{{menu.icon}}</mat-icon>
+              <span>{{menu.label}}</span>
+              <mat-icon class="expand-icon" [class.expanded]="isSubmenuExpanded(menu.label)">
+                expand_more
+              </mat-icon>
+            </div>
+            <div class="submenu" [class.expanded]="isSubmenuExpanded(menu.label)">
+              <a *ngFor="let child of menu.children" [routerLink]="child.route" class="submenu-item"
+                (click)="onMenuClick()">
+                <mat-icon>{{child.icon}}</mat-icon>
+                <span>{{child.label}}</span>
+              </a>
+            </div>
+          </div>
+        </ng-container>
       </div>
     </div>
-
-    <!-- Apps Section -->
-    <!-- <div class="nav-section">
-      <div class="section-title">APPS</div>
-      <div class="nav-items">
-        <div class="nav-item expandable" (click)="toggleSubmenu('blog', $event)">
-          <div class="nav-item-content">
-            <mat-icon>article</mat-icon>
-            <span>Blog</span>
-            <mat-icon class="expand-icon" [class.expanded]="isSubmenuExpanded('blog')">expand_more</mat-icon>
-          </div>
-          <div class="submenu" [class.expanded]="isSubmenuExpanded('blog')">
-            <a routerLink="/blog/posts" class="submenu-item" (click)="onMenuClick()">
-              <mat-icon>post_add</mat-icon>
-              <span>Posts</span>
-            </a>
-            <a routerLink="/blog/categories" class="submenu-item" (click)="onMenuClick()">
-              <mat-icon>category</mat-icon>
-              <span>Categories</span>
-            </a>
-          </div>
-        </div>
-        
-        <a routerLink="/chat" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
-          <mat-icon>chat</mat-icon>
-          <span>Chat</span>
-        </a>
-        
-        <a routerLink="/files" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
-          <mat-icon>folder</mat-icon>
-          <span>Files</span>
-        </a>
-        
-        <a routerLink="/kanban" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
-          <mat-icon>view_kanban</mat-icon>
-          <span>Kanban</span>
-        </a>
-        
-        <div class="nav-item expandable" (click)="toggleSubmenu('mail', $event)">
-          <div class="nav-item-content">
-            <mat-icon>mail</mat-icon>
-            <span>Mail</span>
-            <mat-icon class="expand-icon" [class.expanded]="isSubmenuExpanded('mail')">expand_more</mat-icon>
-          </div>
-          <div class="submenu" [class.expanded]="isSubmenuExpanded('mail')">
-            <a routerLink="/mail/inbox" class="submenu-item" (click)="onMenuClick()">
-              <mat-icon>inbox</mat-icon>
-              <span>Inbox</span>
-            </a>
-            <a routerLink="/mail/sent" class="submenu-item" (click)="onMenuClick()">
-              <mat-icon>send</mat-icon>
-              <span>Sent</span>
-            </a>
-          </div>
-        </div>
-        
-        <a routerLink="/tasks" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
-          <mat-icon>task</mat-icon>
-          <span>Task List</span>
-        </a>
-      </div>
-    </div> -->
-
-    <!-- UI Kit Section -->
-    <!-- <div class="nav-section">
-      <div class="section-title">UI KIT</div>
-      <div class="nav-items">
-        <a routerLink="/ui/forms" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
-          <mat-icon>input</mat-icon>
-          <span>Form Layout</span>
-        </a>
-        <a routerLink="/ui/inputs" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
-          <mat-icon>text_fields</mat-icon>
-          <span>Input</span>
-        </a>
-        <a routerLink="/ui/buttons" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
-          <mat-icon>smart_button</mat-icon>
-          <span>Button</span>
-        </a>
-        <a routerLink="/ui/tables" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
-          <mat-icon>table_chart</mat-icon>
-          <span>Table</span>
-        </a>
-        <a routerLink="/ui/lists" class="nav-item" routerLinkActive="active" (click)="onMenuClick()">
-          <mat-icon>list</mat-icon>
-          <span>List</span>
-        </a>
-        <div class="nav-item expandable" (click)="toggleSubmenu('tree', $event)">
-          <div class="nav-item-content">
-            <mat-icon>account_tree</mat-icon>
-            <span>Tree</span>
-            <mat-icon class="expand-icon" [class.expanded]="isSubmenuExpanded('tree')">expand_more</mat-icon>
-          </div>
-        </div>
-      </div>
-    </div> -->
   </nav>
 </div>

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { tap, catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -7,6 +7,7 @@ import { environment } from '../../environments/environment';
 export interface User {
   userId: number;
   username: string;
+  name?: string;   // เพิ่ม optional name
   role: string;
 }
 
@@ -14,21 +15,48 @@ export interface User {
 export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   currentUser$: Observable<User | null> = this.currentUserSubject.asObservable();
+
   private csrfToken: string = '';
-private logoutTimer: any;
+  private logoutTimer: any;
+
   constructor(private http: HttpClient) {
     const token = localStorage.getItem('token');
-    if (token) {
+    const expiresAt = Number(localStorage.getItem('expires_at'));
+
+    if (token && expiresAt && Date.now() < expiresAt) {
+      // Legacy / localStorage flow: still support decoding if token stored
       try {
         const user = this.decodeToken(token);
         this.currentUserSubject.next(user);
-      } catch (error) {
-        console.error('Invalid token in localStorage, clearing it.', error);
-        this.logout(); // ล้าง token ที่ไม่ถูกต้องออก
+        this.setLogoutTimer(expiresAt - Date.now());
+        return;
+      } catch {
+        this.clearAuthState();
       }
     }
+
+    // If no readable token, try to get current user from server (cookie-based auth)
+    this.http.get<{ user?: any }>(`${environment.apiUrl}/auth/me`, { withCredentials: true })
+      .pipe(
+        catchError(() => of(null))
+      )
+      .subscribe(res => {
+        if (res && res.user) {
+          // map server user to local User interface
+          const u: User = {
+            userId: res.user.id,
+            username: res.user.username,
+            name: res.user.name,
+            role: res.user.role
+          };
+          this.currentUserSubject.next(u);
+        } else {
+          this.clearAuthState();
+        }
+      });
   }
 
+  // ================== CSRF ==================
   fetchCsrfToken() {
     return this.http.get<{ csrfToken: string }>(
       `${environment.apiUrl}/auth/csrf-token`,
@@ -37,39 +65,39 @@ private logoutTimer: any;
       tap(res => this.csrfToken = res.csrfToken)
     );
   }
-  
+
   getCsrfToken(): string {
     return this.csrfToken;
   }
+
+  // ================== JWT Decode ==================
   private decodeToken(token: string): User {
     const payload = JSON.parse(atob(token.split('.')[1]));
     return {
       userId: payload.sub,
       username: payload.username,
+      name: payload.name,  // map name ถ้ามีใน payload
       role: payload.role
     };
   }
 
-
-
-  /////////////////////
-    loginWithCredentials(username: string, password: string): Observable<boolean> {
+  // ================== LOGIN ==================
+  loginWithCredentials(username: string, password: string): Observable<boolean> {
     return this.http.post<{ access_token: string, expires_in?: number }>(
       `${environment.apiUrl}/auth/login`,
       { username, password },
       { withCredentials: true }
     ).pipe(
-      tap(response => {
-        if (response.access_token) {
-          localStorage.setItem('token', response.access_token);
-          const user = this.decodeToken(response.access_token);
-          this.currentUserSubject.next(user);
-
-          // ตั้งเวลา logout auto ถ้ามี expires_in
-          if (response.expires_in) {
-            const expiresAt = Date.now() + response.expires_in * 1000;
-            localStorage.setItem('expires_at', expiresAt.toString());
-            this.setLogoutTimer(response.expires_in * 1000);
+      tap(async response => {
+        // If backend returned token in body (legacy), store it; otherwise rely on cookie + /auth/me
+        if (response?.access_token) {
+          this.setAuthState(response.access_token, response.expires_in);
+        } else {
+          // populate user via /auth/me
+          const me = await this.http.get<any>(`${environment.apiUrl}/auth/me`, { withCredentials: true }).toPromise();
+          if (me?.user) {
+            const u: User = { userId: me.user.id, username: me.user.username, name: me.user.name, role: me.user.role };
+            this.currentUserSubject.next(u);
           }
         }
       }),
@@ -79,42 +107,66 @@ private logoutTimer: any;
   }
 
   loginAsGuest(): Observable<boolean> {
-    return this.http.post<{ access_token: string, expires_in?: number }>(
+    return this.http.post<{ access_token: string; expires_in?: number; expired_at?: string }>(
       `${environment.apiUrl}/auth/guest`,
-      {}
+      {},
+      { withCredentials: true }
     ).pipe(
-      tap(response => {
-        const token = response.access_token;
-        localStorage.setItem('token', token);
-        const user = this.decodeToken(token);
-        this.currentUserSubject.next(user);
-
-        if (response.expires_in) {
-          const expiresAt = Date.now() + response.expires_in * 1000;
-          localStorage.setItem('expires_at', expiresAt.toString());
-          this.setLogoutTimer(response.expires_in * 1000);
+      tap(async response => {
+        if (response?.access_token) {
+          this.setAuthState(response.access_token, response.expires_in);
+        } else {
+          // cookie-only guest: call /auth/me to get user info (or derive guest)
+          const me = await this.http.get<any>(`${environment.apiUrl}/auth/me`, { withCredentials: true }).toPromise();
+          if (me?.user) {
+            const u: User = { userId: me.user.id, username: me.user.username, name: me.user.name, role: me.user.role };
+            this.currentUserSubject.next(u);
+          }
         }
       }),
       map(() => true),
       catchError(err => {
-        console.error('Guest login failed', err);
-        this.logout();
+        this.clearAuthState();
         return of(false);
       })
     );
   }
 
-  private setLogoutTimer(duration: number) {
-    if (this.logoutTimer) {
-      clearTimeout(this.logoutTimer);
-    }
-    this.logoutTimer = setTimeout(() => {
-      this.logout();
-      // คุณอาจ redirect ไปหน้า login ที่นี่
-    }, duration);
+  logout(callback?: () => void): void {
+    this.http.post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true })
+      .subscribe({
+        next: () => {
+          this.clearAuthState();
+          if (callback) callback();
+        },
+        error: () => {
+          this.clearAuthState();
+          if (callback) callback();
+        }
+      });
   }
 
-  logout(): void {
+  // ================== State Helpers ==================
+  private setAuthState(token: string, expiresIn?: number) {
+    // Store token locally only if provided (legacy). If server uses httpOnly cookie, token param may be undefined.
+    if (token) {
+      localStorage.setItem('token', token);
+      try {
+        const user = this.decodeToken(token);
+        this.currentUserSubject.next(user);
+      } catch {
+        this.currentUserSubject.next(null);
+      }
+    }
+
+    if (expiresIn) {
+      const expiresAt = Date.now() + expiresIn * 1000;
+      localStorage.setItem('expires_at', expiresAt.toString());
+      this.setLogoutTimer(expiresIn * 1000);
+    }
+  }
+
+  private clearAuthState(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('expires_at');
     this.currentUserSubject.next(null);
@@ -123,9 +175,21 @@ private logoutTimer: any;
       this.logoutTimer = null;
     }
   }
+  private setLogoutTimer(duration: number) {
+    if (this.logoutTimer) {
+      clearTimeout(this.logoutTimer);
+    }
+    this.logoutTimer = setTimeout(() => this.logout(), duration);
+  }
+
+  // ================== Getters ==================
   getCurrentUser(): User | null {
     return this.currentUserSubject.value;
   }
+
+  isAuthenticated(): boolean {
+    const token = localStorage.getItem('token');
+    const expiresAt = localStorage.getItem('expires_at');
+    return !!token && !!expiresAt && Date.now() < +expiresAt;
+  }
 }
-
-

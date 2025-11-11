@@ -4,7 +4,9 @@
   border: 1px solid #e0e0e0;
   border-radius: 0.5rem;
   margin-bottom: 0.5rem;
+  box-sizing: border-box;
 }
+
 .btn.btn-primary {
   background: #1976d2;
   color: white;
@@ -13,4 +15,17 @@
   border: none;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.btn.btn-primary:hover {
+  background: #1565c0;
+}
+
+.text-green-600 {
+  color: #16a34a;
+}
+
+.text-red-600 {
+  color: #dc2626;
 }
