@@ -2,7 +2,6 @@
 export * from '../ui/stat-card/stat-card';
 export * from '../ui/quick-actions/quick-actions';
 export * from '../ui/chart-widget/chart-widget';
-export * from '../ui/data-table/data-table';
 export * from '../ui/form-builder/form-builder';
 export * from '../ui/loading-spinner/loading-spinner';
 export * from '../ui/table/smart-table';

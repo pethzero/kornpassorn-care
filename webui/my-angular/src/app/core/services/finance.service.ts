@@ -25,17 +25,6 @@ export class FinanceService {
     return this.http.get<{ success: boolean; message: string; data: FinanceSummary }>(`${this.apiUrl}/summary`, { params });
   }
 
-  // getFinanceRecords(queryParams: FinanceQueryParams = {}): Observable<PaginatedResponse<FinanceRecord>> {
-  //   let params = new HttpParams();
-  //   Object.keys(queryParams).forEach(key => {
-  //     const value = (queryParams as any)[key];
-  //     if (value !== undefined && value !== null && value !== '') {
-  //       params = params.set(key, value.toString());
-  //     }
-  //   });
-
-  //   return this.http.get<PaginatedResponse<FinanceRecord>>(this.apiUrl, { params });
-  // }
   getFinanceRecords(queryParams: FinanceQueryParams = {}): Observable<PaginatedResponse<FinanceRecord>> {
     let params = new HttpParams();
     Object.keys(queryParams).forEach(key => {

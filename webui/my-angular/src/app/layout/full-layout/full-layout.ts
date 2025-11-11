@@ -10,9 +10,14 @@ import { MatListModule } from '@angular/material/list';
 import { HeaderComponent } from '../header/header';
 import { SidebarComponent } from '../sidebar/sidebar';
 
+import { ToastModule } from 'primeng/toast'; // ✅ import ToastModule
+import { MessageService } from 'primeng/api';
+
+
 @Component({
   selector: 'app-full-layout',
   standalone: true,
+  providers: [MessageService], // ✅ ต้อง provide ที่นี่
   imports: [
     CommonModule,
     HeaderComponent,
@@ -21,8 +26,9 @@ import { SidebarComponent } from '../sidebar/sidebar';
     MatSidenavModule,
     MatToolbarModule,
     MatIconModule,
-    MatListModule
-  ],
+    MatListModule,
+    ToastModule,
+],
   templateUrl: './full-layout.html',
   styleUrls: ['./full-layout.scss']
 })

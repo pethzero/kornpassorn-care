@@ -1,4 +1,5 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import * as crypto from 'crypto';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -6,9 +7,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserToken } from '../../../database/entities/user-token.entity';
 
-
 @Injectable()
 export class BearerTokenStrategy extends PassportStrategy(Strategy, 'bearer-token') {
+  private readonly logger = new Logger(BearerTokenStrategy.name);
+
   constructor(
     configService: ConfigService,
     @InjectRepository(UserToken)
@@ -26,6 +28,10 @@ export class BearerTokenStrategy extends PassportStrategy(Strategy, 'bearer-toke
     });
   }
 
+  private hashToken(raw: string) {
+    return crypto.createHash('sha256').update(raw).digest('hex');
+  }
+
   async validate(req: any, payload: any) {
     try {
       // ดึง token จาก Authorization header
@@ -39,20 +45,41 @@ export class BearerTokenStrategy extends PassportStrategy(Strategy, 'bearer-toke
         throw new UnauthorizedException('Bearer token is required');
       }
 
-      // เช็คว่า role เป็น admin หรือไม่ ถ้าใช่ไม่ต้องเช็ค expired_at
-      if (payload.role !== 'admin') {
-        // ตรวจสอบว่า token หมดอายุหรือยัง
-        const tokenRecord = await this.userTokenRepo.findOne({
-          where: { token, revoked: false },
-          relations: ['user']
-        });
+      // พยายามหา Token record จาก DB:
+      // 1) lookup by jti (จาก payload)
+      // 2) lookup by tokenHash (sha256 of raw token) หรือ raw token (fallback)
+      let tokenRecord = null as UserToken | null;
+      const jti: string | undefined = payload?.jti;
+      if (jti) {
+        tokenRecord = await this.userTokenRepo.findOne({ where: { jti, revoked: false }, relations: ['user'] });
+      }
 
-        if (!tokenRecord) {
-          throw new UnauthorizedException('Bearer token is invalid or revoked');
+      if (!tokenRecord) {
+        const hash = this.hashToken(token);
+        tokenRecord = await this.userTokenRepo.findOne({
+          where: [
+            { tokenHash: hash, revoked: false },
+          ],
+          relations: ['user'],
+        });
+      }
+
+      // ถ้าเจอ token record ให้ตรวจสอบสถานะ/expiry/user
+      if (tokenRecord) {
+        // update last_used (use repo injected in the strategy)
+        await this.userTokenRepo.update({ id: tokenRecord.id }, { last_used: new Date() });
+        // ...rest logic...
+
+        // ถ้าถูก revoked => reject
+        if (tokenRecord.revoked) {
+          throw new UnauthorizedException('Bearer token is revoked');
         }
 
-        // ตรวจสอบ token หมดอายุ
-        if (tokenRecord.expired_at && tokenRecord.expired_at < new Date()) {
+        // ถ้ามี flag is_permanent ให้อนุญาต (แต่ยังเช็ค user active)
+        const isPermanent = (tokenRecord as any).is_permanent === true;
+
+        // ตรวจสอบ token หมดอายุ (ยกเว้น is_permanent)
+        if (!isPermanent && tokenRecord.expired_at && tokenRecord.expired_at < new Date()) {
           throw new UnauthorizedException('Bearer token has expired');
         }
 
@@ -60,23 +87,33 @@ export class BearerTokenStrategy extends PassportStrategy(Strategy, 'bearer-toke
         if (!tokenRecord.user?.isActive) {
           throw new UnauthorizedException('User account is inactive');
         }
+
+        // คืนค่าข้อมูลของ user (payload + info)
+        return {
+          userId: payload.sub,
+          username: payload.username,
+          role: payload.role,
+          authType: 'bearer',
+        };
       }
 
-      // console.log(payload)
-      // // ตรวจสอบว่า user ที่ใช้ token ยัง active หรือไม่
-      // if (!payload.isActive) {
-      //   throw new UnauthorizedException('User account is inactive');
-      // }
+      // ถ้าไม่พบ tokenRecord
+      // - ถ้าเป็น admin และตั้ง ADMIN_NEVER_EXPIRE=true ให้อนุญาต (แต่ log เตือน)
+      // - มิฉะนั้น ปฏิเสธ
+      const adminNeverExpire = process.env.ADMIN_NEVER_EXPIRE === 'true';
+      if (payload?.role === 'admin' && adminNeverExpire) {
+        this.logger.warn(`Bearer token not found in DB for admin ${payload?.sub} - allowing due to ADMIN_NEVER_EXPIRE`);
+        return {
+          userId: payload.sub,
+          username: payload.username,
+          role: payload.role,
+          authType: 'bearer',
+        };
+      }
 
-      // คืนค่าข้อมูลของ user
-      return {
-        userId: payload.sub,
-        username: payload.username,
-        role: payload.role,
-        authType: 'bearer'
-      };
+      throw new UnauthorizedException('Bearer token is invalid or revoked');
     } catch (error) {
-      console.error('Bearer Token Strategy validation error:', error);
+      this.logger.error('Bearer Token Strategy validation error:', error);
       if (error instanceof UnauthorizedException) {
         throw error;
       }

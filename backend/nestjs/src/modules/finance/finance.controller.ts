@@ -29,6 +29,7 @@ export class FinanceController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(FlexibleAuthGuard) // API และ Web ใช้ได้ทั้งคู่
+  
   async create(
     @Body() createFinanceRecordDto: CreateFinanceRecordDto,
     @Request() req: any,

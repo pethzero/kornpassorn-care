@@ -1,0 +1,7 @@
+Pick<Type, Keys> → เลือกเฉพาะบาง field
+
+Omit<Type, Keys> → เอาทุก field ยกเว้น field ที่ระบุ
+
+Partial<Type> → ทำให้ทุก field เป็น optional
+
+Required<Type> → ทำให้ทุก field เป็น required
