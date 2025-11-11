@@ -23,6 +23,7 @@ export class AuthService {
   ) { }
 
   async validateUser(username: string, password: string): Promise<User | null> {
+    console.log('Validating user:', username);
     const user = await this.databaseService.findUserByUsername(username);
 
     if (!user) return null;

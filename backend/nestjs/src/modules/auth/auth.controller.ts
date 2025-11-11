@@ -243,6 +243,25 @@ export class AuthController {
       return res.status(500).json({ success: false, message: 'Internal server error' });
     }
   }
+  // GET /auth/me
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async me(@Req() req: Request, @Res() res: Response) {
+    const user = (req as any).user;
+    if (!user) {
+      return res.status(401).json({ success: false });
+    }
+    // normalize response expected by frontend
+    return res.json({
+      success: true,
+      user: {
+        id: user.userId ?? user.sub,
+        username: user.username,
+        name: user.name ?? null,
+        role: user.role,
+      },
+    });
+  }
 
 
   // Admin revoke ทุก token ของ user
@@ -269,25 +288,6 @@ export class AuthController {
     return { message: `All tokens revoked for user ${userId}`, revoked: revokedCount };
   }
 
-  // GET /auth/me
-  @UseGuards(JwtAuthGuard)
-  @Get('me')
-  async me(@Req() req: Request, @Res() res: Response) {
-    const user = (req as any).user;
-    if (!user) {
-      return res.status(401).json({ success: false });
-    }
-    // normalize response expected by frontend
-    return res.json({
-      success: true,
-      user: {
-        id: user.userId ?? user.sub,
-        username: user.username,
-        name: user.name ?? null,
-        role: user.role,
-      },
-    });
-  }
 
 
   // GET /auth/sessions

@@ -1,0 +1,2 @@
+# ติดตั้ง bcrypt ถ้ายังไม่มี: npm install bcrypt
+node -e "const bcrypt=require('bcrypt'); console.log(bcrypt.hashSync('123456',10));"
