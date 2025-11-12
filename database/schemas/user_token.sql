@@ -15,6 +15,10 @@ CREATE TABLE IF NOT EXISTS public.user_tokens
     last_used timestamp without time zone,
     is_permanent boolean NOT NULL DEFAULT false,
     device_info jsonb,
+    device_ip inet,
+    revoked_by uuid,
+    revoked_at timestamp without time zone,
+    revoked_reason text COLLATE pg_catalog."default",
     CONSTRAINT "PK_63764db9d9aaa4af33e07b2f4bf" PRIMARY KEY (id),
     CONSTRAINT "FK_92ce9a299624e4c4ffd99b645b6" FOREIGN KEY ("userId")
         REFERENCES public.users (id) MATCH SIMPLE
@@ -58,32 +62,3 @@ CREATE INDEX IF NOT EXISTS "IDX_ebdd918653813b59cdd5d379b5"
     ON public.user_tokens USING btree
     (token_hash COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
-
-
-
-
-------------------------------------------------------------------------------------
--- Table: public.users
-
--- DROP TABLE IF EXISTS public.users;
-
-CREATE TABLE IF NOT EXISTS public.users
-(
-    id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    username character varying(100) COLLATE pg_catalog."default" NOT NULL,
-    password_hash character varying COLLATE pg_catalog."default" NOT NULL,
-    email character varying COLLATE pg_catalog."default",
-    "isActive" boolean NOT NULL DEFAULT true,
-    "createdAt" timestamp with time zone NOT NULL DEFAULT now(),
-    role character varying COLLATE pg_catalog."default" NOT NULL DEFAULT 'user'::character varying,
-    first_name character varying(100) COLLATE pg_catalog."default",
-    last_name character varying(100) COLLATE pg_catalog."default",
-    phone_number character varying(20) COLLATE pg_catalog."default",
-    CONSTRAINT users_pkey PRIMARY KEY (id),
-    CONSTRAINT users_username_key UNIQUE (username)
-)
-
-TABLESPACE pg_default;
-
-ALTER TABLE IF EXISTS public.users
-    OWNER to postgres;

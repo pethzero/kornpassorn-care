@@ -30,57 +30,55 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(req: any, payload: any) {
     try {
-      const authHeader = req?.headers?.authorization;
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        throw new UnauthorizedException('No valid authorization header');
-      }
+      const authHeader = req?.headers?.authorization as string | undefined;
+      const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
-      const token = authHeader.substring(7);
-      if (!token) {
-        throw new UnauthorizedException('No token provided');
-      }
-
-      // lookup by jti first, then by tokenHash (sha256)
-      let tokenRecord = null as UserToken | null;
+      // lookup by jti then tokenHash
+      let tokenRecord = null as any;
       const jti: string | undefined = payload?.jti;
       if (jti) {
         tokenRecord = await this.userTokenRepo.findOne({ where: { jti, revoked: false }, relations: ['user'] });
       }
 
-      // // ...inside validate(), after tokenRecord validated...
-      // if (tokenRecord) {
-      //   // update last_used (use repo injected in the strategy)
-      //   await this.userTokenRepo.update({ id: tokenRecord.id }, { last_used: new Date() });
-      //   // ...rest logic...
-      // }
-
-      if (!tokenRecord) {
+      if (!tokenRecord && token) {
         const hash = crypto.createHash('sha256').update(token).digest('hex');
-        tokenRecord = await this.userTokenRepo.findOne({
-          where: [
-            { tokenHash: hash, revoked: false }
-          ],
-          relations: ['user'],
-        });
+        tokenRecord = await this.userTokenRepo.findOne({ where: { tokenHash: hash, revoked: false }, relations: ['user'] });
       }
 
       if (!tokenRecord) {
         throw new UnauthorizedException('Token revoked or not found');
       }
 
-      if (tokenRecord.expired_at && tokenRecord.expired_at < new Date()) {
+      // expired check (unless permanent)
+      if (tokenRecord.expired_at && tokenRecord.expired_at < new Date() && !tokenRecord.is_permanent) {
         throw new UnauthorizedException('Token expired');
       }
 
-      if (!tokenRecord.user?.isActive) {
-        throw new UnauthorizedException('User account is inactive');
+      // If there is a linked user, ensure active. If no user -> allow only guest tokens.
+      if (tokenRecord.user) {
+        if (!tokenRecord.user.isActive) {
+          throw new UnauthorizedException('User account is inactive');
+        }
+      } else {
+        // allow guest tokens without user relation
+        if (payload?.role !== 'guest') {
+          throw new UnauthorizedException('User not found for token');
+        }
       }
 
+      // update last_used (best-effort)
+      try {
+        await this.userTokenRepo.update({ id: tokenRecord.id }, { last_used: new Date() });
+      } catch (e) { /* ignore update errors */ }
+
+      // return normalized user info (works for guest and normal users)
       return {
-        userId: payload.sub,
-        username: payload.username,
+        userId: tokenRecord.user?.id ?? payload.sub,
+        username: tokenRecord.user?.username ?? payload.username,
+        name: tokenRecord.user?.name ?? payload.name ?? null,
         role: payload.role,
-        tokenId: tokenRecord.id
+        tokenId: tokenRecord.id,
+        jti: tokenRecord.jti ?? payload.jti,
       };
     } catch (error) {
       console.error('JWT Strategy validation error:', error);

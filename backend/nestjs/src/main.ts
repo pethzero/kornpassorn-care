@@ -18,11 +18,13 @@ async function bootstrap() {
     credentials: true,
     // origin: 'http://localhost:4200',
     // credentials: true,
+
     // origin: [
     //   'http://localhost:4200',
     //   'https://3ec7464f696c.ngrok-free.app', // 👈 เพิ่ม ngrok URL
     // ],
     // credentials: true,
+    
     // origin: (origin, callback) => {
     //   if (!origin || origin.includes('localhost') || origin.includes('ngrok-free.app')) {
     //     callback(null, true);

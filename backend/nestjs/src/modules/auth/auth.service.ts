@@ -45,8 +45,27 @@ export class AuthService {
   }
 
   // ปรับให้รับ user เป็น nullable (guest => null)
+  // ...existing code...
+  // helper: remove null/undefined recursively (returns undefined for empty result)
+  private cleanObject(obj: any): any {
+    if (obj === null || obj === undefined) return undefined;
+    if (Array.isArray(obj)) {
+      const a = obj.map((v) => this.cleanObject(v)).filter((v) => v !== undefined);
+      return a.length ? a : undefined;
+    }
+    if (typeof obj === 'object') {
+      const out: any = {};
+      for (const k of Object.keys(obj)) {
+        const v = this.cleanObject(obj[k]);
+        if (v !== undefined) out[k] = v;
+      }
+      return Object.keys(out).length ? out : undefined;
+    }
+    return obj;
+  }
+
   async saveToken(
-    user: User | null,
+    user: any | null,
     rawToken: string | null,
     expiredAt: Date | null,
     jti?: string,
@@ -56,27 +75,64 @@ export class AuthService {
       const tokenHash = rawToken ? this.hashToken(rawToken) : null;
       const finalJti = jti ?? uuidv4();
 
-      // ...existing code...
+      console.log('[saveToken] params:', { userId: user?.id ?? null, hasRaw: !!rawToken, finalJti, expiredAt, opts });
+
+      // normalize + clean deviceInfo to avoid storing null fields
+      const rawDeviceInfo = opts?.deviceInfo ?? null;
+      const cleaned = rawDeviceInfo ? this.cleanObject(rawDeviceInfo) : undefined;
+      const deviceInfo = cleaned ?? null;
+
+      const deviceIp = deviceInfo?.ip ?? null;
+      const fp = deviceInfo?.fingerprint ?? null;
+      const fingerprintHash = fp ? this.hashToken(fp) : null;
+
       const tokenPartial = this.userTokenRepo.create({
         ...(user ? { user: { id: user.id } as any } : {}),
-        // don't reference raw token column (removed)
         tokenHash,
         jti: finalJti,
         tokenType: opts?.tokenType ?? 'access',
-        deviceInfo: opts?.deviceInfo ?? null,
+        deviceInfo: deviceInfo ?? null,
+        deviceIp: deviceIp ?? null,
+        fingerprint: fingerprintHash,
         expired_at: expiredAt ?? null,
         is_permanent: !!opts?.isPermanent,
         revoked: false,
-      } as unknown as Partial<UserToken>);
+      } as any);
 
       const saved = await this.userTokenRepo.save(tokenPartial);
-      console.log('[saveToken] saved id=', (saved as any).id, 'jti=', finalJti);
+      console.log('[saveToken] saved:', { id: (saved as any).id, jti: finalJti, deviceIp });
+
+      // debug repo / datasource info (best-effort)
+      try {
+        console.log('[saveToken] repo.table:', this.userTokenRepo.metadata.tableName);
+        // TypeORM v0.3+: dataSource options accessible via manager.dataSource
+        const dsOptions = (this.userTokenRepo as any).manager?.dataSource?.options;
+        console.log('[saveToken] datasource.options (partial):', {
+          host: dsOptions?.host, port: dsOptions?.port, database: dsOptions?.database, type: dsOptions?.type,
+        });
+      } catch (e) {
+        console.warn('[saveToken] repo metadata debug failed', e);
+      }
+
+      // immediate verify by id / jti / token_hash
+      const idToCheck = (saved as any).id;
+      const foundById = await this.userTokenRepo.findOne({ where: { id: idToCheck } as any });
+      const foundByJti = await this.userTokenRepo.findOne({ where: { jti: finalJti } as any });
+      const foundByHash = tokenHash ? await this.userTokenRepo.findOne({ where: { tokenHash } as any }) : null;
+      console.log('[saveToken] verify find:', {
+        byId: !!foundById,
+        byJti: !!foundByJti,
+        byHash: !!foundByHash,
+        foundById,
+      });
+
       return finalJti;
     } catch (err) {
       console.error('[saveToken] error saving token:', err);
       throw err;
     }
   }
+  // ...existing code...
 
   async revokeToken(rawTokenOrJti: string) {
     try {
@@ -118,51 +174,40 @@ export class AuthService {
       .execute();
     return result.affected ?? 0;
   }
-  
+
   // auth.service.ts
   // เพิ่ม/แก้ loginAsGuest ให้สร้าง jti, เก็บ token (type=guest) แล้วคืนค่า
-  async loginAsGuest() {
-    const expiresIn = process.env.GUEST_EXPIRES_IN || '1h'; // default 1 hour
+  // accept deviceInfo optional param
+  async loginAsGuest(deviceInfo?: any) {
+    const expiresIn = process.env.GUEST_EXPIRES_IN || '1h';
     const jti = uuidv4();
-    // unique guest subject (not linked to users table)
     const guestSub = `guest-${jti}`;
-
-    const payload = {
-      sub: guestSub,
-      username: 'guest',
-      role: 'guest',
-      jti,
-    };
-
+    const payload = { sub: guestSub, username: 'guest', role: 'guest', jti };
     const token = this.jwtService.sign(payload, { expiresIn });
 
-    function parseExpiresIn(str: string): number {
-      const match = str.match(/^(\d+)([dhms])$/);
-      if (!match) return 0;
-      const v = parseInt(match[1], 10);
-      switch (match[2]) {
-        case 'd': return v * 24 * 60 * 60;
-        case 'h': return v * 60 * 60;
-        case 'm': return v * 60;
-        case 's': return v;
-        default: return 0;
-      }
-    }
-
-    const expiresInSeconds = parseExpiresIn(expiresIn);
+    const expiresInSeconds = this.parseExpiresIn(expiresIn);
     const expiredAt = expiresInSeconds > 0 ? new Date(Date.now() + expiresInSeconds * 1000) : null;
 
-    // save as guest (user = null), tokenType = 'guest'
-    await this.saveToken(null, token, expiredAt, jti, { tokenType: 'guest' });
+    // save token with provided deviceInfo
+    await this.saveToken(null, token, expiredAt, jti, { tokenType: 'guest', deviceInfo });
 
-    return {
-      access_token: token,
-      expires_in: expiresInSeconds,
-      expired_at: expiredAt ? expiredAt.toISOString() : null,
-      jti,
-    };
+    return { access_token: token, expires_in: expiresInSeconds, expired_at: expiredAt ? expiredAt.toISOString() : null, jti };
   }
-  // ...existing code...
+
+  // helper parseExpiresIn if not present in file
+  parseExpiresIn(str: string | undefined): number {
+    if (!str) return 0;
+    const match = str.match(/^(\d+)([dhms])$/);
+    if (!match) return 0;
+    const v = parseInt(match[1], 10);
+    switch (match[2]) {
+      case 'd': return v * 24 * 60 * 60;
+      case 'h': return v * 60 * 60;
+      case 'm': return v * 60;
+      case 's': return v;
+      default: return 0;
+    }
+  }
 
 
   // บันทึก log ทุกครั้งที่ login (สำเร็จ/ล้มเหลว)
@@ -176,122 +221,9 @@ export class AuthService {
     });
   }
 
-
-  // // หลัง login สำเร็จ
-  // async saveToken(user: User, token: string, jti: string, expiredAt: Date | null, expiredAt: Date) {
-  //   await this.userTokenRepo.save({
-  //     user,
-  //     token,
-  //     expired_at: expiredAt,
-  //     revoked: false,
-  //   });
-  // }
-
-  // // logout
-  // async revokeToken(token: string) {
-  //   await this.userTokenRepo.update({ token }, { revoked: true });
-  // }
-
-  // async revokeAllTokensOfUser(userId: string) {
-  //   await this.userTokenRepo.update({ user: { id: userId } }, { revoked: true });
-  // }
-
-  // ✅ API สำหรับขอ token ด้วย username/password (สำหรับ API users)
-  // async getTokenByCredentials(username: string, password: string, req: any) {
-  //   try {
-  //     // ตรวจสอบ username และ password ว่าถูกส่งมาหรือไม่
-  //     if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
-  //       await this.logApiKeyUsage(null, false, req, 'Username or password is missing or invalid type');
-  //       return {
-  //         success: false,
-  //         message: 'Username และ Password จำเป็นต้องระบุ'
-  //       };
-  //     }
-
-  //     // หา API user ในฐานข้อมูล
-  //     const apiUser = await this.databaseService.findUserByUsername(username);
-
-  //     if (!apiUser || apiUser.role !== 'api') {
-  //       await this.logApiKeyUsage(null, false, req, 'API user not found or invalid role');
-  //       return {
-  //         success: false,
-  //         message: 'API user ไม่ถูกต้องหรือไม่มีสิทธิ์'
-  //       };
-  //     }
-
-  //     if (!apiUser.isActive) {
-  //       await this.logApiKeyUsage(apiUser, false, req, 'API user is inactive');
-  //       return {
-  //         success: false,
-  //         message: 'API user ถูกปิดการใช้งาน'
-  //       };
-  //     }
-
-  //     // ตรวจสอบ password
-  //     const isPasswordValid = await bcrypt.compare(password, apiUser.password_hash);
-  //     if (!isPasswordValid) {
-  //       await this.logApiKeyUsage(apiUser, false, req, 'Invalid password');
-  //       return {
-  //         success: false,
-  //         message: 'Password ไม่ถูกต้อง'
-  //       };
-  //     }
-
-  //     console.log('Login')
-  //     // สร้าง JWT token
-  //     const payload = {
-  //       sub: apiUser.id,
-  //       username: apiUser.username,
-  //       role: apiUser.role,
-  //       api_token: true, // ระบุว่าเป็น token จาก API credentials
-  //     };
-
-  //     const expiresIn = '24h'; // API token อายุ 24 ชั่วโมง
-  //     const token = this.jwtService.sign(payload, { expiresIn });
-
-  //     // แปลง expiresIn เป็นวินาที (รองรับ h, d, m)
-  //     function parseExpiresIn(str: string): number {
-  //       const match = str.match(/^(\d+)([dhms])$/);
-  //       if (!match) return 0;
-  //       const value = parseInt(match[1], 10);
-  //       switch (match[2]) {
-  //         case 'd': return value * 24 * 60 * 60;
-  //         case 'h': return value * 60 * 60;
-  //         case 'm': return value * 60;
-  //         case 's': return value;
-  //         default: return 0;
-  //       }
-  //     }
-
-  //     const expiresInSeconds = parseExpiresIn(expiresIn);
-
-  //     // บันทึก token
-  //     const expiredAt = new Date(Date.now() + expiresInSeconds * 1000);
-  //     await this.saveToken(apiUser, token, expiredAt);
-
-  //     // บันทึก log สำเร็จ
-  //     await this.logApiKeyUsage(apiUser, true, req);
-
-  //     return {
-  //       success: true,
-  //       access_token: token,
-  //       expires_in: expiresInSeconds,
-  //       user_role: apiUser.role
-  //     };
-
-  //   } catch (error) {
-  //     console.error('Error in getTokenByCredentials:', error);
-  //     await this.logApiKeyUsage(null, false, req, `System error: ${error.message}`);
-  //     return {
-  //       success: false,
-  //       message: 'เกิดข้อผิดพลาดภายในระบบ'
-  //     };
-  //   }
-  // }
-
-
   // ...existing code...
-  async getTokenByCredentials(username: string, password: string, req: any) {
+  // now accept deviceInfo and pass it to saveToken
+  async getTokenByCredentials(username: string, password: string, req: any, deviceInfo?: any) {
     try {
       if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
         await this.logApiKeyUsage(null, false, req, 'Username or password is missing or invalid type');
@@ -314,7 +246,6 @@ export class AuthService {
         return { success: false, message: 'Password ไม่ถูกต้อง' };
       }
 
-      // สร้าง jti และ payload (ไม่ log token)
       const jti = uuidv4();
       const payload = {
         sub: apiUser.id,
@@ -324,27 +255,14 @@ export class AuthService {
         jti,
       };
 
-      const expiresIn = process.env.API_TOKEN_EXPIRES_IN || '20s';
+      const expiresIn = process.env.API_TOKEN_EXPIRES_IN || '30d';
       const token = this.jwtService.sign(payload, { expiresIn });
 
-      // แปลง expiresIn เป็นวินาที (รองรับ d,h,m,s)
-      function parseExpiresIn(str: string): number {
-        const match = str.match(/^(\d+)([dhms])$/);
-        if (!match) return 0;
-        const value = parseInt(match[1], 10);
-        switch (match[2]) {
-          case 'd': return value * 24 * 60 * 60;
-          case 'h': return value * 60 * 60;
-          case 'm': return value * 60;
-          case 's': return value;
-          default: return 0;
-        }
-      }
-      const expiresInSeconds = parseExpiresIn(expiresIn);
-      const expiredAt = new Date(Date.now() + expiresInSeconds * 1000);
+      const expiresInSeconds = this.parseExpiresIn(expiresIn);
+      const expiredAt = expiresInSeconds > 0 ? new Date(Date.now() + expiresInSeconds * 1000) : null;
 
-      // บันทึก token (เก็บ hash + jti). ระบุ tokenType ให้เป็น 'api'
-      await this.saveToken(apiUser, token, expiredAt, jti, { tokenType: 'api' });
+      // save token with deviceInfo (token_hash + jti stored)
+      await this.saveToken(apiUser, token, expiredAt, jti, { tokenType: 'api', deviceInfo });
 
       await this.logApiKeyUsage(apiUser, true, req);
 
@@ -352,7 +270,8 @@ export class AuthService {
         success: true,
         access_token: token,
         expires_in: expiresInSeconds,
-        expired_at: expiredAt.toISOString(),
+        expired_at: expiredAt ? expiredAt.toISOString() : null,
+        jti,
         user_role: apiUser.role
       };
     } catch (error) {
@@ -382,7 +301,7 @@ export class AuthService {
       where: { user: { id: userId } as any },
       relations: ['user'],
       order: { created_at: 'DESC' },
-      select: ['id', 'jti', 'tokenHash', 'tokenType', 'expired_at', 'revoked', 'last_used', 'created_at', 'is_permanent'] as any,
+      select: ['id', 'jti', 'tokenHash', 'tokenType', 'expired_at', 'revoked', 'last_used', 'created_at', 'is_permanent', 'deviceInfo', 'deviceIp'] as any,
     });
   }
 

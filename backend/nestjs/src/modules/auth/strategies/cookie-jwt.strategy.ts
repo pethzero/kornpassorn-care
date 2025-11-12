@@ -34,62 +34,51 @@ export class CookieJwtStrategy extends PassportStrategy(Strategy, 'cookie-jwt') 
 
   async validate(req: any, payload: any) {
     try {
-      let token = req?.cookies?.['token'];
-      let authType = 'cookie';
-      
+      // get token from cookie or header
+      let token = req?.cookies?.['token'] as string | undefined;
       if (!token) {
-        const authHeader = req?.headers?.authorization;
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-          token = authHeader.substring(7);
-          authType = 'bearer';
-        }
+        const authHeader = req?.headers?.authorization as string | undefined;
+        if (authHeader && authHeader.startsWith('Bearer ')) token = authHeader.slice(7);
       }
-
-      if (!token) {
-        throw new UnauthorizedException('JWT token is required (cookie or Bearer)');
-      }
+      if (!token) throw new UnauthorizedException('JWT token is required');
 
       // lookup by jti then tokenHash
-      let tokenRecord = null as UserToken | null;
+      let tokenRecord = null as any;
       const jti: string | undefined = payload?.jti;
       if (jti) {
         tokenRecord = await this.userTokenRepo.findOne({ where: { jti, revoked: false }, relations: ['user'] });
       }
-
       if (!tokenRecord) {
         const hash = crypto.createHash('sha256').update(token).digest('hex');
-        tokenRecord = await this.userTokenRepo.findOne({
-          where: [
-            { tokenHash: hash, revoked: false }
-          ],
-          relations: ['user'],
-        });
+        tokenRecord = await this.userTokenRepo.findOne({ where: { tokenHash: hash, revoked: false }, relations: ['user'] });
       }
 
-      if (!tokenRecord) {
-        throw new UnauthorizedException('JWT token is invalid or revoked');
-      }
+      if (!tokenRecord) throw new UnauthorizedException('JWT token is invalid or revoked');
 
-      if (tokenRecord.expired_at && tokenRecord.expired_at < new Date()) {
+      if (tokenRecord.expired_at && tokenRecord.expired_at < new Date() && !tokenRecord.is_permanent) {
         throw new UnauthorizedException('JWT token has expired');
       }
 
-      if (!tokenRecord.user?.isActive) {
-        throw new UnauthorizedException('User account is inactive');
+      if (tokenRecord.user) {
+        if (!tokenRecord.user.isActive) throw new UnauthorizedException('User account is inactive');
+      } else {
+        if (payload?.role !== 'guest') throw new UnauthorizedException('User not found for token');
       }
 
-      return { 
-        userId: payload.sub, 
-        username: payload.username, 
+      try {
+        await this.userTokenRepo.update({ id: tokenRecord.id }, { last_used: new Date() });
+      } catch (e) { /* ignore */ }
+
+      return {
+        userId: tokenRecord.user?.id ?? payload.sub,
+        username: tokenRecord.user?.username ?? payload.username,
+        name: tokenRecord.user?.name ?? payload.name ?? null,
         role: payload.role,
         tokenId: tokenRecord.id,
-        authType: authType
+        jti: tokenRecord.jti ?? payload.jti,
       };
     } catch (error) {
       console.error('Cookie JWT Strategy validation error:', error);
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
       throw new UnauthorizedException('JWT token validation failed');
     }
   }

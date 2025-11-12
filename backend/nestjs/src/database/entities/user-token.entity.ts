@@ -21,9 +21,21 @@ export class UserToken {
   @Column({ name: 'token_type', default: 'access' })
   tokenType?: string;
 
-  // แม็ปเป็น device_info (ตรงกับ DB)
   @Column({ name: 'device_info', type: 'jsonb', nullable: true })
   deviceInfo?: any;
+
+  @Column({ name: 'device_ip', type: 'inet', nullable: true })
+  deviceIp?: string;
+
+
+  @Column({ name: 'revoked_by', type: 'uuid', nullable: true })
+  revokedBy?: string;
+
+  @Column({ name: 'revoked_at', type: 'timestamp', nullable: true })
+  revokedAt?: Date;
+
+  @Column({ name: 'revoked_reason', type: 'text', nullable: true })
+  revokedReason?: string;
 
   @CreateDateColumn({ name: 'created_at' })
   created_at: Date;

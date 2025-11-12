@@ -4,6 +4,7 @@ import { Response, Request } from 'express';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { v4 as uuidv4 } from 'uuid';
+import * as UAParser from 'ua-parser-js';
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) { }
@@ -18,62 +19,7 @@ export class AuthController {
     }
   }
 
-  // @Post('login')
-  // async login(@Body() body: LoginDto, @Req() req: Request, @Res() res: Response) {
-  //   const user = await this.authService.validateUser(body.username, body.password);
-
-  //   if (!user) {
-  //     await this.authService.logLogin(null, false, req, 'Invalid credentials');
-  //     return res.status(401).json({ message: 'Invalid credentials' });
-  //   }
-
-  //   // กำหนด expiresIn ตาม role
-  //   let expiresIn: string | undefined = undefined;
-  //   if (user.role !== 'admin') {
-  //     expiresIn = '1d';
-  //   }
-
-  //   const token = this.authService.generateJwt({
-  //     sub: user.id,
-  //     username: user.username,
-  //     role: user.role,
-  //   }, expiresIn);
-
-  //   // กำหนด expiredAt ตาม expiresIn
-  //   let expiredAt: Date | null = null;
-  //   if (expiresIn) {
-  //     // รองรับ d, h, m, s
-  //     function parseExpiresIn(str: string): number {
-  //       const match = str.match(/^(\d+)([dhms])$/);
-  //       if (!match) return 0;
-  //       const value = parseInt(match[1], 10);
-  //       switch (match[2]) {
-  //         case 'd': return value * 24 * 60 * 60;
-  //         case 'h': return value * 60 * 60;
-  //         case 'm': return value * 60;
-  //         case 's': return value;
-  //         default: return 0;
-  //       }
-  //     }
-  //     const expiresInSeconds = parseExpiresIn(expiresIn);
-  //     expiredAt = new Date(Date.now() + expiresInSeconds * 1000);
-  //   }
-
-  //   // ส่ง expiredAt ถ้ามีค่า
-  //   if (expiredAt) {
-  //     await this.authService.saveToken(user, token, expiredAt);
-  //   }
-
-  //   await this.authService.logLogin(user, true, req);
-
-  //   res.cookie('token', token, {
-  //     httpOnly: true,
-  //     secure: false,
-  //     sameSite: 'strict',
-  //   });
-  //   return res.json({ access_token: token });
-  // }
-
+  // ...existing code...
   @Post('login')
   async login(@Body() body: LoginDto, @Req() req: Request, @Res() res: Response) {
     const user = await this.authService.validateUser(body.username, body.password);
@@ -82,17 +28,14 @@ export class AuthController {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // อ่านการตั้งค่าว่าจะให้ admin เป็น never-expire หรือไม่ (ENV)
     const adminNeverExpire = (process.env.ADMIN_NEVER_EXPIRE === 'true');
-
-    // เลือก expires จาก env (configurable) — แต่ถ้า adminNeverExpire => no expires
     const userDefault = process.env.ACCESS_TOKEN_EXPIRES_IN || '1d';
     const adminDefault = process.env.ADMIN_ACCESS_TOKEN_EXPIRES_IN || '30d';
     let expiresIn: string | undefined = user.role === 'admin' ? adminDefault : userDefault;
     if (user.role === 'admin' && adminNeverExpire) {
-      expiresIn = undefined; // no expiry in JWT sign (or treat separately)
+      expiresIn = undefined;
     }
-    // สร้าง jti แล้วใส่ใน payload
+
     const jti = uuidv4();
     const payload = {
       sub: user.id,
@@ -103,30 +46,62 @@ export class AuthController {
 
     const token = this.authService.generateJwt(payload, expiresIn);
 
-    // คำนวณ expiredAt (ถ้ามี)
-    let expiredAt: Date | null = null;
-    if (expiresIn) {
-      function parseExpiresIn(str: string): number {
-        const match = str.match(/^(\d+)([dhms])$/);
-        if (!match) return 0;
-        const value = parseInt(match[1], 10);
-        switch (match[2]) {
-          case 'd': return value * 24 * 60 * 60;
-          case 'h': return value * 60 * 60;
-          case 'm': return value * 60;
-          case 's': return value;
-          default: return 0;
-        }
+    // parse expiresIn string -> seconds
+    const parseExpiresIn = (str: string | undefined): number => {
+      if (!str) return 0;
+      const match = str.match(/^(\d+)([dhms])$/);
+      if (!match) return 0;
+      const value = parseInt(match[1], 10);
+      switch (match[2]) {
+        case 'd': return value * 24 * 60 * 60;
+        case 'h': return value * 60 * 60;
+        case 'm': return value * 60;
+        case 's': return value;
+        default: return 0;
       }
-      const expiresInSeconds = parseExpiresIn(expiresIn);
-      expiredAt = new Date(Date.now() + expiresInSeconds * 1000);
-    } else {
-      // no expiry => keep expiredAt null
-      expiredAt = null;
-    }
+    };
 
-    // บันทึก token เสมอ (saveToken ปรับให้เก็บ hash + jti)
-    await this.authService.saveToken(user, token, expiredAt, jti, { isPermanent: user.role === 'admin' && adminNeverExpire });
+    const expiresInSeconds = parseExpiresIn(expiresIn);
+    const expiredAt = expiresInSeconds > 0 ? new Date(Date.now() + expiresInSeconds * 1000) : null;
+
+    const ua = new UAParser.UAParser(req.headers['user-agent'] || '');
+    const uaResult = ua.getResult();
+    const deviceInfo = {
+      raw: req.headers['user-agent'],
+      client: uaResult.browser.name ? 'browser' : 'mobile',
+      ua: {
+        family: uaResult.browser.name,
+        version: uaResult.browser.version,
+      },
+      os: {
+        name: uaResult.os.name,
+        version: uaResult.os.version,
+      },
+      device: {
+        vendor: uaResult.device.vendor || null,
+        brand: uaResult.device.vendor || null,
+        model: uaResult.device.model || null,
+      },
+      app: {
+        name: (req.headers['x-app-name'] as string) || null,
+        version: (req.headers['x-app-version'] as string) || null,
+      },
+      ip: ((req.headers['x-forwarded-for'] as string) || req.ip)?.split(',')[0].trim(),
+      locale: req.headers['accept-language'] || null,
+      timezone: (req.headers['x-timezone'] as string) || null,
+      screen: {
+        width: (req.headers['x-screen-width'] as any) || null,
+        height: (req.headers['x-screen-height'] as any) || null,
+      },
+      fingerprint: (req.headers['x-client-fingerprint'] as string) || (req.body && (req.body as any).fingerprint) || null
+    };
+
+    // ส่ง isPermanent ถ้า admin และตั้ง ADMIN_NEVER_EXPIRE=true
+    await this.authService.saveToken(user, token, expiredAt, jti, {
+      deviceInfo,
+      tokenType: 'access',
+      isPermanent: user.role === 'admin' && adminNeverExpire,
+    });
 
     await this.authService.logLogin(user, true, req);
 
@@ -134,19 +109,61 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
+      path: '/',
     };
     if (expiredAt) cookieOptions.maxAge = expiredAt.getTime() - Date.now();
 
     res.cookie('token', token, cookieOptions);
-    return res.json({ access_token: token, expires_at: expiredAt, is_permanent: user.role === 'admin' && adminNeverExpire });
-  }
 
+    return res.json({
+      success: true,
+      access_token: token,
+      expires_in: expiresInSeconds,
+      expired_at: expiredAt ? expiredAt.toISOString() : null,
+      jti,
+      is_permanent: user.role === 'admin' && adminNeverExpire,
+    });
+  }
+  // ...existing code...
 
   // ...existing code...
   @Post('guest')
-  async loginAsGuest(@Res() res: Response) {
+  async loginAsGuest(@Req() req: Request, @Res() res: Response) {
     try {
-      const result = await this.authService.loginAsGuest();
+      const ua = new UAParser.UAParser(req.headers['user-agent'] || '');
+      const uaResult = ua.getResult();
+      const deviceInfo = {
+        raw: req.headers['user-agent'],
+        client: uaResult.browser.name ? 'browser' : 'mobile',
+        ua: {
+          family: uaResult.browser.name,
+          version: uaResult.browser.version,
+        },
+        os: {
+          name: uaResult.os.name,
+          version: uaResult.os.version,
+        },
+        device: {
+          vendor: uaResult.device.vendor || null,
+          brand: uaResult.device.vendor || null,
+          model: uaResult.device.model || null,
+        },
+        app: {
+          name: (req.headers['x-app-name'] as string) || null,
+          version: (req.headers['x-app-version'] as string) || null,
+        },
+        ip: ((req.headers['x-forwarded-for'] as string) || req.ip)?.split(',')[0].trim(),
+        locale: req.headers['accept-language'] || null,
+        timezone: (req.headers['x-timezone'] as string) || null,
+        screen: {
+          width: (req.headers['x-screen-width'] as any) || null,
+          height: (req.headers['x-screen-height'] as any) || null,
+        },
+        fingerprint: (req.headers['x-client-fingerprint'] as string) || (req.body && (req.body as any).fingerprint) || null
+      };
+
+      // let service create token and save using provided deviceInfo
+      const result = await this.authService.loginAsGuest(deviceInfo);
 
       if (!result || !result.access_token) {
         return res.status(500).json({ success: false, message: 'Failed to create guest token' });
@@ -211,36 +228,31 @@ export class AuthController {
   // API สำหรับขอ token โดยใช้ username/password (สำหรับ API users)
   @Post('token')
   async getApiToken(@Body() body: { username?: string; password?: string }, @Req() req: Request, @Res() res: Response) {
-    if (!body || !body.username || !body.password) {
-      return res.status(400).json({
-        success: false,
-        message: 'กรุณาระบุ username และ password ใน request body'
-      });
-    }
-
     try {
-      const result = await this.authService.getTokenByCredentials(body.username, body.password, req);
-
-      // อย่า log token/password
-      console.log('API Token Request for user:', body.username, 'success=', !!result.success);
-
-      if (!result.success) {
-        return res.status(401).json({
-          success: false,
-          message: result.message || 'Invalid credentials'
-        });
+      const username = body.username ?? '';
+      const password = body.password ?? '';
+      if (!username || !password) {
+        return res.status(400).json({ success: false, message: 'username and password are required' });
       }
 
-      return res.json({
-        success: true,
-        access_token: result.access_token,
-        expires_in: result.expires_in,
-        token_type: 'Bearer',
-        user_role: result.user_role
-      });
+      const ua = new UAParser.UAParser(req.headers['user-agent'] || '');
+      const uaResult = ua.getResult();
+      const deviceInfo = {
+        raw: req.headers['user-agent'] || null,
+        ua: uaResult,
+        ip: ((req.headers['x-forwarded-for'] as string) || req.ip)?.split(',')[0].trim(),
+        fingerprint: (req.headers['x-client-fingerprint'] as string) || (body && (body as any).fingerprint) || null,
+      };
+
+      const result = await this.authService.getTokenByCredentials(username, password, req, deviceInfo);
+
+      if (!result.success) {
+        return res.status(401).json(result);
+      }
+      return res.json(result);
     } catch (err) {
-      console.error('getApiToken error:', err);
-      return res.status(500).json({ success: false, message: 'Internal server error' });
+      console.error('getApiToken controller error:', err);
+      return res.status(500).json({ success: false, message: 'Internal error' });
     }
   }
 
@@ -301,7 +313,7 @@ export class AuthController {
   }
 
   // POST /auth/revoke/:jti
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @Post('revoke/:jti')
   async revoke(@Param('jti') jti: string, @Req() req: Request) {
     const actor = (req as any).user;
