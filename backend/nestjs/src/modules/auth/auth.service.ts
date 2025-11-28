@@ -4,9 +4,10 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 // Update the import path to the correct location of user.entity.ts
-import { User } from '../../database/entities/user.entity';
 import * as bcrypt from 'bcrypt';
-import { DatabaseService } from '../../database/database.service';
+import { User } from '../../database/entities/user.entity';
+import { UserService } from '../user/user.service';
+import { UserController } from '../user/user.controller';
 import { UserToken } from '../../database/entities/user-token.entity';
 import { LoginLog } from '../../database/entities/login-log.entity';
 import * as crypto from 'crypto';
@@ -17,14 +18,14 @@ import { v4 as uuidv4 } from 'uuid';
 export class AuthService {
   constructor(
     private jwtService: JwtService,
-    private databaseService: DatabaseService, // inject service
+    private userService: UserService, // inject service
     @InjectRepository(UserToken) private userTokenRepo: Repository<UserToken>,
     @InjectRepository(LoginLog) private loginLogRepo: Repository<LoginLog>,
   ) { }
 
   async validateUser(username: string, password: string): Promise<User | null> {
-    const user = await this.databaseService.findUserByUsername(username);
-
+    const user = await this.userService.findByUsername(username);
+    console.log('Found user:', user );
     if (!user) return null;
     const isMatch = await bcrypt.compare(password, user.password_hash);
     console.log('Password match:', isMatch);
@@ -75,7 +76,7 @@ export class AuthService {
       const tokenHash = rawToken ? this.hashToken(rawToken) : null;
       const finalJti = jti ?? uuidv4();
 
-      console.log('[saveToken] params:', { userId: user?.id ?? null, hasRaw: !!rawToken, finalJti, expiredAt, opts });
+      // console.log('[saveToken] params:', { userId: user?.id ?? null, hasRaw: !!rawToken, finalJti, expiredAt, opts });
 
       // normalize + clean deviceInfo to avoid storing null fields
       const rawDeviceInfo = opts?.deviceInfo ?? null;
@@ -100,11 +101,11 @@ export class AuthService {
       } as any);
 
       const saved = await this.userTokenRepo.save(tokenPartial);
-      console.log('[saveToken] saved:', { id: (saved as any).id, jti: finalJti, deviceIp });
+      // console.log('[saveToken] saved:', { id: (saved as any).id, jti: finalJti, deviceIp });
 
       // debug repo / datasource info (best-effort)
       try {
-        console.log('[saveToken] repo.table:', this.userTokenRepo.metadata.tableName);
+        // console.log('[saveToken] repo.table:', this.userTokenRepo.metadata.tableName);
         // TypeORM v0.3+: dataSource options accessible via manager.dataSource
         const dsOptions = (this.userTokenRepo as any).manager?.dataSource?.options;
         console.log('[saveToken] datasource.options (partial):', {
@@ -119,12 +120,12 @@ export class AuthService {
       const foundById = await this.userTokenRepo.findOne({ where: { id: idToCheck } as any });
       const foundByJti = await this.userTokenRepo.findOne({ where: { jti: finalJti } as any });
       const foundByHash = tokenHash ? await this.userTokenRepo.findOne({ where: { tokenHash } as any }) : null;
-      console.log('[saveToken] verify find:', {
-        byId: !!foundById,
-        byJti: !!foundByJti,
-        byHash: !!foundByHash,
-        foundById,
-      });
+      // console.log('[saveToken] verify find:', {
+      //   byId: !!foundById,
+      //   byJti: !!foundByJti,
+      //   byHash: !!foundByHash,
+      //   foundById,
+      // });
 
       return finalJti;
     } catch (err) {
@@ -230,7 +231,7 @@ export class AuthService {
         return { success: false, message: 'Username และ Password จำเป็นต้องระบุ' };
       }
 
-      const apiUser = await this.databaseService.findUserByUsername(username);
+      const apiUser = await this.userService.findByUsername(username);
       if (!apiUser || apiUser.role !== 'api') {
         await this.logApiKeyUsage(null, false, req, 'API user not found or invalid role');
         return { success: false, message: 'API user ไม่ถูกต้องหรือไม่มีสิทธิ์' };

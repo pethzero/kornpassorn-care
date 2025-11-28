@@ -1,34 +1,35 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, Index } from 'typeorm';
 
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Index({ unique: true })
+  @Column({ name: 'username', type: 'varchar', length: 100 })
   username: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ name: 'password_hash', type: 'varchar' })
   password_hash: string;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ name: 'email', type: 'varchar', nullable: true })
   email?: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ name: 'first_name', type: 'varchar', length: 100, nullable: true })
   first_name?: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ name: 'last_name', type: 'varchar', length: 100, nullable: true })
   last_name?: string;
 
-  @Column({ type: 'varchar', length: 20, nullable: true })
+  @Column({ name: 'phone_number', type: 'varchar', length: 20, nullable: true })
   phone_number?: string;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ name: 'isActive', type: 'boolean', default: true })
   isActive: boolean;
 
-  @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ name: 'createdAt', type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @Column({ type: 'varchar', default: 'user' })
+  @Column({ name: 'role', type: 'varchar', default: 'user' })
   role: string;
 }

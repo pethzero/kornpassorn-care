@@ -5,6 +5,8 @@ import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { v4 as uuidv4 } from 'uuid';
 import * as UAParser from 'ua-parser-js';
+import { Config } from '../../config';
+import { buildDeviceInfo } from '../../utils/device.util';
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) { }
@@ -23,6 +25,7 @@ export class AuthController {
   @Post('login')
   async login(@Body() body: LoginDto, @Req() req: Request, @Res() res: Response) {
     const user = await this.authService.validateUser(body.username, body.password);
+    console.log('User after validateUser:', user);
     if (!user) {
       await this.authService.logLogin(null, false, req, 'Invalid credentials');
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -66,41 +69,14 @@ export class AuthController {
 
     const ua = new UAParser.UAParser(req.headers['user-agent'] || '');
     const uaResult = ua.getResult();
-    const deviceInfo = {
-      raw: req.headers['user-agent'],
-      client: uaResult.browser.name ? 'browser' : 'mobile',
-      ua: {
-        family: uaResult.browser.name,
-        version: uaResult.browser.version,
-      },
-      os: {
-        name: uaResult.os.name,
-        version: uaResult.os.version,
-      },
-      device: {
-        vendor: uaResult.device.vendor || null,
-        brand: uaResult.device.vendor || null,
-        model: uaResult.device.model || null,
-      },
-      app: {
-        name: (req.headers['x-app-name'] as string) || null,
-        version: (req.headers['x-app-version'] as string) || null,
-      },
-      ip: ((req.headers['x-forwarded-for'] as string) || req.ip)?.split(',')[0].trim(),
-      locale: req.headers['accept-language'] || null,
-      timezone: (req.headers['x-timezone'] as string) || null,
-      screen: {
-        width: (req.headers['x-screen-width'] as any) || null,
-        height: (req.headers['x-screen-height'] as any) || null,
-      },
-      fingerprint: (req.headers['x-client-fingerprint'] as string) || (req.body && (req.body as any).fingerprint) || null
-    };
+    const deviceInfo = buildDeviceInfo(req, (req.body as any) || {});
+    const isPermanentOpt = user.role === 'admin' && Config.token.ADMIN_NEVER_EXPIRE;
+    console.log('[auth.login] isPermanentOpt=', isPermanentOpt);
 
-    // ส่ง isPermanent ถ้า admin และตั้ง ADMIN_NEVER_EXPIRE=true
     await this.authService.saveToken(user, token, expiredAt, jti, {
       deviceInfo,
       tokenType: 'access',
-      isPermanent: user.role === 'admin' && adminNeverExpire,
+      isPermanent: isPermanentOpt,
     });
 
     await this.authService.logLogin(user, true, req);

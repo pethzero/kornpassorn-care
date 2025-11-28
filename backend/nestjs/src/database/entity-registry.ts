@@ -35,33 +35,6 @@ export const getEntitiesForDatabase = (dbName: string = 'default'): EntityClass[
   return DATABASE_ENTITIES[dbName] || DEFAULT_ENTITIES;
 };
 
-export const getEntityPathsForDatabase = (dbName: string = 'default'): string[] => {
-  // แค่ return pattern ทั่วไป เพราะ TypeORM สามารถ auto-discover entities ได้
-  return ['src/database/entities/*.entity.ts'];
-};
-
-export const hasEntityInDatabase = (dbName: string, entityClass: EntityClass): boolean => {
-  return getEntitiesForDatabase(dbName).includes(entityClass);
-};
-
-// Utility functions
-export const addEntityToDatabase = (dbName: string, entityClass: EntityClass): void => {
-  DATABASE_ENTITIES[dbName] = DATABASE_ENTITIES[dbName] || [];
-  if (!DATABASE_ENTITIES[dbName].includes(entityClass)) {
-    DATABASE_ENTITIES[dbName].push(entityClass);
-  }
-};
-
-export const removeEntityFromDatabase = (dbName: string, entityClass: EntityClass): void => {
-  if (DATABASE_ENTITIES[dbName]) {
-    DATABASE_ENTITIES[dbName] = DATABASE_ENTITIES[dbName].filter(entity => entity !== entityClass);
-  }
-};
-
-export const listEntitiesInDatabase = (dbName: string = 'default'): string[] => {
-  return getEntitiesForDatabase(dbName).map(entity => entity.name);
-};
-
 // Main export for TypeORM
 export const getEntitiesForTypeOrm = (dbName: string = 'default') => {
   return getEntitiesForDatabase(dbName);
