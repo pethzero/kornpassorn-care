@@ -3,13 +3,18 @@
   <div class="sidebar-header">
     <div class="brand-logo">
       <div class="logo-icon">
-        <mat-icon>local_hospital </mat-icon>
+        <mat-icon>local_hospital</mat-icon>
       </div>
       <div class="brand-text">
         <h2>KORNPASSORN</h2>
         <span>Care Management System</span>
       </div>
     </div>
+    
+    <!-- ปุ่มปิดสำหรับ mobile -->
+    <button class="close-btn-mobile" (click)="closeSidebar.emit()" aria-label="Close sidebar">
+      <mat-icon>close</mat-icon>
+    </button>
   </div>
 
   <!-- Navigation Menu -->
@@ -34,7 +39,7 @@
             </div>
             <div class="submenu" [class.expanded]="isSubmenuExpanded(menu.label)">
               <a *ngFor="let child of menu.children" [routerLink]="child.route" class="submenu-item"
-                (click)="onMenuClick()">
+                routerLinkActive="active" (click)="onMenuClick()">
                 <mat-icon>{{child.icon}}</mat-icon>
                 <span>{{child.label}}</span>
               </a>

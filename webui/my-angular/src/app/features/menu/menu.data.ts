@@ -15,6 +15,7 @@ export const MENU_CONFIG: MenuItem[] = [
     children: [
       { label: 'List', icon: 'post_add', route: '/finance/list', roles: ['user', 'admin'] },
       { label: 'Form', icon: 'category', route: '/finance/form', roles: ['user','admin'] }, // ✅ เฉพาะ admin
+      { label: 'Summary', icon: 'summary', route: '/finance/summary', roles: ['user','admin'] }, // ✅ เฉพาะ admin
     ]
   },
   {
@@ -24,6 +25,7 @@ export const MENU_CONFIG: MenuItem[] = [
     children: [
       { label: 'List', icon: 'post_add', route: '/patient/list', roles: ['user', 'admin'] },
       { label: 'Form', icon: 'category', route: '/patient/form', roles: ['user','admin'] }, // ✅ เฉพาะ admin
+      
     ]
   }
 ];

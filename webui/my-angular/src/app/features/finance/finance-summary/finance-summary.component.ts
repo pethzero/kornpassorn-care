@@ -1,209 +1,138 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, PLATFORM_ID, ChangeDetectorRef, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { FinanceService,  } from '../../../core/services/finance.service';
-import { FinanceSummary } from '../../../core/models/finance.model';
-// Angular Material
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 
-// PrimeNG Imports
+// PrimeNG
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { PanelModule } from 'primeng/panel';
-import { TagModule } from 'primeng/tag';
-import { MessageModule } from 'primeng/message';
+import { ChartModule } from 'primeng/chart';
 import { SelectModule } from 'primeng/select';
+import { MessageModule } from 'primeng/message';
+import { DialogModule } from 'primeng/dialog';
+
+// Angular Material
+import { MatIconModule } from '@angular/material/icon';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 
 @Component({
   selector: 'app-finance-summary',
   standalone: true,
   imports: [
-    CommonModule, 
+    CommonModule,
     FormsModule,
-    // PrimeNG
     CardModule,
     ButtonModule,
     ProgressSpinnerModule,
-    PanelModule,
-    TagModule,
-    MessageModule,
+    ChartModule,
     SelectModule,
-    // Angular Material
-    MatCardModule,
-    MatButtonModule,
+    MessageModule,
+    DialogModule,
     MatIconModule,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
   ],
   templateUrl: './finance-summary.component.html',
-  styleUrl: './finance-summary.component.scss'
+  styleUrls: ['./finance-summary.component.scss'],
 })
 export class FinanceSummaryComponent implements OnInit {
-  summary: FinanceSummary | null = null;
-  startDate: string = '';
-  endDate: string = '';
-  loading = false;
-  errorMessage = '';
-  successMessage = '';
-  
-  // New properties for dashboard
-  searchTerm = '';
-  selectedPeriod = 'Last Week';
-  periodOptions = [
-    { label: 'Last Week', value: 'Last Week' },
-    { label: 'Last Month', value: 'Last Month' },
-    { label: 'Last 3 Months', value: 'Last 3 Months' },
-    { label: 'Last Year', value: 'Last Year' }
-  ];
-  
-  weeklyData = [
-    { day: 'MON', incomePercent: 65, expensePercent: 45 },
-    { day: 'TUE', incomePercent: 55, expensePercent: 35 },
-    { day: 'WED', incomePercent: 80, expensePercent: 60 },
-    { day: 'THU', incomePercent: 85, expensePercent: 50 },
-    { day: 'FRI', incomePercent: 75, expensePercent: 40 },
-    { day: 'SAT', incomePercent: 90, expensePercent: 65 },
-    { day: 'SUN', incomePercent: 70, expensePercent: 30 }
-  ];
-  
-  recentTransactions = [
-    {
-      description: 'Salary Payment',
-      category: 'income',
-      amount: 45000,
-      type: 'income',
-      status: 'completed',
-      date: new Date()
-    },
-    {
-      description: 'Grocery Shopping',
-      category: 'food',
-      amount: -1200,
-      type: 'expense',
-      status: 'completed',
-      date: new Date()
-    },
-    {
-      description: 'Gas Station',
-      category: 'transport',
-      amount: -800,
-      type: 'expense',
-      status: 'completed',
-      date: new Date()
-    }
-  ];
-  
-  topCategories = [
-    {
-      name: 'Food & Dining',
-      amount: 12500,
-      transactionCount: 24,
-      icon: '/assets/picture/food-icon.png'
-    },
-    {
-      name: 'Transportation',
-      amount: 8500,
-      transactionCount: 18,
-      icon: '/assets/picture/transport-icon.png'
-    },
-    {
-      name: 'Shopping',
-      amount: 6200,
-      transactionCount: 15,
-      icon: '/assets/picture/shopping-icon.png'
-    }
-  ];
+  data: any;
+  options: any;
 
-  constructor(
-    private financeService: FinanceService,
-    private router: Router
-  ) {
-    // Set default date range (current month)
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    
-    this.startDate = firstDay.toISOString().split('T')[0];
-    this.endDate = lastDay.toISOString().split('T')[0];
+  platformId = inject(PLATFORM_ID);
+  private cd = inject(ChangeDetectorRef);
+
+  // Mock data for 12 months
+  private mockIncomeData = [45000, 38000, 42000, 47000, 50000, 52000, 48000, 49000, 51000, 53000, 55000, 60000];
+  private mockExpenseData = [15000, 12000, 14000, 13000, 16000, 15000, 17000, 16500, 15500, 14000, 13500, 14500];
+
+  // ✅ effect created in injection context (field initializer)
+  themeEffect = effect(() => {
+    this.initChart();
+    this.cd.detectChanges();
+  });
+
+  ngOnInit(): void {
+    this.initChart();
   }
 
-  ngOnInit() {
-    this.loadSummary();
-  }
+  initChart() {
+    const documentStyle = getComputedStyle(document.documentElement);
+    const textColor = documentStyle.getPropertyValue('--text-color') || '#495057';
+    const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary') || '#6c757d';
+    const surfaceBorder = documentStyle.getPropertyValue('--surface-border') || '#dfe7ef';
 
-  loadSummary() {
-    this.loading = true;
-    this.errorMessage = '';
-    
-    this.financeService.getSummary(this.startDate, this.endDate).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.summary = response.data;
-        } else {
-          this.errorMessage = response.message;
-        }
-        this.loading = false;
+    this.data = {
+      labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+      datasets: [
+        {
+          label: 'Income',
+          backgroundColor: documentStyle.getPropertyValue('--p-green-500') || '#4caf50',
+          borderColor: documentStyle.getPropertyValue('--p-green-500') || '#4caf50',
+          data: this.mockIncomeData,
+        },
+        {
+          label: 'Expense',
+          backgroundColor: documentStyle.getPropertyValue('--p-red-500') || '#f44336',
+          borderColor: documentStyle.getPropertyValue('--p-red-500') || '#f44336',
+          data: this.mockExpenseData,
+        },
+      ],
+    };
+
+    this.options = {
+      maintainAspectRatio: false,
+      aspectRatio: 0.8,
+      responsive: true,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: {
+            color: textColor,
+            usePointStyle: true,
+            padding: 15,
+          },
+        },
+        tooltip: {
+          enabled: true,
+          callbacks: {
+            label: (context: any) => {
+              const label = context.dataset.label || '';
+              const value = context.parsed.y;
+              return `${label}: ฿${value.toLocaleString('th-TH')}`;
+            },
+          },
+        },
       },
-      error: (error) => {
-        this.errorMessage = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
-        console.error('Error loading summary:', error);
-        this.loading = false;
-      }
-    });
-  }
-
-  onDateChange() {
-    if (this.startDate && this.endDate) {
-      this.loadSummary();
-    }
-  }
-
-  clearFilter() {
-    this.startDate = '';
-    this.endDate = '';
-    this.loadSummary();
-  }
-
-  formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('th-TH', {
-      style: 'currency',
-      currency: 'THB'
-    }).format(amount);
-  }
-
-  getDateRangeText(): string {
-    if (!this.summary?.date_range) return 'ทั้งหมด';
-    if (this.summary.date_range.start_date && this.summary.date_range.end_date) {
-      return `${this.summary.date_range.start_date} - ${this.summary.date_range.end_date}`;
-    }
-    return 'ทั้งหมด';
-  }
-
-  // Navigation methods
-  navigateToAdd() {
-    this.router.navigate(['/finance/add']);
-  }
-
-  navigateToList() {
-    this.router.navigate(['/finance/list']);
-  }
-
-  quickAddIncome() {
-    this.router.navigate(['/finance/add'], { queryParams: { type: 'income' } });
-  }
-
-  quickAddExpense() {
-    this.router.navigate(['/finance/add'], { queryParams: { type: 'expense' } });
-  }
-
-  viewReports() {
-    // TODO: Navigate to reports page
-    console.log('Navigate to reports');
+      scales: {
+        x: {
+          ticks: {
+            color: textColorSecondary,
+            font: {
+              weight: 500,
+            },
+          },
+          grid: {
+            color: surfaceBorder,
+            drawBorder: false,
+          },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            color: textColorSecondary,
+            callback: (value: any) => {
+              return '฿' + value.toLocaleString('th-TH');
+            },
+          },
+          grid: {
+            color: surfaceBorder,
+            drawBorder: false,
+          },
+        },
+      },
+    };
   }
 }
