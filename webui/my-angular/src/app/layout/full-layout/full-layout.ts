@@ -1,4 +1,4 @@
-import { Component, ViewChild, HostListener, AfterViewInit } from '@angular/core';
+import { Component, ViewChild, HostListener, AfterViewInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 
@@ -10,14 +10,13 @@ import { MatListModule } from '@angular/material/list';
 import { HeaderComponent } from '../header/header';
 import { SidebarComponent } from '../sidebar/sidebar';
 
-import { ToastModule } from 'primeng/toast'; // ✅ import ToastModule
+import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-
 
 @Component({
   selector: 'app-full-layout',
   standalone: true,
-  providers: [MessageService], // ✅ ต้อง provide ที่นี่
+  providers: [MessageService],
   imports: [
     CommonModule,
     HeaderComponent,
@@ -28,25 +27,36 @@ import { MessageService } from 'primeng/api';
     MatIconModule,
     MatListModule,
     ToastModule,
-],
+  ],
   templateUrl: './full-layout.html',
   styleUrls: ['./full-layout.scss']
 })
 export class FullLayoutComponent implements AfterViewInit {
   @ViewChild('sidenav') sidenav!: MatSidenav;
 
-  isMobile = false;
+  // Config: sidebar เริ่มต้นเปิดหรือปิด
+  private readonly SIDEBAR_INITIAL_STATE = {
+    desktop: false,  // false = ปิด, true = เปิด
+    mobile: false    // false = ปิด, true = เปิด
+  };
 
-  constructor() {
+  isMobile = false;
+  isSidebarOpen = false;
+
+  constructor(private ngZone: NgZone) {
     this.checkScreenWidth();
   }
 
   ngAfterViewInit() {
-    // ตั้งค่า sidebar ตามขนาดหน้าจอ
-    if (this.isMobile) {
-      this.sidenav.close();
-    } else {
+    // ตั้งค่า sidebar ตาม initial state config
+    const shouldOpen = this.isMobile 
+      ? this.SIDEBAR_INITIAL_STATE.mobile 
+      : this.SIDEBAR_INITIAL_STATE.desktop;
+
+    if (shouldOpen) {
       this.sidenav.open();
+    } else {
+      this.sidenav.close();
     }
   }
 
@@ -54,22 +64,23 @@ export class FullLayoutComponent implements AfterViewInit {
   checkScreenWidth() {
     const wasMobile = this.isMobile;
     this.isMobile = window.innerWidth < 768;
-    
-    // ถ้าเปลี่ยนจาก mobile เป็น desktop หรือกลับกัน
+
+    // เมื่อ resize ให้ปิด sidebar (ป้องกันปัญหา layout)
     if (wasMobile !== this.isMobile && this.sidenav) {
-      if (this.isMobile) {
-        this.sidenav.close();
-      } else {
-        this.sidenav.open();
-      }
+      this.sidenav.close();
     }
   }
 
   toggleSidebar() {
-    this.sidenav.toggle();
+    // ปรับ class/CSS ภายนอก Angular เพื่อลด CD cycles
+    this.ngZone.runOutsideAngular(() => {
+      this.isSidebarOpen = !this.isSidebarOpen;
+      this.sidenav.toggle();
+      // ถ้าจำเป็นเรียก back into Angular เพียงเมื่อต้อง update data-binding ที่จำเป็น:
+      // this.ngZone.run(() => {});
+    });
   }
 
-  // ปิด sidebar เมื่อเลือกเมนูใน mobile
   closeSidebarOnMobile() {
     if (this.isMobile && this.sidenav.opened) {
       this.sidenav.close();
