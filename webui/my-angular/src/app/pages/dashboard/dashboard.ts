@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 // PrimeNG imports
@@ -10,11 +10,7 @@ import { ProgressBarModule } from 'primeng/progressbar';
 import { ChartModule } from 'primeng/chart';
 
 // Custom components
-import { StatCardComponent } from '../../ui/stat-card/stat-card';
-import { PersonCardComponent } from '../../ui/person-card/person-card';
 import { SimplePersonCardComponent } from '../../ui/simple-person-card/simple-person-card';
-
-
 
 export interface Patient {
   id: number;
@@ -26,151 +22,90 @@ export interface Patient {
   department: string;
 }
 
-export interface FinanceRecord {
-  id: number;
-  date: string;
-  description: string;
-  category: string;
-  amount: number;
-  type: 'income' | 'expense';
-}
-
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [
-    CommonModule, 
-    CardModule, 
-    TableModule, 
-    ButtonModule, 
-    TagModule, 
+    CommonModule,
+    CardModule,
+    TableModule,
+    ButtonModule,
+    TagModule,
     ProgressBarModule,
     ChartModule,
-    // StatCardComponent,
-    // PersonCardComponent,
     SimplePersonCardComponent
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent implements OnInit {
   stats = {
-    totalPatients: 2345,
-    newPatientsToday: 23,
-    appointmentsToday: 45,
-    inExamRoom: 5,
-    // Finance stats
-    totalIncome: 125000,
-    totalExpenses: 75000,
-    netProfit: 50000,
-    totalTransactions: 152,
-    // Person-related stats
     activePatients: 23,
     doctorsOnDuty: 8,
     nursesOnDuty: 15,
-    waitingQueue: 7
+    waitingQueue: 7,
+    // finance placeholders
+    totalIncome: 0,
+    totalExpenses: 0,
+    netProfit: 0,
+    totalTransactions: 0
   };
-  isLoading: boolean = false;
 
-  patients: Patient[] = [
-    {
-      id: 1,
-      name: 'นายสมชาย ใจดี',
-      age: 35,
-      gender: 'ชาย',
-      appointmentDate: '2025-08-11 09:00',
-      status: 'รอตรวจ',
-      department: 'อายุรกรรม'
-    },
-    {
-      id: 2,
-      name: 'นางสาวสมหญิง สุขใจ',
-      age: 28,
-      gender: 'หญิง',
-      appointmentDate: '2025-08-11 10:30',
-      status: 'กำลังตรวจ',
-      department: 'ศัลยกรรม'
-    },
-    {
-      id: 3,
-      name: 'นายวิชัย มั่นคง',
-      age: 42,
-      gender: 'ชาย',
-      appointmentDate: '2025-08-11 11:00',
-      status: 'เสร็จแล้ว',
-      department: 'ออร์โธปิดิกส์'
-    },
-    {
-      id: 4,
-      name: 'นางรัตนา เจริญสุข',
-      age: 56,
-      gender: 'หญิง',
-      appointmentDate: '2025-08-11 14:00',
-      status: 'รอตรวจ',
-      department: 'โรคหัวใจ'
-    },
-    {
-      id: 5,
-      name: 'นายปรีชา วิทยาศรี',
-      age: 31,
-      gender: 'ชาย',
-      appointmentDate: '2025-08-11 15:30',
-      status: 'รอตรวจ',
-      department: 'ตา หู คอ จมูก'
-    }
+  // charts - always initialized to avoid "possibly undefined"
+  patientGenderChart: any = { labels: [], datasets: [] };
+  patientGenderChartOptions: any = { responsive: true, animation: false, maintainAspectRatio: false };
+
+  monthlyPatientsChart: any = { labels: [], datasets: [] };
+  monthlyPatientsChartOptions: any = { responsive: true, animation: false, maintainAspectRatio: false };
+
+  chartData: any = { labels: [], datasets: [] };
+  chartOptions: any = { responsive: true, animation: false };
+
+  // orders must include `total` used in template
+  orders: Array<{ id: string; customer: string; status: string; total: number }> = [
+    { id: 'ORD001', customer: 'John Doe', status: 'delivered', total: 129.5 },
+    { id: 'ORD002', customer: 'Jane Smith', status: 'pending', total: 49.0 },
+    { id: 'ORD003', customer: 'Michael Lee', status: 'cancelled', total: 0 },
+    { id: 'ORD004', customer: 'Sara Connor', status: 'delivered', total: 220.75 },
+    { id: 'ORD005', customer: 'Tom Hardy', status: 'pending', total: 15.99 }
   ];
 
-  financeRecords: FinanceRecord[] = [
-    {
-      id: 1,
-      date: '2025-08-11',
-      description: 'ค่าตรวจรักษา - นายสมชาย',
-      category: 'รายได้การรักษา',
-      amount: 1500,
-      type: 'income'
-    },
-    {
-      id: 2,
-      date: '2025-08-11',
-      description: 'ค่ายา - นางสาวสมหญิง',
-      category: 'รายได้ค่ายา',
-      amount: 850,
-      type: 'income'
-    },
-    {
-      id: 3,
-      date: '2025-08-11',
-      description: 'ค่าซื้ออุปกรณ์การแพทย์',
-      category: 'อุปกรณ์',
-      amount: 12000,
-      type: 'expense'
-    },
-    {
-      id: 4,
-      date: '2025-08-10',
-      description: 'ค่าตรวจเอกซเรย์',
-      category: 'รายได้การตรวจ',
-      amount: 600,
-      type: 'income'
-    },
-    {
-      id: 5,
-      date: '2025-08-10',
-      description: 'ค่าไฟฟ้า',
-      category: 'ค่าสาธารณูปโภค',
-      amount: 3200,
-      type: 'expense'
-    }
-  ];
+  patients: Patient[] = []; // optional, keep if used elsewhere
 
-  // Chart data for PrimeNG
-  patientGenderChart: any;
-  monthlyPatientsChart: any;
+  constructor(private cdr: ChangeDetectorRef) {}
 
-  chartData: any;
-  chartOptions: any;
+  ngOnInit(): void {
+    this.initCharts();
+    // example finance calc if financeRecords exist
+    // this.calculateFinanceStats();
+    this.cdr.markForCheck();
+  }
 
-    constructor() {
+  initCharts(): void {
+    this.patientGenderChart = {
+      labels: ['ชาย', 'หญิง'],
+      datasets: [{ data: [60, 40], backgroundColor: ['#3B82F6', '#EC4899'] }]
+    };
+    this.patientGenderChartOptions = {
+      responsive: true,
+      animation: false,
+      plugins: { legend: { position: 'bottom' } },
+      maintainAspectRatio: false
+    };
+
+    this.monthlyPatientsChart = {
+      labels: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม'],
+      datasets: [{ label: 'ผู้ป่วยรายเดือน', data: [30, 45, 28, 50, 42], backgroundColor: '#10B981' }]
+    };
+    this.monthlyPatientsChartOptions = {
+      responsive: true,
+      animation: false,
+      plugins: { legend: { display: false } },
+      maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true } }
+    };
+
     this.chartData = {
       labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
       datasets: [
@@ -180,99 +115,20 @@ export class DashboardComponent implements OnInit {
           fill: true,
           borderColor: '#42A5F5',
           tension: 0.4,
-          backgroundColor: 'rgba(66,165,245,0.2)'
+          backgroundColor: 'rgba(66,165,245,0.15)'
         }
       ]
     };
-
-    this.chartOptions = {
-      responsive: true,
-      plugins: {
-        legend: { display: false }
-      }
-    };
-  }
-  
-  orders = [
-    { id: 'ORD001', customer: 'John Doe', status: 'delivered' },
-    { id: 'ORD002', customer: 'Jane Smith', status: 'pending' },
-    { id: 'ORD003', customer: 'Michael Lee', status: 'cancelled' },
-    { id: 'ORD004', customer: 'Sara Connor', status: 'delivered' },
-    { id: 'ORD005', customer: 'Tom Hardy', status: 'pending' }
-  ];
-
-  ngOnInit() {
-    this.initCharts();
-    this.calculateFinanceStats();
+    this.chartOptions = { responsive: true, animation: false, plugins: { legend: { display: false } } };
   }
 
-  calculateFinanceStats() {
-    const income = this.financeRecords
-      .filter(record => record.type === 'income')
-      .reduce((sum, record) => sum + record.amount, 0);
-    
-    const expenses = this.financeRecords
-      .filter(record => record.type === 'expense')
-      .reduce((sum, record) => sum + record.amount, 0);
-
-    this.stats.totalIncome = income;
-    this.stats.totalExpenses = expenses;
-    this.stats.netProfit = income - expenses;
-    this.stats.totalTransactions = this.financeRecords.length;
+  // trackBy for table / ngFor
+  trackByOrder(index: number, item: any) {
+    return item?.id ?? index;
   }
 
-  initCharts() {
-    // Patient Gender Chart
-    this.patientGenderChart = {
-      labels: ['ชาย', 'หญิง'],
-      datasets: [
-        {
-          data: [60, 40],
-          backgroundColor: ['#3B82F6', '#EC4899'],
-          hoverBackgroundColor: ['#2563EB', '#DB2777']
-        }
-      ]
-    };
-
-    // Monthly Patients Chart
-    this.monthlyPatientsChart = {
-      labels: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม'],
-      datasets: [
-        {
-          label: 'ผู้ป่วยรายเดือน',
-          data: [30, 45, 28, 50, 42],
-          backgroundColor: '#10B981',
-          borderColor: '#059669',
-          borderWidth: 1
-        }
-      ]
-    };
-  }
-
-  getStatusSeverity(status: string): 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast' | undefined {
-    switch (status) {
-      case 'เสร็จแล้ว':
-        return 'success';
-      case 'กำลังตรวจ':
-        return 'warning';
-      case 'รอตรวจ':
-        return 'info';
-      default:
-        return 'secondary';
-    }
-  }
-
-  getAmountClass(type: 'income' | 'expense'): string {
-    return type === 'income' ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold';
-  }
-
-  formatAmount(amount: number, type: 'income' | 'expense'): string {
-    const prefix = type === 'income' ? '+' : '-';
-    return `${prefix}${amount.toLocaleString('th-TH')} ฿`;
-  }
-
-  getTotalAmount(): number {
-    if (!this.financeRecords || this.financeRecords.length === 0) return 0;
-    return this.financeRecords.reduce((sum, record) => sum + record.amount, 0);
+  // helper to avoid template errors when checking lengths
+  get useVirtualScroll(): boolean {
+    return (this.orders?.length ?? 0) > 50;
   }
 }

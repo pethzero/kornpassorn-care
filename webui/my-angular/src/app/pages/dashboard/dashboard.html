@@ -1,177 +1,74 @@
 <div class="dashboard-container p-6 bg-gray-50 min-h-screen">
-
-
   <!-- Simple Person Cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <!-- Card: Active Patients -->
-    <app-simple-person-card
-      title="คนไข้ที่มารักษา"
-      [value]="stats.activePatients"
-      subtitle="ผู้ป่วยที่มารับการรักษาวันนี้"
-     >
-    </app-simple-person-card>
-
-    <!-- Card: Medical Staff -->
-    <app-simple-person-card
-      title="แพทย์เวรวันนี้"
-      [value]="stats.doctorsOnDuty"
-      subtitle="แพทย์ที่ปฏิบัติงานในวันนี้"
-      iconColor="green"
-      status="พร้อมรักษา">
-    </app-simple-person-card>
-
-    <!-- Card: Nursing Staff -->
-    <app-simple-person-card
-      title="พยาบาลเวรวันนี้"
-      [value]="stats.nursesOnDuty"
-      subtitle="พยาบาลที่ปฏิบัติงานในวันนี้"
-      iconColor="pink"
-      status="พร้อมดูแล">
-    </app-simple-person-card>
-
-    <!-- Card: Patient Queue -->
-    <app-simple-person-card
-      title="คิวรอตรวจ"
-      [value]="stats.waitingQueue"
-      subtitle="ผู้ป่วยที่รอการตรวจรักษา"
-      iconColor="orange"
-      status="รอตรวจ">
-    </app-simple-person-card>
+    <app-simple-person-card title="คนไข้ที่มารักษา" [value]="stats.activePatients" subtitle="ผู้ป่วยที่มารับการรักษาวันนี้"></app-simple-person-card>
+    <app-simple-person-card title="แพทย์เวรวันนี้" [value]="stats.doctorsOnDuty" subtitle="แพทย์ที่ปฏิบัติงานในวันนี้" iconColor="green" status="พร้อมรักษา"></app-simple-person-card>
+    <app-simple-person-card title="พยาบาลเวรวันนี้" [value]="stats.nursesOnDuty" subtitle="พยาบาลที่ปฏิบัติงานในวันนี้" iconColor="pink" status="พร้อมดูแล"></app-simple-person-card>
+    <app-simple-person-card title="คิวรอตรวจ" [value]="stats.waitingQueue" subtitle="ผู้ป่วยที่รอการตรวจรักษา" iconColor="orange" status="รอตรวจ"></app-simple-person-card>
   </div>
 
   <!-- Charts Section -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <p-card styleClass="beautiful-chart-card">
       <ng-template pTemplate="header">
-        <div class="chart-title">
-          <span class="emoji">📊</span>
-          สัดส่วนเพศผู้ป่วย
-        </div>
+        <div class="chart-title"><span class="emoji">📊</span> สัดส่วนเพศผู้ป่วย</div>
       </ng-template>
-      <p-chart type="pie" [data]="patientGenderChart" [options]="{
-        responsive: true,
-        plugins: {
-          legend: {
-            position: 'bottom'
-          }
-        }
-      }" width="100%" height="300px"></p-chart>
+      <p-chart type="pie" [data]="patientGenderChart" [options]="patientGenderChartOptions" style="height:300px"></p-chart>
     </p-card>
 
     <p-card styleClass="beautiful-chart-card">
       <ng-template pTemplate="header">
-        <div class="chart-title">
-          <span class="emoji">📈</span>
-          ผู้ป่วยรายเดือน
-        </div>
+        <div class="chart-title"><span class="emoji">📈</span> ผู้ป่วยรายเดือน</div>
       </ng-template>
-      <p-chart type="bar" [data]="monthlyPatientsChart" [options]="{
-        responsive: true,
-        plugins: {
-          legend: {
-            display: false
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              stepSize: 10
-            }
-          }
-        }
-      }" width="100%" height="300px"></p-chart>
+      <p-chart type="bar" [data]="monthlyPatientsChart" [options]="monthlyPatientsChartOptions" style="height:300px"></p-chart>
     </p-card>
   </div>
-
-  
 
   <p-card styleClass="card-theme">
-  <div class="card-header">
-    <i class="pi pi-twitter text-blue-500"></i>
-    44,995 <span class="text-sm font-normal ml-2">Retweets</span>
-  </div>
-  <div class="card-subtitle">Target 10,000 | All Time Record 50,702</div>
-  <div class="card-content">
-    <!-- เนื้อหาอื่นๆ -->
-  </div>
-</p-card>
-
+    <div class="card-header"><i class="pi pi-twitter text-blue-500"></i> 44,995 <span class="text-sm font-normal ml-2">Retweets</span></div>
+    <div class="card-subtitle">Target 10,000 | All Time Record 50,702</div>
+    <div class="card-content"></div>
+  </p-card>
 </div>
 
-
 <div class="p-grid p-m-3 dashboard">
+  <!-- Stats cards -->
+  <div class="p-col-12 md:p-col-6 lg:p-col-3"><p-card class="stat-card revenue"><div class="stat-value">$12,500</div><div class="stat-label">Revenue</div></p-card></div>
+  <div class="p-col-12 md:p-col-6 lg:p-col-3"><p-card class="stat-card orders"><div class="stat-value">1,245</div><div class="stat-label">Orders</div></p-card></div>
+  <div class="p-col-12 md:p-col-6 lg:p-col-3"><p-card class="stat-card customers"><div class="stat-value">3,458</div><div class="stat-label">Customers</div></p-card></div>
+  <div class="p-col-12 md:p-col-6 lg:p-col-3"><p-card class="stat-card feedback"><div class="stat-value">92%</div><div class="stat-label">Positive Feedback</div></p-card></div>
 
-  <!-- Card 1: Revenue -->
-  <div class="p-col-12 md:p-col-6 lg:p-col-3">
-    <p-card class="stat-card revenue">
-      <div class="stat-value">$12,500</div>
-      <div class="stat-label">Revenue</div>
-    </p-card>
-  </div>
+  <!-- Revenue Chart -->
 
-  <!-- Card 2: Orders -->
-  <div class="p-col-12 md:p-col-6 lg:p-col-3">
-    <p-card class="stat-card orders">
-      <div class="stat-value">1,245</div>
-      <div class="stat-label">Orders</div>
-    </p-card>
-  </div>
-
-  <!-- Card 3: Customers -->
-  <div class="p-col-12 md:p-col-6 lg:p-col-3">
-    <p-card class="stat-card customers">
-      <div class="stat-value">3,458</div>
-      <div class="stat-label">Customers</div>
-    </p-card>
-  </div>
-
-  <!-- Card 4: Feedback -->
-  <div class="p-col-12 md:p-col-6 lg:p-col-3">
-    <p-card class="stat-card feedback">
-      <div class="stat-value">92%</div>
-      <div class="stat-label">Positive Feedback</div>
-    </p-card>
-  </div>
-
-  <!-- Chart -->
-  <div class="p-col-12 md:p-col-8">
-    <p-card header="Revenue Chart">
-      <p-chart type="line" [data]="chartData" [options]="chartOptions"></p-chart>
-    </p-card>
-  </div>
 
   <!-- Table -->
- <p-card header="Recent Orders">
-  <p-table 
-    [value]="orders" 
-    [paginator]="true" 
-    [rows]="5" 
-    [rowsPerPageOptions]="[5,10,20]" 
-    responsiveLayout="scroll" 
-    class="custom-table"
-  >
-    <ng-template pTemplate="header">
-      <tr>
-        <th>Order ID</th>
-        <th>Customer</th>
-        <th>Status</th>
-        <th>Total</th>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-order>
-      <tr>
-        <td>{{ order.id }}</td>
-        <td>{{ order.customer }}</td>
-        <td>
-          <span [class]="'status-badge ' + order.status">
-            {{ order.status | titlecase }}
-          </span>
-        </td>
-        <td>\${{ order.total | number }}</td>
-      </tr>
-    </ng-template>
-  </p-table>
-</p-card>
-
+  <p-card header="Recent Orders">
+    <p-table
+      [value]="orders || []"
+      [paginator]="true"
+      [rows]="5"
+      [rowsPerPageOptions]="[5,10,20]"
+      responsiveLayout="scroll"
+      class="custom-table"
+      dataKey="id"
+      [virtualScroll]="useVirtualScroll"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Order ID</th>
+          <th>Customer</th>
+          <th>Status</th>
+          <th>Total</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-order>
+        <tr>
+          <td>{{ order.id }}</td>
+          <td>{{ order.customer }}</td>
+          <td><span [class]="'status-badge ' + (order.status || '')">{{ order.status | titlecase }}</span></td>
+          <td>\${{ (order.total ?? 0) | number:'1.0-2' }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
 </div>
