@@ -24,23 +24,28 @@ const defaultOptions = {
   imports: [
     // Default (unnamed) connection
     TypeOrmModule.forRoot(defaultOptions),
-
     // Register repositories for default connection
     TypeOrmModule.forFeature(getEntitiesForTypeOrm('default')),
 
-    // ตัวอย่าง: เพิ่ม connection ที่สอง (commented) — uncomment และปรับค่าเมื่อจำเป็น
-    /*
-    TypeOrmModule.forRoot({
-      ...defaultOptions,
-      name: 'albumsConnection',          // ชื่อ connection (named)
-      host: process.env.ALBUM_DB_HOST || 'album_db_host',
-      database: process.env.ALBUM_DB_NAME || 'album_db',
-      entities: [Album],                 // ต้อง import Album entity ข้างบนถ้าใช้
-      // synchronize/logging: ปรับเฉพาะ connection นี้ได้
-    }),
-    */
+    // TypeOrmModule.forRoot({
+    //   name: 'mysql',
+    //   type: 'mysql',
+    //   host: process.env.MYSQL_HOST || 'localhost',
+    //   port: 3306,
+    //   username: process.env.MYSQL_USER || 'root',
+    //   password: process.env.MYSQL_PASS || 'pass1234',
+    //   database: process.env.MYSQL_DB || 'mysql_db',
+    //   entities: getEntitiesForTypeOrm('db1'),
+    //   synchronize: true,
+    //   logging: false,
+    // }),
+
+    // TypeOrmModule.forFeature(
+    //   getEntitiesForTypeOrm('db1'),
+    //   'mysql',
+    // ),
   ],
   providers: [],
   exports: [TypeOrmModule],
 })
-export class DatabaseModule {}
+export class DatabaseModule { }

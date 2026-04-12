@@ -29,7 +29,7 @@ export class UserMenu implements OnInit {
 
   ngOnInit(): void {
     this.user = this.auth.getCurrentUser();
-    console.log('Current user:', this.user);
+    // console.log('Current user:', this.user);
 
     // subscribe ถ้าอยาก update user live
     this.auth.currentUser$.subscribe(u => this.user = u);

@@ -1,3 +1,4 @@
+// entity-registry.ts
 // Entity Registry - จัดการ entities สำหรับแต่ละ database
 import { 
   User, 
@@ -28,6 +29,7 @@ export const DATABASE_ENTITIES: Record<string, EntityClass[]> = {
   db2: [Patient, MedicalRecord],
   finance_db: [User, FinanceRecord],
   api_db: [User],
+  mysql1:[]
 };
 
 // Helper functions
