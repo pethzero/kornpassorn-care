@@ -1,67 +1,108 @@
-<form [formGroup]="patientForm" (ngSubmit)="submit()" class="space-y-4 max-w-lg mx-auto bg-white p-6 rounded-xl shadow">
-
-  <div>
-    <label>รหัสคนไข้</label>
-    <input formControlName="patient_code" class="input" required />
-  </div>
-
-  <div>
-    <label>ชื่อ</label>
-    <input formControlName="first_name" class="input" required />
-  </div>
-
-  <div>
-    <label>นามสกุล</label>
-    <input formControlName="last_name" class="input" required />
-  </div>
-
-  <div>
-    <label>เพศ</label>
-    <select formControlName="gender" class="input">
-      <option value="">-</option>
-      <option value="male">ชาย</option>
-      <option value="female">หญิง</option>
-      <option value="other">อื่นๆ</option>
-    </select>
-  </div>
-
-  <div>
-    <label>วันเกิด</label>
-    <input type="date" formControlName="date_of_birth" class="input" />
-  </div>
-
-  <div>
-    <label>เบอร์โทร</label>
-    <input formControlName="phone" class="input" />
-    <div class="text-red-600 text-sm" *ngIf="patientForm.get('phone')?.invalid && patientForm.get('phone')?.touched">
-      กรุณากรอกเบอร์โทรให้ถูกต้อง
+<div class="patient-form-container">
+  @if (loading) {
+    <div class="overlay">
+      <p-progress-spinner ariaLabel="loading"></p-progress-spinner>
     </div>
-  </div>
+  } @else {
+    <p-card class="form-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <h3>{{ isEditMode ? '✏️ แก้ไขข้อมูลคนไข้' : '➕ เพิ่มคนไข้ใหม่' }}</h3>
+        </div>
+      </ng-template>
 
-  <div>
-    <label>Email</label>
-    <input formControlName="email" class="input" />
-    <div class="text-red-600 text-sm" *ngIf="patientForm.get('email')?.invalid && patientForm.get('email')?.touched">
-      กรุณากรอกอีเมลให้ถูกต้อง
-    </div>
-  </div>
+      <form [formGroup]="patientForm">
 
-  <div>
-    <label>ที่อยู่</label>
-    <input formControlName="address" class="input" />
-  </div>
+        <div class="field">
+          <label>รหัสคนไข้ <span class="required">*</span></label>
+          <input pInputText formControlName="patient_code" placeholder="กรอกรหัสคนไข้" class="full-width"
+            [class.ng-invalid]="isFieldInvalid('patient_code')" />
+          @if (isFieldInvalid('patient_code')) {
+            <small class="error-message">{{ getFieldError('patient_code') }}</small>
+          }
+        </div>
 
-  <div>
-    <label for="blood_type">กรุ๊ปเลือด</label>
-    <p-select formControlName="blood_type" [options]="bloodTypes" optionLabel="label" optionValue="value"
-      placeholder="เลือกกรุ๊ปเลือด" styleClass="w-full">
-    </p-select>
-  </div>
+        <div class="field">
+          <label>ชื่อ <span class="required">*</span></label>
+          <input pInputText formControlName="first_name" placeholder="กรอกชื่อ" class="full-width"
+            [class.ng-invalid]="isFieldInvalid('first_name')" />
+          @if (isFieldInvalid('first_name')) {
+            <small class="error-message">{{ getFieldError('first_name') }}</small>
+          }
+        </div>
 
-  <button type="submit" class="btn btn-primary" [disabled]="patientForm.invalid">
-    บันทึก
-  </button>
+        <div class="field">
+          <label>นามสกุล <span class="required">*</span></label>
+          <input pInputText formControlName="last_name" placeholder="กรอกนามสกุล" class="full-width"
+            [class.ng-invalid]="isFieldInvalid('last_name')" />
+          @if (isFieldInvalid('last_name')) {
+            <small class="error-message">{{ getFieldError('last_name') }}</small>
+          }
+        </div>
 
-  <div *ngIf="successMessage" class="text-green-600 mt-2">{{ successMessage }}</div>
-  <div *ngIf="errorMessage" class="text-red-600 mt-2">{{ errorMessage }}</div>
-</form>
+        <div class="field">
+          <label>เพศ</label>
+          <select formControlName="gender" class="full-width">
+            <option value="">-</option>
+            <option value="male">ชาย</option>
+            <option value="female">หญิง</option>
+            <option value="other">อื่นๆ</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>วันเกิด</label>
+          <input type="date" formControlName="date_of_birth" class="full-width" />
+        </div>
+
+        <div class="field">
+          <label>เบอร์โทร <span class="required">*</span></label>
+          <input pInputText formControlName="phone" placeholder="กรอกเบอร์โทร" class="full-width"
+            [class.ng-invalid]="isFieldInvalid('phone')" />
+          @if (isFieldInvalid('phone')) {
+            <small class="error-message">{{ getFieldError('phone') }}</small>
+          }
+        </div>
+
+        <div class="field">
+          <label>Email <span class="required">*</span></label>
+          <input pInputText formControlName="email" placeholder="กรอกอีเมล" class="full-width"
+            [class.ng-invalid]="isFieldInvalid('email')" />
+          @if (isFieldInvalid('email')) {
+            <small class="error-message">{{ getFieldError('email') }}</small>
+          }
+        </div>
+
+        <div class="field">
+          <label>ที่อยู่</label>
+          <textarea formControlName="address" placeholder="กรอกที่อยู่ (ไม่บังคับ)"
+            rows="3" class="full-width"></textarea>
+        </div>
+
+        <div class="field">
+          <label>กรุ๊ปเลือด</label>
+          <p-select formControlName="blood_type" [options]="bloodTypes"
+            optionLabel="label" optionValue="value"
+            placeholder="เลือกกรุ๊ปเลือด" styleClass="full-width">
+          </p-select>
+        </div>
+
+        <div class="form-actions">
+          <button pButton type="button" label="ยกเลิก"
+            class="p-button-secondary" (click)="onCancel()"></button>
+          <button pButton type="button" label="รีเซ็ต"
+            class="p-button-secondary" (click)="onReset()"
+            [disabled]="patientForm.pristine"></button>
+          <button pButton type="button" class="p-button-success"
+            (click)="submit()" [disabled]="loading">
+            <i class="pi pi-check" pButtonIcon></i>
+            <span pButtonLabel>{{ isEditMode ? 'บันทึกการแก้ไข' : 'บันทึก' }}</span>
+          </button>
+        </div>
+
+      </form>
+    </p-card>
+  }
+</div>
+
+<p-toast></p-toast>

@@ -26,4 +26,10 @@ export class PatientService {
   updatePatient(id: number, patient: Partial<Patient>): Observable<any> {
     return this.http.put(`${environment.apiUrl}/patients/${id}`, patient);
   }
+
+  getPatientById(id: string): Observable<Patient> {
+    return this.http.get<Patient>(`${environment.apiUrl}/patients/${id}`);
+  }
+
+
 }

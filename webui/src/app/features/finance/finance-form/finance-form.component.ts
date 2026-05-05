@@ -104,28 +104,6 @@ export class FinanceFormComponent implements OnInit {
         });
       }
     });
-
-    // Simulate API call - Replace with actual service call
-    // setTimeout(() => {
-    //   // const mockRecord: FinanceRecord = {
-    //   //   id: this.recordId!,
-    //   //   item_name: 'ค่าอาหาร',
-    //   //   category: 'expense',
-    //   //   amount: 250,
-    //   //   record_date: new Date(),
-    //   //   description: 'ค่าอาหารกลางวัน'
-    //   // };
-
-    //   // this.financeForm.patchValue({
-    //   //   item_name: mockRecord.item_name,
-    //   //   category: mockRecord.category,
-    //   //   amount: mockRecord.amount,
-    //   //   record_date: mockRecord.record_date,
-    //   //   description: mockRecord.description
-    //   // });
-
-    //   this.loading = false;
-    // }, 2000);
   }
 
   onSubmit(): void {

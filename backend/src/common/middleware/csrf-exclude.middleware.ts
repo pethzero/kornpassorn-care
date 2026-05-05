@@ -3,7 +3,9 @@ import { csrfProtection } from './csrf.middleware';
 
 // 🔒 รายการ path/method ที่ต้องการให้ใช้ CSRF Protection (เฉพาะตัวที่กำหนด)
 const requireCsrf: { path: RegExp; method: string }[] = [
+  { path: /^\/api\/auth\/csrf-token$/, method: 'GET' },
   { path: /^\/api\/patients/, method: 'ANY' }, // 🔒 /api/patients/* ทุก method ต้องใช้ CSRF
+
   // เพิ่มตัวอื่นๆ ที่ต้องการ CSRF protection ตรงนี้
   // { path: /^\/api\/auth\/token$/, method: 'POST' }, // 🔒 POST /api/auth/token ต้องใช้ CSRF
   // { path: /^\/api\/admin/, method: 'ANY' },
