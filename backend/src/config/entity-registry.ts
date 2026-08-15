@@ -1,13 +1,13 @@
 // entity-registry.ts
 // Entity Registry - จัดการ entities สำหรับแต่ละ database
-import { 
-  User, 
-  UserToken, 
-  LoginLog, 
-  FinanceRecord, 
-  Patient, 
-  MedicalRecord 
-} from './entities';
+import {
+  User,
+  UserToken,
+  LoginLog,
+  FinanceRecord,
+  Patient,
+  MedicalRecord
+} from '../database/entities';
 
 // Type definition สำหรับ Entity Class
 export type EntityClass = new (...args: any[]) => any;
@@ -23,13 +23,13 @@ export const DEFAULT_ENTITIES: EntityClass[] = [
 ];
 
 // Entity configurations สำหรับแต่ละ database
+// เพิ่ม key ใหม่ที่นี่เมื่อเปิดใช้ connection นั้นจริงใน config/database.config.ts และ database.module.ts
 export const DATABASE_ENTITIES: Record<string, EntityClass[]> = {
   default: DEFAULT_ENTITIES,
-  db1: [User, UserToken, LoginLog],
-  db2: [Patient, MedicalRecord],
-  finance_db: [User, FinanceRecord],
-  api_db: [User],
-  mysql1:[]
+  // db1: [User, UserToken, LoginLog],
+  // db2: [Patient, MedicalRecord],
+  // finance_db: [User, FinanceRecord],
+  // api_db: [User],
 };
 
 // Helper functions

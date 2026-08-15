@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ProfileController } from './profile.controller';
-import { DatabaseModule } from '../../database/database.module';
+import { DatabaseModule } from '../../config/database.module';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({

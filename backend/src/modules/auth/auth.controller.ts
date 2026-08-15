@@ -25,19 +25,14 @@ export class AuthController {
   @Post('login')
   async login(@Body() body: LoginDto, @Req() req: Request, @Res() res: Response) {
     const user = await this.authService.validateUser(body.username, body.password);
-    console.log('User after validateUser:', user);
     if (!user) {
       await this.authService.logLogin(null, false, req, 'Invalid credentials');
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const adminNeverExpire = (process.env.ADMIN_NEVER_EXPIRE === 'true');
-    const userDefault = process.env.ACCESS_TOKEN_EXPIRES_IN || '1d';
-    const adminDefault = process.env.ADMIN_ACCESS_TOKEN_EXPIRES_IN || '30d';
-    let expiresIn: string | undefined = user.role === 'admin' ? adminDefault : userDefault;
-    if (user.role === 'admin' && adminNeverExpire) {
-      expiresIn = undefined;
-    }
+    // --- Access token (สั้น, ใช้แนบทุก request) ---
+    const expiresIn = Config.token.resolveAccessTokenExpiresIn(user.role);
+    const isPermanent = expiresIn === undefined; // admin + ADMIN_ACCESS_TOKEN_EXPIRES_IN=0
 
     const jti = uuidv4();
     const payload = {
@@ -48,48 +43,61 @@ export class AuthController {
     };
 
     const token = this.authService.generateJwt(payload, expiresIn);
-
-    // parse expiresIn string -> seconds
-    const parseExpiresIn = (str: string | undefined): number => {
-      if (!str) return 0;
-      const match = str.match(/^(\d+)([dhms])$/);
-      if (!match) return 0;
-      const value = parseInt(match[1], 10);
-      switch (match[2]) {
-        case 'd': return value * 24 * 60 * 60;
-        case 'h': return value * 60 * 60;
-        case 'm': return value * 60;
-        case 's': return value;
-        default: return 0;
-      }
-    };
-
-    const expiresInSeconds = parseExpiresIn(expiresIn);
+    const expiresInSeconds = Config.token.parseExpiresIn(expiresIn);
     const expiredAt = expiresInSeconds > 0 ? new Date(Date.now() + expiresInSeconds * 1000) : null;
 
-    const ua = new UAParser.UAParser(req.headers['user-agent'] || '');
-    const uaResult = ua.getResult();
     const deviceInfo = buildDeviceInfo(req, (req.body as any) || {});
-    const isPermanentOpt = user.role === 'admin' && Config.token.ADMIN_NEVER_EXPIRE;
-    console.log('[auth.login] isPermanentOpt=', isPermanentOpt);
 
     await this.authService.saveToken(user, token, expiredAt, jti, {
       deviceInfo,
       tokenType: 'access',
-      isPermanent: isPermanentOpt,
+      isPermanent,
     });
 
     await this.authService.logLogin(user, true, req);
 
+    const oneYearMs = 365 * 24 * 60 * 60 * 1000;
     const cookieOptions: any = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/',
     };
-    if (expiredAt) cookieOptions.maxAge = expiredAt.getTime() - Date.now();
+    // token ไม่มี expiry (permanent) ก็ต้องให้ cookie อยู่ข้ามการปิดเบราว์เซอร์ด้วย ไม่งั้นเป็นแค่ session cookie
+    cookieOptions.maxAge = expiredAt ? expiredAt.getTime() - Date.now() : oneYearMs * 10;
 
     res.cookie('token', token, cookieOptions);
+
+    // --- Refresh token (ยาว, เก็บใน httpOnly cookie แยก ให้ /auth/refresh ต่ออายุ access token ได้โดย user ไม่ต้อง login ซ้ำ) ---
+    // rememberMe: user (พนักงาน) ที่ใช้เครื่องส่วนตัวติ๊กไว้ได้ ถ้าไม่ติ๊กจะได้ session สั้นกว่า (เหมาะกับเครื่องแชร์กันในหน่วยงาน)
+    const rememberMe = !!body.rememberMe;
+    const refreshExpiresIn = rememberMe
+      ? Config.token.REFRESH_TOKEN_REMEMBER_ME_EXPIRES_IN
+      : Config.token.REFRESH_TOKEN_EXPIRES_IN;
+    const refreshJti = uuidv4();
+    const refreshPayload = {
+      sub: user.id,
+      username: user.username,
+      role: user.role,
+      jti: refreshJti,
+      remember: rememberMe,
+    };
+    const refreshToken = await this.authService.generateRefreshToken(refreshPayload, refreshExpiresIn);
+    const refreshExpiresInSeconds = Config.token.parseExpiresIn(refreshExpiresIn);
+    const refreshExpiredAt = new Date(Date.now() + refreshExpiresInSeconds * 1000);
+
+    await this.authService.saveToken(user, refreshToken, refreshExpiredAt, refreshJti, {
+      deviceInfo,
+      tokenType: 'refresh',
+    });
+
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: refreshExpiresInSeconds * 1000,
+    });
 
     return res.json({
       success: true,
@@ -97,7 +105,7 @@ export class AuthController {
       expires_in: expiresInSeconds,
       expired_at: expiredAt ? expiredAt.toISOString() : null,
       jti,
-      is_permanent: user.role === 'admin' && adminNeverExpire,
+      is_permanent: isPermanent,
     });
   }
   // ...existing code...
@@ -108,6 +116,7 @@ export class AuthController {
     try {
       const ua = new UAParser.UAParser(req.headers['user-agent'] || '');
       const uaResult = ua.getResult();
+
       const deviceInfo = {
         raw: req.headers['user-agent'],
         client: uaResult.browser.name ? 'browser' : 'mobile',
@@ -124,38 +133,18 @@ export class AuthController {
           brand: uaResult.device.vendor || null,
           model: uaResult.device.model || null,
         },
-        app: {
-          name: (req.headers['x-app-name'] as string) || null,
-          version: (req.headers['x-app-version'] as string) || null,
-        },
         ip: ((req.headers['x-forwarded-for'] as string) || req.ip)?.split(',')[0].trim(),
-        locale: req.headers['accept-language'] || null,
-        timezone: (req.headers['x-timezone'] as string) || null,
-        screen: {
-          width: (req.headers['x-screen-width'] as any) || null,
-          height: (req.headers['x-screen-height'] as any) || null,
-        },
-        fingerprint: (req.headers['x-client-fingerprint'] as string) || (req.body && (req.body as any).fingerprint) || null
+        fingerprint: (req.headers['x-client-fingerprint'] as string) || null
       };
 
-      // let service create token and save using provided deviceInfo
       const result = await this.authService.loginAsGuest(deviceInfo);
 
-      if (!result || !result.access_token) {
+      if (!result?.access_token) {
         return res.status(500).json({ success: false, message: 'Failed to create guest token' });
       }
 
-      const cookieOptions: any = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/',
-      };
-      if (typeof result.expires_in === 'number' && result.expires_in > 0) {
-        cookieOptions.maxAge = result.expires_in * 1000;
-      }
-
-      res.cookie('token', result.access_token, cookieOptions);
+      // ❌ ไม่ต้อง set cookie
+      // res.cookie('token', ...)
 
       return res.json({
         success: true,
@@ -163,7 +152,9 @@ export class AuthController {
         expires_in: result.expires_in,
         expired_at: result.expired_at,
         jti: result.jti,
+        is_guest: true
       });
+
     } catch (err) {
       console.error('loginAsGuest error:', err);
       return res.status(500).json({ success: false, message: 'Internal error' });
@@ -289,7 +280,7 @@ export class AuthController {
   }
 
   // POST /auth/revoke/:jti
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Post('revoke/:jti')
   async revoke(@Param('jti') jti: string, @Req() req: Request) {
     const actor = (req as any).user;
@@ -298,6 +289,84 @@ export class AuthController {
   }
 
 
+  @Post('refresh')
+  async refresh(@Req() req: Request, @Res() res: Response) {
+    const refreshToken = req.cookies?.refresh_token;
+
+    if (!refreshToken) {
+      return res.status(401).json({ message: 'No refresh token' });
+    }
+
+    try {
+      const payload = await this.authService.verifyRefreshToken(refreshToken);
+
+      if (payload.is_guest) {
+        return res.status(401).json({ message: 'Guest cannot refresh' });
+      }
+
+      const isValid = await this.authService.isRefreshTokenValid(payload.jti);
+      if (!isValid) {
+        return res.status(401).json({ message: 'Refresh token revoked/expired' });
+      }
+
+      // 🔥 ใช้ method ใหม่
+      await this.authService.revokeRefreshTokenByJti(payload.jti);
+
+      const newJti = uuidv4();
+
+      const newPayload = {
+        sub: payload.sub,
+        username: payload.username,
+        role: payload.role,
+        jti: newJti,
+      };
+
+      const newAccessExpiresIn = Config.token.resolveAccessTokenExpiresIn(payload.role);
+      const newAccessToken = this.authService.generateJwt(newPayload, newAccessExpiresIn);
+
+      // คง remember-me duration เดิมของ session นี้ไว้ตอน rotate refresh token
+      const refreshExpiresIn = payload.remember
+        ? Config.token.REFRESH_TOKEN_REMEMBER_ME_EXPIRES_IN
+        : Config.token.REFRESH_TOKEN_EXPIRES_IN;
+      const refreshExpiresInSeconds = Config.token.parseExpiresIn(refreshExpiresIn);
+      const refreshExpiresAt = new Date(Date.now() + refreshExpiresInSeconds * 1000);
+
+      // 🔥 ต้อง await
+      const newRefreshToken = await this.authService.generateRefreshToken(
+        { ...newPayload, remember: payload.remember },
+        refreshExpiresIn,
+      );
+
+      await this.authService.saveToken(
+        { id: payload.sub },
+        newRefreshToken,
+        refreshExpiresAt,
+        newJti,
+        { tokenType: 'refresh' }
+      );
+
+      res.cookie('refresh_token', newRefreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/',
+        maxAge: refreshExpiresInSeconds * 1000,
+      });
+
+      return res.json({
+        access_token: newAccessToken,
+      });
+
+    } catch (err) {
+      res.clearCookie('refresh_token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+      });
+
+      return res.status(401).json({ message: 'Invalid refresh token' });
+    }
+  }
 
 
 }

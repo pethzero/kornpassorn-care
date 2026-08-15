@@ -10,8 +10,12 @@ export class UserService {
     private readonly repo: Repository<User>,
   ) {}
 
+  // ไม่ select password_hash — endpoint ที่เรียก findById ส่งค่ากลับให้ client โดยตรง
   findById(id: string): Promise<User | null> {
-    return this.repo.findOne({ where: { id } });
+    return this.repo.findOne({
+      where: { id },
+      select: ['id', 'username', 'email', 'first_name', 'last_name', 'phone_number', 'isActive', 'createdAt', 'role'],
+    });
   }
 
   findByUsername(username: string): Promise<User | null> {

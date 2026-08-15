@@ -1,5 +1,5 @@
 // src/auth/auth.service.ts
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -7,11 +7,11 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from '../../database/entities/user.entity';
 import { UserService } from '../user/user.service';
-import { UserController } from '../user/user.controller';
 import { UserToken } from '../../database/entities/user-token.entity';
 import { LoginLog } from '../../database/entities/login-log.entity';
 import * as crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
+import { Config } from '../../config';
 
 
 @Injectable()
@@ -25,10 +25,8 @@ export class AuthService {
 
   async validateUser(username: string, password: string): Promise<User | null> {
     const user = await this.userService.findByUsername(username);
-    console.log('Found user:', user );
     if (!user) return null;
     const isMatch = await bcrypt.compare(password, user.password_hash);
-    console.log('Password match:', isMatch);
     if (!isMatch) return null;
     return user;
   }
@@ -100,32 +98,7 @@ export class AuthService {
         revoked: false,
       } as any);
 
-      const saved = await this.userTokenRepo.save(tokenPartial);
-      // console.log('[saveToken] saved:', { id: (saved as any).id, jti: finalJti, deviceIp });
-
-      // debug repo / datasource info (best-effort)
-      try {
-        // console.log('[saveToken] repo.table:', this.userTokenRepo.metadata.tableName);
-        // TypeORM v0.3+: dataSource options accessible via manager.dataSource
-        const dsOptions = (this.userTokenRepo as any).manager?.dataSource?.options;
-        console.log('[saveToken] datasource.options (partial):', {
-          host: dsOptions?.host, port: dsOptions?.port, database: dsOptions?.database, type: dsOptions?.type,
-        });
-      } catch (e) {
-        console.warn('[saveToken] repo metadata debug failed', e);
-      }
-
-      // immediate verify by id / jti / token_hash
-      const idToCheck = (saved as any).id;
-      const foundById = await this.userTokenRepo.findOne({ where: { id: idToCheck } as any });
-      const foundByJti = await this.userTokenRepo.findOne({ where: { jti: finalJti } as any });
-      const foundByHash = tokenHash ? await this.userTokenRepo.findOne({ where: { tokenHash } as any }) : null;
-      // console.log('[saveToken] verify find:', {
-      //   byId: !!foundById,
-      //   byJti: !!foundByJti,
-      //   byHash: !!foundByHash,
-      //   foundById,
-      // });
+      await this.userTokenRepo.save(tokenPartial);
 
       return finalJti;
     } catch (err) {
@@ -177,39 +150,35 @@ export class AuthService {
   }
 
   // auth.service.ts
-  // เพิ่ม/แก้ loginAsGuest ให้สร้าง jti, เก็บ token (type=guest) แล้วคืนค่า
-  // accept deviceInfo optional param
-  async loginAsGuest(deviceInfo?: any) {
-    const expiresIn = process.env.GUEST_EXPIRES_IN || '1h';
+  async loginAsGuest(deviceInfo: any) {
     const jti = uuidv4();
-    const guestSub = `guest-${jti}`;
-    const payload = { sub: guestSub, username: 'guest', role: 'guest', jti };
-    const token = this.jwtService.sign(payload, { expiresIn });
 
-    const expiresInSeconds = this.parseExpiresIn(expiresIn);
-    const expiredAt = expiresInSeconds > 0 ? new Date(Date.now() + expiresInSeconds * 1000) : null;
+    const payload = {
+      sub: `guest_${jti}`,
+      role: 'guest',
+      is_guest: true,
+      jti,
+    };
 
-    // save token with provided deviceInfo
-    await this.saveToken(null, token, expiredAt, jti, { tokenType: 'guest', deviceInfo });
+    const expiresIn = '15m';
 
-    return { access_token: token, expires_in: expiresInSeconds, expired_at: expiredAt ? expiredAt.toISOString() : null, jti };
+    const accessToken = this.generateJwt(payload, expiresIn);
+
+    const expiresInSeconds = 15 * 60;
+    const expiredAt = new Date(Date.now() + expiresInSeconds * 1000);
+
+    await this.saveToken(null, accessToken, expiredAt, jti, {
+      deviceInfo,
+      tokenType: 'access',
+    });
+
+    return {
+      access_token: accessToken,
+      expires_in: expiresInSeconds,
+      expired_at: expiredAt,
+      jti,
+    };
   }
-
-  // helper parseExpiresIn if not present in file
-  parseExpiresIn(str: string | undefined): number {
-    if (!str) return 0;
-    const match = str.match(/^(\d+)([dhms])$/);
-    if (!match) return 0;
-    const v = parseInt(match[1], 10);
-    switch (match[2]) {
-      case 'd': return v * 24 * 60 * 60;
-      case 'h': return v * 60 * 60;
-      case 'm': return v * 60;
-      case 's': return v;
-      default: return 0;
-    }
-  }
-
 
   // บันทึก log ทุกครั้งที่ login (สำเร็จ/ล้มเหลว)
   async logLogin(user: User | null, success: boolean, req: any, failReason?: string) {
@@ -256,10 +225,10 @@ export class AuthService {
         jti,
       };
 
-      const expiresIn = process.env.API_TOKEN_EXPIRES_IN || '30d';
+      const expiresIn = Config.token.API_TOKEN_EXPIRES_IN;
       const token = this.jwtService.sign(payload, { expiresIn });
 
-      const expiresInSeconds = this.parseExpiresIn(expiresIn);
+      const expiresInSeconds = Config.token.parseExpiresIn(expiresIn);
       const expiredAt = expiresInSeconds > 0 ? new Date(Date.now() + expiresInSeconds * 1000) : null;
 
       // save token with deviceInfo (token_hash + jti stored)
@@ -317,7 +286,7 @@ export class AuthService {
     const actorRole = actor?.role;
 
     if (actorRole !== 'admin' && ownerId !== actorId) {
-      throw new Error('Not allowed to revoke this token');
+      throw new ForbiddenException('Not allowed to revoke this token');
     }
 
     await this.userTokenRepo.update({ jti }, { revoked: true });
@@ -332,6 +301,39 @@ export class AuthService {
     }
   }
   // ...existing code...
+
+
+  async verifyRefreshToken(token: string) {
+    return this.jwtService.verify(token, {
+      secret: process.env.JWT_REFRESH_SECRET,
+    });
+  }
+
+  async generateRefreshToken(payload: any, expiresIn: string) {
+    return this.jwtService.sign(payload, {
+      secret: process.env.JWT_REFRESH_SECRET,
+      expiresIn,
+    });
+  }
+
+  async isRefreshTokenValid(jti: string) {
+    const token = await this.userTokenRepo.findOne({ where: { jti, tokenType: 'refresh' } });
+
+    if (!token) return false;
+    if (token.revoked) return false;
+    if (token.expired_at && new Date(token.expired_at) < new Date()) return false;
+
+    return true;
+  }
+
+  async revokeRefreshTokenByJti(jti: string) {
+    if (!jti) return;
+
+    await this.userTokenRepo.update(
+      { jti, tokenType: 'refresh' },
+      { revoked: true }
+    );
+  }
 
 }
 

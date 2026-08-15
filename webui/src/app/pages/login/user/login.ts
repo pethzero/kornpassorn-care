@@ -14,12 +14,13 @@ import { FormsModule } from '@angular/forms';
 export class LoginComponent {
   username = '';
   password = '';
+  rememberMe = false;
   errorMessage = '';
 
   constructor(private auth: AuthService, private router: Router) {}
 
   login(): void {
-    this.auth.loginWithCredentials(this.username, this.password).subscribe(success => {
+    this.auth.loginWithCredentials(this.username, this.password, this.rememberMe).subscribe(success => {
       if (success) {
         this.router.navigate(['/dashboard']);
       } else {

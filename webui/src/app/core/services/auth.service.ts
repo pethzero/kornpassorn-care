@@ -1,59 +1,37 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { BehaviorSubject, Observable, of, firstValueFrom } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { tap, catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface User {
   userId: number;
   username: string;
-  name?: string;   // เพิ่ม optional name
+  name?: string;
   role: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
-  currentUser$: Observable<User | null> = this.currentUserSubject.asObservable();
+  currentUser$ = this.currentUserSubject.asObservable();
 
   private csrfToken: string = '';
-  private logoutTimer: any;
 
   constructor(private http: HttpClient) {
-    const token = localStorage.getItem('token');
-    const expiresAt = Number(localStorage.getItem('expires_at'));
+    // ต้อง defer ออกไปนอก constructor ก่อน เพราะถ้ายิง http.get() sync ตรงนี้เลย
+    // จะไป trigger authInterceptor ที่ inject(AuthService) ซ้ำ ขณะที่ instance นี้ยังสร้างไม่เสร็จ
+    // -> Angular throw NG0200 circular dependency (error ถูกกลืนเงียบๆ ใน loadUser() ทำให้ /auth/me ไม่เคยยิงจริง)
+    queueMicrotask(() => this.initUserFromServer());
+  }
 
-    if (token && expiresAt && Date.now() < expiresAt) {
-      // Legacy / localStorage flow: still support decoding if token stored
-      try {
-        const user = this.decodeToken(token);
-        this.currentUserSubject.next(user);
-        this.setLogoutTimer(expiresAt - Date.now());
-        return;
-      } catch {
-        this.clearAuthState();
-      }
+  // ================== INIT ==================
+  private initUserFromServer() {
+    // ไม่มี token เก็บไว้เลย ก็ไม่ต้องยิงเช็ค (ยังไม่เคย login)
+    if (!localStorage.getItem('token')) {
+      return;
     }
-
-    // If no readable token, try to get current user from server (cookie-based auth)
-    this.http.get<{ user?: any }>(`${environment.apiUrl}/auth/me`, { withCredentials: true })
-      .pipe(
-        catchError(() => of(null))
-      )
-      .subscribe(res => {
-        if (res && res.user) {
-          // map server user to local User interface
-          const u: User = {
-            userId: res.user.id,
-            username: res.user.username,
-            name: res.user.name,
-            role: res.user.role
-          };
-          this.currentUserSubject.next(u);
-        } else {
-          this.clearAuthState();
-        }
-      });
+    this.loadUser();
   }
 
   // ================== CSRF ==================
@@ -76,29 +54,23 @@ export class AuthService {
     return {
       userId: payload.sub,
       username: payload.username,
-      name: payload.name,  // map name ถ้ามีใน payload
+      name: payload.name,
       role: payload.role
     };
   }
 
   // ================== LOGIN ==================
-  loginWithCredentials(username: string, password: string): Observable<boolean> {
-    return this.http.post<{ access_token: string, expires_in?: number }>(
+  loginWithCredentials(username: string, password: string, rememberMe = false): Observable<boolean> {
+    return this.http.post<{ access_token?: string }>(
       `${environment.apiUrl}/auth/login`,
-      { username, password },
+      { username, password, rememberMe },
       { withCredentials: true }
     ).pipe(
-      tap(async response => {
-        // If backend returned token in body (legacy), store it; otherwise rely on cookie + /auth/me
-        if (response?.access_token) {
-          this.setAuthState(response.access_token, response.expires_in);
-        } else {
-          // populate user via /auth/me
-          const me = await this.http.get<any>(`${environment.apiUrl}/auth/me`, { withCredentials: true }).toPromise();
-          if (me?.user) {
-            const u: User = { userId: me.user.id, username: me.user.username, name: me.user.name, role: me.user.role };
-            this.currentUserSubject.next(u);
-          }
+      tap(res => {
+        // decodeToken จาก JWT ที่เพิ่งได้มาพอแล้ว ไม่ต้องยิง /auth/me ซ้ำ
+        // (ถ้ายิงซ้ำแล้วบังเอิญ fail จะไปล้าง token ที่เพิ่ง login สำเร็จทิ้งโดยไม่ตั้งใจ)
+        if (res?.access_token) {
+          this.setAccessToken(res.access_token);
         }
       }),
       map(() => true),
@@ -107,89 +79,102 @@ export class AuthService {
   }
 
   loginAsGuest(): Observable<boolean> {
-    return this.http.post<{ access_token: string; expires_in?: number; expired_at?: string }>(
+    return this.http.post<{ access_token?: string }>(
       `${environment.apiUrl}/auth/guest`,
       {},
       { withCredentials: true }
     ).pipe(
-      tap(async response => {
-        if (response?.access_token) {
-          this.setAuthState(response.access_token, response.expires_in);
-        } else {
-          // cookie-only guest: call /auth/me to get user info (or derive guest)
-          const me = await this.http.get<any>(`${environment.apiUrl}/auth/me`, { withCredentials: true }).toPromise();
-          if (me?.user) {
-            const u: User = { userId: me.user.id, username: me.user.username, name: me.user.name, role: me.user.role };
-            this.currentUserSubject.next(u);
-          }
+      tap(res => {
+        if (res?.access_token) {
+          this.setAccessToken(res.access_token);
         }
       }),
       map(() => true),
-      catchError(err => {
+      catchError(() => {
         this.clearAuthState();
         return of(false);
       })
     );
   }
 
-  logout(callback?: () => void): void {
-    this.http.post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true })
-      .subscribe({
-        next: () => {
-          this.clearAuthState();
-          if (callback) callback();
-        },
-        error: () => {
-          this.clearAuthState();
-          if (callback) callback();
-        }
-      });
+  // ================== REFRESH ==================
+  refreshToken(): Observable<string> {
+    return this.http.post<{ access_token: string }>(
+      `${environment.apiUrl}/auth/refresh`,
+      {},
+      { withCredentials: true }
+    ).pipe(
+      map(res => res.access_token),
+      tap(token => this.setAccessToken(token))
+    );
   }
 
-  // ================== State Helpers ==================
-  private setAuthState(token: string, expiresIn?: number) {
-    // Store token locally only if provided (legacy). If server uses httpOnly cookie, token param may be undefined.
-    if (token) {
-      localStorage.setItem('token', token);
-      try {
-        const user = this.decodeToken(token);
-        this.currentUserSubject.next(user);
-      } catch {
-        this.currentUserSubject.next(null);
+  // ================== LOGOUT ==================
+  logout(callback?: () => void): void {
+    this.http.post(`${environment.apiUrl}/auth/logout`, {}, {
+      withCredentials: true
+    }).subscribe({
+      next: () => {
+        this.clearAuthState();
+        callback?.();
+      },
+      error: () => {
+        this.clearAuthState();
+        callback?.();
+      }
+    });
+  }
+
+  // ================== HELPERS ==================
+  private async loadUser() {
+    try {
+      const me = await firstValueFrom(
+        this.http.get<any>(`${environment.apiUrl}/auth/me`, {
+          withCredentials: true
+        })
+      );
+
+      if (me?.user) {
+        const u: User = {
+          userId: me.user.id,
+          username: me.user.username,
+          name: me.user.name,
+          role: me.user.role
+        };
+        this.currentUserSubject.next(u);
+      }
+    } catch (err) {
+      // ล้าง session เฉพาะตอนที่ backend ยืนยันว่า unauthenticated จริง (401)
+      // error อื่น (network/CORS ชั่วคราว ฯลฯ) ไม่ควรทำให้ต้อง login ใหม่ทั้งที่ token ยังใช้ได้
+      if (err instanceof HttpErrorResponse && err.status === 401) {
+        this.clearAuthState();
       }
     }
+  }
 
-    if (expiresIn) {
-      const expiresAt = Date.now() + expiresIn * 1000;
-      localStorage.setItem('expires_at', expiresAt.toString());
-      this.setLogoutTimer(expiresIn * 1000);
+  private setAccessToken(token: string) {
+    localStorage.setItem('token', token);
+
+    try {
+      const user = this.decodeToken(token);
+      this.currentUserSubject.next(user);
+    } catch {
+      this.currentUserSubject.next(null);
     }
   }
 
-  private clearAuthState(): void {
+  private clearAuthState() {
     localStorage.removeItem('token');
-    localStorage.removeItem('expires_at');
     this.currentUserSubject.next(null);
-    if (this.logoutTimer) {
-      clearTimeout(this.logoutTimer);
-      this.logoutTimer = null;
-    }
-  }
-  private setLogoutTimer(duration: number) {
-    if (this.logoutTimer) {
-      clearTimeout(this.logoutTimer);
-    }
-    this.logoutTimer = setTimeout(() => this.logout(), duration);
   }
 
-  // ================== Getters ==================
+  // ================== GETTERS ==================
   getCurrentUser(): User | null {
     return this.currentUserSubject.value;
   }
 
   isAuthenticated(): boolean {
-    const token = localStorage.getItem('token');
-    const expiresAt = localStorage.getItem('expires_at');
-    return !!token && !!expiresAt && Date.now() < +expiresAt;
+    // 🔥 เช็คจาก state ไม่ใช่เวลา
+    return !!this.currentUserSubject.value;
   }
 }

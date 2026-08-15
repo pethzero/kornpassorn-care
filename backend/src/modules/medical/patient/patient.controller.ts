@@ -2,13 +2,14 @@ import { Controller, Get, Post, Body, Param, Put, Delete, Req, Res, HttpStatus, 
 import { PatientService } from './patient.service';
 import { Request, Response } from 'express';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
-// สมมติว่าคุณมี AuthGuard และ CSRF middleware อยู่แล้ว
 // ถ้าใช้ NestJS CSRF middleware ให้แน่ใจว่า path นี้ถูก apply CSRF
 
 @ApiTags('patients')
 @ApiBearerAuth()
 @Controller('patients')
+@UseGuards(JwtAuthGuard)
 export class PatientController {
   constructor(private readonly patientService: PatientService) {}
 
