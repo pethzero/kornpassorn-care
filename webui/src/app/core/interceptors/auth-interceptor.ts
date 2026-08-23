@@ -1,41 +1,15 @@
-// // src/app/core/interceptors/auth-interceptor.ts
-// import { HttpInterceptorFn, HttpRequest } from '@angular/common/http';
-
-// export const authInterceptor: HttpInterceptorFn = (req, next) => {
-//   const token = localStorage.getItem('token');
-
-//   // Skip endpoints ที่ไม่ต้องใส่ token
-//   const skipUrls = ['/auth/login', '/auth/guest', '/auth/csrf-token'];
-//   if (skipUrls.some(url => req.url.includes(url))) {
-//     return next(req);
-//   }
-
-//   // สร้าง headers
-//   const headersConfig: Record<string, string> = {};
-//   if (token) {
-//     headersConfig['Authorization'] = `Bearer ${token}`;
-//   }
-
-//   // clone request และแนบ headers + withCredentials
-//   const authReq: HttpRequest<any> = req.clone({
-//     setHeaders: headersConfig,
-//     withCredentials: true, // ถ้า backend ใช้ cookie + CSRF
-//   });
-
-//   return next(authReq);
-// };
-import { HttpInterceptorFn, HttpRequest, HttpErrorResponse } from '@angular/common/http';
+// src/app/core/interceptors/auth-interceptor.ts
+import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, throwError, switchMap, BehaviorSubject, filter, take } from 'rxjs';
-import { AuthService } from '../services/auth.service'; // ✅ import
+import { catchError, throwError, switchMap } from 'rxjs';
+import { AuthService } from '../services/auth.service';
 
-let isRefreshing = false;
-const refreshTokenSubject = new BehaviorSubject<string | null>(null);
+const RETRIED_HEADER = 'X-Retried-After-Refresh';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
-  const authService = inject(AuthService); // ✅ inject
+  const authService = inject(AuthService);
 
   const token = localStorage.getItem('token');
 
@@ -56,59 +30,34 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-
-      if (error.status === 401) {
-
-        // 🔥 รอบแรก → ยิง refresh
-        if (!isRefreshing) {
-          isRefreshing = true;
-          refreshTokenSubject.next(null);
-
-          return authService.refreshToken().pipe( // ✅ ใช้ service
-            switchMap((newToken: string) => {
-              isRefreshing = false;
-              refreshTokenSubject.next(newToken);
-
-              // 🔁 retry request
-              const retryReq = req.clone({
-                setHeaders: {
-                  Authorization: `Bearer ${newToken}`,
-                },
-                withCredentials: true,
-              });
-
-              return next(retryReq);
-            }),
-            catchError(err => {
-              isRefreshing = false;
-
-              // ❌ refresh fail → logout
-              authService.logout(() => {
-                router.navigate(['/login']);
-              });
-
-              return throwError(() => err);
-            })
-          );
-        }
-
-        // 🔁 รอ refresh เสร็จ
-        return refreshTokenSubject.pipe(
-          filter(token => token !== null),
-          take(1),
-          switchMap(token => {
-            const retryReq = req.clone({
-              setHeaders: {
-                Authorization: `Bearer ${token!}`,
-              },
-              withCredentials: true,
-            });
-            return next(retryReq);
-          })
-        );
+      // เคยลอง refresh+retry ไปแล้วรอบนึง ยัง 401 อีก แปลว่าไม่ใช่แค่ access token หมดอายุ -> เลิกลอง กัน loop ไม่รู้จบ
+      if (error.status !== 401 || authReq.headers.has(RETRIED_HEADER)) {
+        return throwError(() => error);
       }
 
-      return throwError(() => error);
+      // AuthService.refreshToken() แชร์ request เดียวกันให้ทุกคนที่เรียกพร้อมกันอยู่แล้ว (shareReplay)
+      // ไม่ว่าจะมีกี่ request 401 พร้อมกัน ก็ยิง /auth/refresh แค่ครั้งเดียว แล้วทุกคนได้ผลลัพธ์เดียวกัน
+      // ไม่ต้องมี queue/flag แยกต่างหากในไฟล์นี้ ที่พลาดง่ายเวลา error (request ที่รออยู่ค้างตลอดไปไม่ reject)
+      return authService.refreshToken().pipe(
+        switchMap((newToken: string) => {
+          const retryReq = req.clone({
+            setHeaders: { Authorization: `Bearer ${newToken}`, [RETRIED_HEADER]: '1' },
+            withCredentials: true,
+          });
+          return next(retryReq);
+        }),
+        catchError(err => {
+          // backend ยืนยันว่า refresh token ใช้ไม่ได้จริง (401) → session ตายจริง ต้อง logout
+          // ไม่งั้น token ที่ตายแล้วจะค้างใน localStorage แล้วทุก request ถัดไปก็จะวน 401 ซ้ำไปเรื่อยๆ
+          // ส่วน error อื่น (server ไม่ตอบ/network ล่มชั่วคราว) ไม่ควรเคลียร์ session ที่ยัง valid อยู่
+          if (err instanceof HttpErrorResponse && err.status === 401) {
+            authService.logout(() => {
+              router.navigate(['/login']);
+            });
+          }
+          return throwError(() => err);
+        })
+      );
     })
   );
 };

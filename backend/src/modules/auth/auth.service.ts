@@ -74,8 +74,6 @@ export class AuthService {
       const tokenHash = rawToken ? this.hashToken(rawToken) : null;
       const finalJti = jti ?? uuidv4();
 
-      // console.log('[saveToken] params:', { userId: user?.id ?? null, hasRaw: !!rawToken, finalJti, expiredAt, opts });
-
       // normalize + clean deviceInfo to avoid storing null fields
       const rawDeviceInfo = opts?.deviceInfo ?? null;
       const cleaned = rawDeviceInfo ? this.cleanObject(rawDeviceInfo) : undefined;
@@ -84,7 +82,7 @@ export class AuthService {
       const deviceIp = deviceInfo?.ip ?? null;
       const fp = deviceInfo?.fingerprint ?? null;
       const fingerprintHash = fp ? this.hashToken(fp) : null;
-
+        
       const tokenPartial = this.userTokenRepo.create({
         ...(user ? { user: { id: user.id } as any } : {}),
         tokenHash,
@@ -108,8 +106,68 @@ export class AuthService {
   }
   // ...existing code...
 
-  async revokeToken(rawTokenOrJti: string) {
+  // ออก access + refresh token คู่กันแล้ว save ทั้งคู่ลง DB ในที่เดียว
+  // (เดิม login() กับ refresh() ต่างก็เขียน jti/payload/expiry/saveToken เองซ้ำกันทั้งสองจุด)
+  async issueTokenPair(
+    identity: { id: string; username?: string; role: string },
+    rememberMe: boolean,
+    deviceInfo?: any,
+  ) {
+    const accessExpiresIn = Config.token.resolveAccessExpiry(identity.role, rememberMe);
+    const isPermanent = accessExpiresIn === undefined; // admin + ADMIN_ACCESS_TOKEN_EXPIRES_IN=0
+    const accessJti = uuidv4();
+    const accessToken = this.generateJwt(
+      { sub: identity.id, username: identity.username, role: identity.role, jti: accessJti },
+      accessExpiresIn,
+    );
+    const accessExpiresInSeconds = Config.token.parseExpiresIn(accessExpiresIn);
+    const accessExpiredAt = accessExpiresInSeconds > 0 ? new Date(Date.now() + accessExpiresInSeconds * 1000) : null;
+
+    const refreshExpiresIn = rememberMe
+      ? Config.token.REFRESH_TOKEN_REMEMBER_ME_EXPIRES_IN
+      : Config.token.REFRESH_TOKEN_EXPIRES_IN;
+    const refreshJti = uuidv4();
+    const refreshToken = await this.generateRefreshToken(
+      { sub: identity.id, username: identity.username, role: identity.role, jti: refreshJti, remember: rememberMe },
+      refreshExpiresIn,
+    );
+    const refreshExpiresInSeconds = Config.token.parseExpiresIn(refreshExpiresIn);
+    const refreshExpiredAt = new Date(Date.now() + refreshExpiresInSeconds * 1000);
+
+    await Promise.all([
+      this.saveToken({ id: identity.id }, accessToken, accessExpiredAt, accessJti, {
+        deviceInfo,
+        tokenType: 'access',
+        isPermanent,
+      }),
+      this.saveToken({ id: identity.id }, refreshToken, refreshExpiredAt, refreshJti, {
+        deviceInfo,
+        tokenType: 'refresh',
+      }),
+    ]);
+
+    return {
+      accessToken,
+      accessJti,
+      accessExpiresInSeconds,
+      accessExpiredAt,
+      isPermanent,
+      refreshToken,
+      refreshJti,
+      refreshExpiresInSeconds,
+      refreshExpiredAt,
+    };
+  }
+
+  async revokeToken(rawTokenOrJti: string, opts?: { revokedBy?: string; reason?: string }) {
     try {
+      const patch = {
+        revoked: true,
+        revokedAt: new Date(),
+        revokedBy: opts?.revokedBy ?? undefined,
+        revokedReason: opts?.reason ?? undefined,
+      };
+
       // ถ้าเป็น JWT ให้ decode เพื่อหาค่า jti
       let jti: string | null = null;
       try {
@@ -118,7 +176,7 @@ export class AuthService {
       } catch (e) { /* ignore */ }
 
       if (jti) {
-        await this.userTokenRepo.update({ jti }, { revoked: true });
+        await this.userTokenRepo.update({ jti }, patch);
         return;
       }
 
@@ -127,7 +185,7 @@ export class AuthService {
       // update by token_hash (no raw token column)
       await this.userTokenRepo.createQueryBuilder()
         .update()
-        .set({ revoked: true })
+        .set(patch)
         .where('token_hash = :hash', { hash })
         .execute();
 
@@ -139,12 +197,18 @@ export class AuthService {
   }
 
   // revoke all tokens for a given userId, return number of rows affected
-  async revokeAllTokensOfUser(userId: string): Promise<number> {
+  async revokeAllTokensOfUser(userId: string, opts?: { revokedBy?: string; reason?: string }): Promise<number> {
     if (!userId) return 0;
     const result = await this.userTokenRepo.createQueryBuilder()
       .update()
-      .set({ revoked: true })
+      .set({
+        revoked: true,
+        revokedAt: new Date(),
+        revokedBy: opts?.revokedBy ?? undefined,
+        revokedReason: opts?.reason ?? undefined,
+      })
       .where('"userId" = :userId', { userId })
+      .andWhere('revoked = false')
       .execute();
     return result.affected ?? 0;
   }
@@ -289,7 +353,10 @@ export class AuthService {
       throw new ForbiddenException('Not allowed to revoke this token');
     }
 
-    await this.userTokenRepo.update({ jti }, { revoked: true });
+    await this.userTokenRepo.update(
+      { jti },
+      { revoked: true, revokedAt: new Date(), revokedBy: actorId ?? undefined, revokedReason: 'manual_revoke' },
+    );
   }
 
 
@@ -331,7 +398,7 @@ export class AuthService {
 
     await this.userTokenRepo.update(
       { jti, tokenType: 'refresh' },
-      { revoked: true }
+      { revoked: true, revokedAt: new Date(), revokedReason: 'rotated' },
     );
   }
 

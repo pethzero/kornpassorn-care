@@ -14,8 +14,9 @@ export class UserToken {
   @Index()
   tokenHash?: string;
 
+  // unique กัน jti ชนกัน (จริง ๆ แทบเป็นไปไม่ได้เพราะเป็น uuid v4 แต่กันไว้เผื่อบั๊กใน caller ที่ generate ซ้ำ)
   @Column({ type: 'uuid', nullable: true })
-  @Index()
+  @Index({ unique: true })
   jti?: string;
 
   @Column({ name: 'token_type', default: 'access' })
@@ -40,7 +41,9 @@ export class UserToken {
   @CreateDateColumn({ name: 'created_at' })
   created_at: Date;
 
+  // index ไว้ให้ cleanup job filter ตาม expired_at ได้เร็ว ไม่ต้อง full scan ตารางที่โตขึ้นเรื่อย ๆ
   @Column({ name: 'expired_at', type: 'timestamp', nullable: true })
+  @Index()
   expired_at?: Date;
 
   @Column({ name: 'last_used', type: 'timestamp', nullable: true })

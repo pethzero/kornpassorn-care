@@ -12,16 +12,6 @@
       <p class="text-sm text-gray-500">กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแลระบบของคุณ</p>
     </div>
 
-    <!-- Divider -->
-    <!-- <div class="relative">
-      <div class="absolute inset-0 flex items-center">
-        <div class="w-full border-t border-gray-300"></div>
-      </div>
-      <div class="relative flex justify-center text-sm">
-        <span class="bg-white px-2 text-gray-400">หรือเข้าสู่ระบบ</span>
-      </div>
-    </div> -->
-
     <!-- Login Form -->
     <form (ngSubmit)="login()" #loginForm="ngForm" class="space-y-4">
       <!-- Username -->
@@ -39,9 +29,9 @@
       </div>
 
       <!-- Submit -->
-      <button type="submit" [disabled]="!loginForm.form.valid"
-        class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition font-semibold">
-        เข้าสู่ระบบ
+      <button type="submit" [disabled]="!loginForm.form.valid || isSubmitting"
+        class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+        {{ isSubmitting ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ' }}
       </button>
 
       <!-- Error -->

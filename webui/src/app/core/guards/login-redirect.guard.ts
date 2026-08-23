@@ -10,13 +10,8 @@ export class LoginRedirectGuard implements CanActivate {
   canActivate(): boolean {
     const user = this.auth.getCurrentUser();
     if (user) {
-      // ถ้า login แล้ว ให้ redirect ไปหน้า dashboard หรืออื่น ๆ ตาม role
-    //   if (user.role === 'admin') {
-    //     this.router.navigate(['/admin/dashboard']);
-    //   } else {
-    //     this.router.navigate(['/dashboard']);
-    //   }
-    this.router.navigate(['/dashboard']);
+      // login อยู่แล้ว ไม่ต้องเข้าหน้า login ซ้ำ
+      this.router.navigate(['/dashboard']);
       return false;
     }
     return true; // ถ้ายังไม่ login, เข้า login page ได้ตามปกติ

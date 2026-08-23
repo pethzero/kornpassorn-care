@@ -1,16 +1,17 @@
 // src/auth/strategies/jwt.strategy.ts
 import * as crypto from 'crypto';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserToken } from '../../../database/entities/user-token.entity';
-// ...existing code...
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  private readonly logger = new Logger(JwtStrategy.name);
+
   constructor(
     configService: ConfigService,
     @InjectRepository(UserToken)
@@ -46,6 +47,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       }
 
       if (!tokenRecord) {
+        // fallback เดิมของ bearer-token strategy (รวมเข้ามาที่นี่หลังจากยุบ strategy ที่ซ้ำซ้อนทิ้ง):
+        // ถ้า DB record ของ admin token หายไป (เช่น purge/prune ตาราง user_tokens) แต่ตั้ง ADMIN_NEVER_EXPIRE=true ไว้
+        // ให้ยังผ่านได้โดยเชื่อ signature เป็นหลัก แทนที่จะ 401 ทันที
+        if (payload?.role === 'admin' && process.env.ADMIN_NEVER_EXPIRE === 'true') {
+          this.logger.warn(`UserToken record not found for admin ${payload?.sub} - allowing due to ADMIN_NEVER_EXPIRE`);
+          return {
+            userId: payload.sub,
+            username: payload.username,
+            name: payload.name ?? null,
+            role: payload.role,
+            jti: payload.jti,
+          };
+        }
         throw new UnauthorizedException('Token revoked or not found');
       }
 

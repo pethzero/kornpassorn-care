@@ -36,14 +36,14 @@ export class UserMenu implements OnInit {
   }
 
   logout() {
-    // ใช้ callback หลัง logout เสร็จ
-    this.auth.logout(() => {
-      console.log('logout system', this.user);
+    // ต้องจำ role ไว้ก่อน เพราะ auth.logout() จะเคลียร์ currentUser เป็น null ก่อน callback ทำงาน
+    const wasAdmin = this.user?.role === 'admin';
 
+    this.auth.logout(() => {
       // อัปเดต user หลัง logout
       this.user = this.auth.getCurrentUser();
 
-      if (this.user?.role === 'admin') {
+      if (wasAdmin) {
         this.router.navigate(['/admin-login']);
       } else {
         this.router.navigate(['/login']);

@@ -7,15 +7,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { TokenCleanupService } from './token-cleanup.service';
 
 // strategies & guards
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { BearerTokenStrategy } from './strategies/bearer-token.strategy';
-import { CookieJwtStrategy } from './strategies/cookie-jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { BearerTokenGuard } from './guards/bearer-token.guard';
-import { CookieJwtGuard } from './guards/cookie-jwt.guard';
-import { FlexibleAuthGuard } from './guards/flexible-auth.guard';
 
 // feature modules / entities
 import { UserModule } from '../user/user.module';
@@ -45,20 +41,13 @@ import { LoginLog } from '../../database/entities/login-log.entity';
   providers: [
     AuthService,
     JwtStrategy,
-    BearerTokenStrategy,
-    CookieJwtStrategy,
     JwtAuthGuard,
-    BearerTokenGuard,
-    CookieJwtGuard,
-    FlexibleAuthGuard,
+    TokenCleanupService,
   ],
   exports: [
     AuthService,
     JwtModule,
     JwtAuthGuard,
-    BearerTokenGuard,
-    CookieJwtGuard,
-    FlexibleAuthGuard, // <-- export guards so other modules can inject them
   ],
 })
 export class AuthModule {}

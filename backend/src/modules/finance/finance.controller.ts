@@ -17,9 +17,7 @@ import { FinanceService } from './finance.service';
 import { CreateFinanceRecordDto } from './dto/create-finance-record.dto';
 import { UpdateFinanceRecordDto } from './dto/update-finance-record.dto';
 import { QueryFinanceRecordDto } from './dto/query-finance-record.dto';
-import { BearerTokenGuard } from '../auth/guards/bearer-token.guard';
 import { JwtAuthGuard } from '../auth/guards';
-import { FlexibleAuthGuard } from '../auth/guards/flexible-auth.guard';
 
 @Controller('finance')
 export class FinanceController {
@@ -28,7 +26,7 @@ export class FinanceController {
   // POST /api/finance - สร้างรายการการเงินใหม่
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @UseGuards(FlexibleAuthGuard) // API และ Web ใช้ได้ทั้งคู่
+  @UseGuards(JwtAuthGuard)
   
   async create(
     @Body() createFinanceRecordDto: CreateFinanceRecordDto,
@@ -46,7 +44,7 @@ export class FinanceController {
 
   // GET /api/finance - ดึงข้อมูลทั้งหมด (พร้อม pagination และ filter)
   @Get()
-  @UseGuards(FlexibleAuthGuard) // API และ Web ใช้ได้ทั้งคู่
+  @UseGuards(JwtAuthGuard)
   async findAll(@Query() query: QueryFinanceRecordDto) {
     console.log('Query parameters:', query);
     const result = await this.financeService.findAll(query);
@@ -59,7 +57,7 @@ export class FinanceController {
 
   // GET /api/finance/summary - สรุปยอดรายได้/รายจ่าย
   @Get('summary')
-  @UseGuards(FlexibleAuthGuard) // API และ Web ใช้ได้ทั้งคู่
+  @UseGuards(JwtAuthGuard)
   async getSummary(
     @Query('start_date') start_date?: string,
     @Query('end_date') end_date?: string,
@@ -74,7 +72,7 @@ export class FinanceController {
 
   // GET /api/finance/reports/daily - รายงานรายวัน
   @Get('reports/daily')
-  @UseGuards(FlexibleAuthGuard) // API และ Web ใช้ได้ทั้งคู่
+  @UseGuards(JwtAuthGuard)
   async getDailyReport(
     @Query('start_date') start_date?: string,
     @Query('end_date') end_date?: string,
@@ -89,7 +87,7 @@ export class FinanceController {
 
   // GET /api/finance/:id - ดึงข้อมูลตาม ID
   @Get(':id')
-  @UseGuards(FlexibleAuthGuard) // API และ Web ใช้ได้ทั้งคู่
+  @UseGuards(JwtAuthGuard)
   async findOne(@Param('id', ParseIntPipe) id: number) {
     const result = await this.financeService.findOne(id);
     return {
@@ -101,7 +99,7 @@ export class FinanceController {
 
   // PATCH /api/finance/:id - อัปเดตข้อมูล
   @Patch(':id')
-  @UseGuards(FlexibleAuthGuard) // API และ Web ใช้ได้ทั้งคู่
+  @UseGuards(JwtAuthGuard)
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateFinanceRecordDto: UpdateFinanceRecordDto,
@@ -119,7 +117,7 @@ export class FinanceController {
   // DELETE /api/finance/:id - ลบข้อมูล
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(FlexibleAuthGuard) // API และ Web ใช้ได้ทั้งคู่
+  @UseGuards(JwtAuthGuard)
   async remove(@Param('id', ParseIntPipe) id: number) {
     const result = await this.financeService.remove(id);
     return {

@@ -3,7 +3,6 @@ import { AuthService } from './auth.service';
 import { Response, Request } from 'express';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { v4 as uuidv4 } from 'uuid';
 import * as UAParser from 'ua-parser-js';
 import { Config } from '../../config';
 import { buildDeviceInfo } from '../../utils/device.util';
@@ -21,7 +20,6 @@ export class AuthController {
     }
   }
 
-  // ...existing code...
   @Post('login')
   async login(@Body() body: LoginDto, @Req() req: Request, @Res() res: Response) {
     const user = await this.authService.validateUser(body.username, body.password);
@@ -30,87 +28,34 @@ export class AuthController {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // --- Access token (สั้น, ใช้แนบทุก request) ---
-    const expiresIn = Config.token.resolveAccessTokenExpiresIn(user.role);
-    const isPermanent = expiresIn === undefined; // admin + ADMIN_ACCESS_TOKEN_EXPIRES_IN=0
-
-    const jti = uuidv4();
-    const payload = {
-      sub: user.id,
-      username: user.username,
-      role: user.role,
-      jti,
-    };
-
-    const token = this.authService.generateJwt(payload, expiresIn);
-    const expiresInSeconds = Config.token.parseExpiresIn(expiresIn);
-    const expiredAt = expiresInSeconds > 0 ? new Date(Date.now() + expiresInSeconds * 1000) : null;
-
+    // admin: อายุ token กำหนดจาก ADMIN_ACCESS_TOKEN_EXPIRES_IN เท่านั้น (permanent by default) ไม่ขึ้นกับ rememberMe
+    // user: rememberMe ยืดอายุ access token ให้เท่ากับ refresh token remember-me duration
+    // rememberMe: user (พนักงาน) ที่ใช้เครื่องส่วนตัวติ๊กไว้ได้ ถ้าไม่ติ๊กจะได้ session สั้นกว่า (เหมาะกับเครื่องแชร์กันในหน่วยงาน)
+    const rememberMe = !!body.rememberMe;
     const deviceInfo = buildDeviceInfo(req, (req.body as any) || {});
 
-    await this.authService.saveToken(user, token, expiredAt, jti, {
-      deviceInfo,
-      tokenType: 'access',
-      isPermanent,
-    });
+    const tokens = await this.authService.issueTokenPair(user, rememberMe, deviceInfo);
 
     await this.authService.logLogin(user, true, req);
 
-    const oneYearMs = 365 * 24 * 60 * 60 * 1000;
-    const cookieOptions: any = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      path: '/',
-    };
-    // token ไม่มี expiry (permanent) ก็ต้องให้ cookie อยู่ข้ามการปิดเบราว์เซอร์ด้วย ไม่งั้นเป็นแค่ session cookie
-    cookieOptions.maxAge = expiredAt ? expiredAt.getTime() - Date.now() : oneYearMs * 10;
-
-    res.cookie('token', token, cookieOptions);
-
-    // --- Refresh token (ยาว, เก็บใน httpOnly cookie แยก ให้ /auth/refresh ต่ออายุ access token ได้โดย user ไม่ต้อง login ซ้ำ) ---
-    // rememberMe: user (พนักงาน) ที่ใช้เครื่องส่วนตัวติ๊กไว้ได้ ถ้าไม่ติ๊กจะได้ session สั้นกว่า (เหมาะกับเครื่องแชร์กันในหน่วยงาน)
-    const rememberMe = !!body.rememberMe;
-    const refreshExpiresIn = rememberMe
-      ? Config.token.REFRESH_TOKEN_REMEMBER_ME_EXPIRES_IN
-      : Config.token.REFRESH_TOKEN_EXPIRES_IN;
-    const refreshJti = uuidv4();
-    const refreshPayload = {
-      sub: user.id,
-      username: user.username,
-      role: user.role,
-      jti: refreshJti,
-      remember: rememberMe,
-    };
-    const refreshToken = await this.authService.generateRefreshToken(refreshPayload, refreshExpiresIn);
-    const refreshExpiresInSeconds = Config.token.parseExpiresIn(refreshExpiresIn);
-    const refreshExpiredAt = new Date(Date.now() + refreshExpiresInSeconds * 1000);
-
-    await this.authService.saveToken(user, refreshToken, refreshExpiredAt, refreshJti, {
-      deviceInfo,
-      tokenType: 'refresh',
-    });
-
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      path: '/',
-      maxAge: refreshExpiresInSeconds * 1000,
-    });
+    // refresh token เก็บใน httpOnly cookie แยก ให้ /auth/refresh ต่ออายุ access token ได้โดย user ไม่ต้อง login ซ้ำ
+    res.cookie(
+      'refresh_token',
+      tokens.refreshToken,
+      Config.token.refreshCookieOptions(tokens.refreshExpiresInSeconds * 1000),
+    );
 
     return res.json({
       success: true,
-      access_token: token,
-      expires_in: expiresInSeconds,
-      expired_at: expiredAt ? expiredAt.toISOString() : null,
-      jti,
-      is_permanent: isPermanent,
+      access_token: tokens.accessToken,
+      expires_in: tokens.accessExpiresInSeconds,
+      expired_at: tokens.accessExpiredAt ? tokens.accessExpiredAt.toISOString() : null,
+      jti: tokens.accessJti,
+      is_permanent: tokens.isPermanent,
+      remember_me: rememberMe,
     });
   }
-  // ...existing code...
 
-  // ...existing code...
   @Post('guest')
   async loginAsGuest(@Req() req: Request, @Res() res: Response) {
     try {
@@ -160,37 +105,32 @@ export class AuthController {
       return res.status(500).json({ success: false, message: 'Internal error' });
     }
   }
-  // ...existing code...
 
 
-  // ...existing code...
   @Post('logout')
   async logout(@Req() req: Request, @Res() res: Response) {
-    // รับ token จาก cookie ก่อน แล้ว fallback ไปที่ Authorization header
-    const cookieToken = req.cookies?.token;
-    let token = cookieToken;
     const authHeader = (req.headers['authorization'] || req.headers['Authorization']) as string | undefined;
-    if (!token && authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.slice(7);
-    }
-    if (token) {
-      try {
-        await this.authService.revokeToken(token);
-      } catch (err) {
-        console.error('Error revoking token:', err);
-        // ไม่ต้องส่ง error กลับ client เพื่อไม่ให้ leak info — ทำต่อไปเพื่อ clear cookie
-      }
-    }
+    const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
+    // ต้อง revoke + clear refresh_token ด้วย ไม่งั้น request ถัดไปที่โดน 401
+    // จะไปยิง /auth/refresh แล้วได้ access token ใหม่กลับมาเอง กลายเป็นว่า logout ไม่จริง
+    const refreshToken = req.cookies?.refresh_token;
+
+    // สอง token คนละ record กัน ไม่ block กัน ยิงพร้อมกันได้ (allSettled กัน error ของอันนึงไปกระทบอีกอัน)
+    const [tokenResult, refreshResult] = await Promise.allSettled([
+      token ? this.authService.revokeToken(token, { reason: 'logout' }) : Promise.resolve(),
+      refreshToken ? this.authService.revokeToken(refreshToken, { reason: 'logout' }) : Promise.resolve(),
+    ]);
+    if (tokenResult.status === 'rejected') console.error('Error revoking token:', tokenResult.reason);
+    if (refreshResult.status === 'rejected') console.error('Error revoking refresh token:', refreshResult.reason);
+
     // เคลียร์ cookie ด้วย options เดียวกับตอนตั้งค่า (secure ตาม env)
-    res.clearCookie('token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-    });
+    // path ต้อง match กับตอน res.cookie(...) ด้วย ไม่งั้น clearCookie จะไม่ลบ cookie ตัวจริงที่ path '/'
+    res.clearCookie('refresh_token', Config.token.refreshCookieOptions());
+    // legacy: session ที่ login ไว้ก่อนตัด 'token' cookie ออก อาจยังมี cookie ตัวนี้ค้างอยู่ในเบราว์เซอร์
+    res.clearCookie('token', Config.token.refreshCookieOptions());
 
     return res.status(200).json({ success: true, message: 'Logged out' });
   }
-  // ...existing code...
 
   // API สำหรับขอ token โดยใช้ username/password (สำหรับ API users)
   @Post('token')
@@ -227,8 +167,10 @@ export class AuthController {
   // Admin revoke ทุก token ของ user
   @UseGuards(JwtAuthGuard)
   @Post('revoke-all/:userId')
-  async revokeAllTokens(@Param('userId') userId: string) {
-    await this.authService.revokeAllTokensOfUser(userId);
+  async revokeAllTokens(@Param('userId') userId: string, @Req() req: Request) {
+    const actor = (req as any).user;
+    const actorId = actor?.userId ?? actor?.sub;
+    await this.authService.revokeAllTokensOfUser(userId, { revokedBy: actorId, reason: 'admin_revoke_all' });
     return { message: 'All tokens revoked for user ' + userId };
   }
 
@@ -244,7 +186,10 @@ export class AuthController {
       throw new ForbiddenException('Not allowed to revoke tokens for this user');
     }
 
-    const revokedCount = await this.authService.revokeAllTokensOfUser(userId);
+    const revokedCount = await this.authService.revokeAllTokensOfUser(userId, {
+      revokedBy: actorId,
+      reason: actorRole === 'admin' ? 'admin_revoke_all' : 'self_revoke_all',
+    });
     return { message: `All tokens revoked for user ${userId}`, revoked: revokedCount };
   }
 
@@ -312,57 +257,28 @@ export class AuthController {
       // 🔥 ใช้ method ใหม่
       await this.authService.revokeRefreshTokenByJti(payload.jti);
 
-      const newJti = uuidv4();
-
-      const newPayload = {
-        sub: payload.sub,
-        username: payload.username,
-        role: payload.role,
-        jti: newJti,
-      };
-
-      const newAccessExpiresIn = Config.token.resolveAccessTokenExpiresIn(payload.role);
-      const newAccessToken = this.authService.generateJwt(newPayload, newAccessExpiresIn);
-
-      // คง remember-me duration เดิมของ session นี้ไว้ตอน rotate refresh token
-      const refreshExpiresIn = payload.remember
-        ? Config.token.REFRESH_TOKEN_REMEMBER_ME_EXPIRES_IN
-        : Config.token.REFRESH_TOKEN_EXPIRES_IN;
-      const refreshExpiresInSeconds = Config.token.parseExpiresIn(refreshExpiresIn);
-      const refreshExpiresAt = new Date(Date.now() + refreshExpiresInSeconds * 1000);
-
-      // 🔥 ต้อง await
-      const newRefreshToken = await this.authService.generateRefreshToken(
-        { ...newPayload, remember: payload.remember },
-        refreshExpiresIn,
+      // ใช้ helper เดียวกับ login (issueTokenPair) เพื่อให้กฎ "admin ไม่ขึ้นกับ rememberMe" คงเดิมตอน rotate ด้วย
+      // (เดิมจุดนี้เช็คแค่ payload.remember ไม่เช็ค role ทำให้ admin ที่เผลอ login มาพร้อม rememberMe:true
+      // จะโดนลดอายุ access token จาก permanent เหลือ 30 วันทุกครั้งที่ refresh)
+      // และต้อง save access token ใหม่ลง DB ด้วย ไม่งั้น JwtStrategy หา UserToken record ไม่เจอ
+      // (lookup by jti/tokenHash) แล้ว 401 ทันทีตั้งแต่ request แรกที่ใช้ access token ที่เพิ่ง refresh มา
+      const tokens = await this.authService.issueTokenPair(
+        { id: payload.sub, username: payload.username, role: payload.role },
+        !!payload.remember,
       );
 
-      await this.authService.saveToken(
-        { id: payload.sub },
-        newRefreshToken,
-        refreshExpiresAt,
-        newJti,
-        { tokenType: 'refresh' }
+      res.cookie(
+        'refresh_token',
+        tokens.refreshToken,
+        Config.token.refreshCookieOptions(tokens.refreshExpiresInSeconds * 1000),
       );
-
-      res.cookie('refresh_token', newRefreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/',
-        maxAge: refreshExpiresInSeconds * 1000,
-      });
 
       return res.json({
-        access_token: newAccessToken,
+        access_token: tokens.accessToken,
       });
 
     } catch (err) {
-      res.clearCookie('refresh_token', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-      });
+      res.clearCookie('refresh_token', Config.token.refreshCookieOptions());
 
       return res.status(401).json({ message: 'Invalid refresh token' });
     }

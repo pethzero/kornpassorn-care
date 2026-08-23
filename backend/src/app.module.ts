@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './config/database.module';
@@ -16,6 +17,9 @@ import { ProfileController } from './modules/profile/profile.controller';
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV || 'dev'}`,
     }),
+
+    // เปิดใช้ @Cron(...) ทั่วแอป — ต้อง forRoot() แค่จุดเดียวที่ root module (auth module ใช้สำหรับ TokenCleanupService)
+    ScheduleModule.forRoot(),
 
     // DatabaseModule already registers TypeOrm default connection
     DatabaseModule,

@@ -9,8 +9,8 @@
 
     <div class="text-center space-y-2">
       <h2 class="text-xl font-semibold text-gray-800">เข้าแบบ Guest</h2>
-      <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md font-semibold transition"
-        (click)="loginAsGuest()">
+      <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+        [disabled]="isSubmitting" (click)="loginAsGuest()">
         เข้าสู่ระบบโดยไม่ต้องล็อกอิน
       </button>
     </div>
@@ -50,9 +50,9 @@
       </div>
 
       <!-- Submit -->
-      <button type="submit" [disabled]="!loginForm.form.valid"
-        class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition font-semibold">
-        เข้าสู่ระบบ
+      <button type="submit" [disabled]="!loginForm.form.valid || isSubmitting"
+        class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+        {{ isSubmitting ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ' }}
       </button>
 
       <!-- Error -->

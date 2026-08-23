@@ -16,11 +16,17 @@ export class LoginComponent {
   password = '';
   rememberMe = false;
   errorMessage = '';
+  isSubmitting = false;
 
   constructor(private auth: AuthService, private router: Router) {}
 
   login(): void {
+    // กันกดซ้ำ/ดับเบิลคลิกตอน request ยังไม่เสร็จ ไม่งั้นยิง /auth/login ซ้ำ
+    // จนได้ token 2 ชุด (access+refresh x2) ใน user_tokens จากการ login ครั้งเดียว
+    if (this.isSubmitting) return;
+    this.isSubmitting = true;
     this.auth.loginWithCredentials(this.username, this.password, this.rememberMe).subscribe(success => {
+      this.isSubmitting = false;
       if (success) {
         this.router.navigate(['/dashboard']);
       } else {
@@ -30,8 +36,10 @@ export class LoginComponent {
   }
 
   loginAsGuest(): void {
-    console.log('เรียก loginAsGuest');
+    if (this.isSubmitting) return;
+    this.isSubmitting = true;
     this.auth.loginAsGuest().subscribe(success => {
+      this.isSubmitting = false;
       if (success) {
         this.router.navigate(['/dashboard']);
       } else {

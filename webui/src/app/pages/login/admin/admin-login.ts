@@ -16,11 +16,15 @@ export class AdminLoginComponent {
   username = '';
   password = '';
   errorMessage = '';
+  isSubmitting = false;
 
   constructor(private auth: AuthService, private router: Router) { }
 
   login(): void {
+    if (this.isSubmitting) return;
+    this.isSubmitting = true;
     this.auth.loginWithCredentials(this.username, this.password).subscribe(success => {
+      this.isSubmitting = false;
       if (success) {
         this.router.navigate(['/dashboard']);
       } else {
@@ -28,6 +32,4 @@ export class AdminLoginComponent {
       }
     });
   }
-
-
 }
