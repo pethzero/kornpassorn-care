@@ -1,10 +1,9 @@
 <div class="patient-form-container">
   @if (loading) {
-    <div class="overlay">
-      <p-progress-spinner ariaLabel="loading"></p-progress-spinner>
-    </div>
-  } @else {
-    <p-card class="form-card">
+    <app-loading-spinner [overlay]="true" [message]="loadingMessage"></app-loading-spinner>
+  }
+
+  <p-card class="form-card">
       <ng-template pTemplate="header">
         <div class="card-header">
           <h3>{{ isEditMode ? '✏️ แก้ไขข้อมูลคนไข้' : '➕ เพิ่มคนไข้ใหม่' }}</h3>
@@ -101,8 +100,7 @@
         </div>
 
       </form>
-    </p-card>
-  }
+  </p-card>
 </div>
 
 <p-toast></p-toast>

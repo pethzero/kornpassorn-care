@@ -1,9 +1,12 @@
-<mat-toolbar color="primary" class="header-toolbar">
+<mat-toolbar class="header-toolbar">
   <div class="toolbar-left">
-    <button mat-icon-button (click)="toggleSidebar()" aria-label="Toggle sidebar">
-      <mat-icon style="color: white;">menu</mat-icon>
+    <button mat-icon-button (click)="toggleSidebar()" aria-label="Toggle sidebar" class="menu-btn">
+      <mat-icon>menu</mat-icon>
     </button>
-    <span class="header-title">My Dashboard</span>
+    <div class="header-brand">
+      <mat-icon class="brand-icon">local_hospital</mat-icon>
+      <span class="header-title">Kornpassorn Care</span>
+    </div>
   </div>
 
   <div class="toolbar-center">
