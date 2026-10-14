@@ -1,0 +1,37 @@
+<div class="questionnaire-detail-container">
+  @if (loading) {
+    <app-loading-spinner [overlay]="true" message="กำลังโหลดข้อมูล..."></app-loading-spinner>
+  }
+
+  <button pButton icon="pi pi-arrow-left" label="กลับ" class="p-button-text mb-4" (click)="back()"></button>
+
+  <ng-container *ngIf="questionnaire">
+    <div class="header-card">
+      <div>
+        <h2>{{ patientName() }}</h2>
+        <p class="text-sm text-gray-500" *ngIf="questionnaire.patient">รหัสผู้ป่วย: {{ questionnaire.patient.patient_code }}</p>
+        <p class="text-sm text-gray-500">ส่งเมื่อ: {{ formatDate(questionnaire.created_at) }}</p>
+      </div>
+      <div class="header-actions">
+        <p-tag [value]="questionnaire.status === 'reviewed' ? 'ตรวจสอบแล้ว' : 'รอตรวจสอบ'"
+          [severity]="questionnaire.status === 'reviewed' ? 'success' : 'warn'"></p-tag>
+        <button pButton label="ทำเครื่องหมายว่าตรวจสอบแล้ว" size="small"
+          *ngIf="questionnaire.status !== 'reviewed'" (click)="markReviewed()"></button>
+      </div>
+    </div>
+
+    <div class="answer-list">
+      <div class="answer-item" *ngFor="let a of questionnaire.answers">
+        <div class="question-text">{{ a.question?.text }}</div>
+        <div class="answer-text">{{ a.answer_text || '-' }}</div>
+      </div>
+    </div>
+
+    <div class="note-block" *ngIf="questionnaire.note">
+      <h4>หมายเหตุจากผู้ป่วย</h4>
+      <p>{{ questionnaire.note }}</p>
+    </div>
+  </ng-container>
+
+  <p-toast></p-toast>
+</div>

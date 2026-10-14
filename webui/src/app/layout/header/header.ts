@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Output } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,7 +9,7 @@ import { UserMenu } from './user-menu/user-menu'; // ✅ import ให้ตร�
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, MatToolbarModule, MatIconModule, MatButtonModule,UserMenu ],
+  imports: [CommonModule, RouterModule, MatToolbarModule, MatIconModule, MatButtonModule,UserMenu ],
   templateUrl: './header.html',
   styleUrls: ['./header.scss']
 })

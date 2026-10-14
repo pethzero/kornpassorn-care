@@ -3,13 +3,18 @@ import { PatientService } from './patient.service';
 import { Request, Response } from 'express';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../../common/guards/roles.guard';
+import { Roles } from '../../../common/decorators/roles.decorator';
 
 // ถ้าใช้ NestJS CSRF middleware ให้แน่ใจว่า path นี้ถูก apply CSRF
 
+// จำกัดเฉพาะพนักงาน (user/admin) — คนไข้ที่ login ด้วย role 'patient' ต้องไม่เข้าถึง endpoint นี้ได้
+// (เข้าถึงข้อมูลผู้ป่วยคนอื่นได้หมดถ้าไม่กันตรงนี้ ดู PatientAuthController สำหรับ endpoint ของคนไข้เอง)
 @ApiTags('patients')
 @ApiBearerAuth()
 @Controller('patients')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('user', 'admin')
 export class PatientController {
   constructor(private readonly patientService: PatientService) {}
 

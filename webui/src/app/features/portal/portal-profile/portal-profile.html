@@ -1,0 +1,73 @@
+<div class="portal-profile-container">
+  @if (loading) {
+    <app-loading-spinner [overlay]="true" [message]="loadingMessage"></app-loading-spinner>
+  }
+
+  <h2 class="text-xl font-bold text-gray-800 mb-4">โปรไฟล์ของฉัน</h2>
+
+  <div *ngIf="needsProfile" class="profile-hint">
+    กรุณากรอกชื่อ-นามสกุลของคุณเพื่อใช้งานระบบให้ครบถ้วน
+  </div>
+
+  <div class="readonly-row">
+    <div>
+      <label>รหัสผู้ป่วย</label>
+      <div class="readonly-value">{{ patientCode }}</div>
+    </div>
+    <div>
+      <label>เบอร์โทรศัพท์</label>
+      <div class="readonly-value">{{ phone }}</div>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <div class="field">
+      <label>ชื่อ <span class="required">*</span></label>
+      <input pInputText formControlName="first_name" class="full-width" [class.ng-invalid]="isFieldInvalid('first_name')" />
+    </div>
+
+    <div class="field">
+      <label>นามสกุล <span class="required">*</span></label>
+      <input pInputText formControlName="last_name" class="full-width" [class.ng-invalid]="isFieldInvalid('last_name')" />
+    </div>
+
+    <div class="field">
+      <label>เพศ</label>
+      <select formControlName="gender" class="full-width">
+        <option value="">-</option>
+        <option value="male">ชาย</option>
+        <option value="female">หญิง</option>
+        <option value="other">อื่นๆ</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>วันเกิด</label>
+      <input type="date" formControlName="date_of_birth" class="full-width" />
+    </div>
+
+    <div class="field">
+      <label>Email</label>
+      <input pInputText formControlName="email" class="full-width" />
+    </div>
+
+    <div class="field">
+      <label>ที่อยู่</label>
+      <textarea formControlName="address" rows="3" class="full-width"></textarea>
+    </div>
+
+    <div class="field">
+      <label>กรุ๊ปเลือด</label>
+      <p-select formControlName="blood_type" [options]="bloodTypes" optionLabel="label" optionValue="value"
+        placeholder="เลือกกรุ๊ปเลือด" styleClass="full-width"></p-select>
+    </div>
+
+    <div class="form-actions">
+      <button pButton type="submit" [disabled]="loading">
+        <span pButtonLabel>บันทึก</span>
+      </button>
+    </div>
+  </form>
+
+  <p-toast></p-toast>
+</div>

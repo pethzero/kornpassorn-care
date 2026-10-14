@@ -21,4 +21,5 @@ export interface Patient {
   email?: string;
   address?: string;
   blood_type?: string;
+  national_id?: string;
 }

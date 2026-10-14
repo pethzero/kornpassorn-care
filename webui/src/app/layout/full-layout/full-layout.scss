@@ -49,6 +49,12 @@
   // สำหรับ Firefox
   scrollbar-width: none;
   -ms-overflow-style: none;
+
+  // มือถือ: padding เดิม 24-32px กินพื้นที่แนวนอนไปเยอะบนจอแคบ (~375px) ลดลงให้เหลือพื้นที่ใช้งานจริงมากขึ้น
+  @media (max-width: 768px) {
+    padding: 16px 12px;
+    border-radius: 0;
+  }
 }
 
 mat-sidenav-container {

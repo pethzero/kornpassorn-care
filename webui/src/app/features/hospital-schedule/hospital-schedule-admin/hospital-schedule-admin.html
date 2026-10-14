@@ -1,0 +1,57 @@
+<div class="hospital-schedule-container">
+  @if (loading) {
+    <app-loading-spinner [overlay]="true" message="กำลังโหลดข้อมูล..."></app-loading-spinner>
+  }
+
+  <h2 class="text-xl font-bold text-gray-800 mb-4">เวลาทำการโรงพยาบาล</h2>
+
+  <div class="section">
+    <h3>ตารางเวลาประจำสัปดาห์</h3>
+    <div class="weekly-row" *ngFor="let day of weekly">
+      <div class="day-label">{{ dayLabels[day.day_of_week] }}</div>
+      <label class="closed-toggle">
+        <input type="checkbox" [(ngModel)]="day.is_closed" />
+        <span>ปิดทำการ</span>
+      </label>
+      <div class="time-range" *ngIf="!day.is_closed">
+        <input type="time" [(ngModel)]="day.open_time" />
+        <span>ถึง</span>
+        <input type="time" [(ngModel)]="day.close_time" />
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button pButton label="บันทึกตารางประจำสัปดาห์" (click)="saveWeekly()" [disabled]="saving"></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>วันหยุด / วันพิเศษ</h3>
+
+    <div class="special-day-list">
+      <div class="special-day-item" *ngFor="let day of specialDays">
+        <div>
+          <strong>{{ day.date }}</strong>
+          <span class="badge" [class.closed]="day.is_closed">{{ day.is_closed ? 'ปิดทำการ' : 'เปิดทำการ' }}</span>
+          <span class="note" *ngIf="day.note">{{ day.note }}</span>
+        </div>
+        <button pButton icon="pi pi-trash" size="small" severity="danger" outlined rounded
+          (click)="confirmRemoveSpecialDay($event, day)"></button>
+      </div>
+      <p class="empty-hint" *ngIf="!specialDays.length">ยังไม่มีวันพิเศษ</p>
+    </div>
+
+    <div class="add-special-day">
+      <input type="date" [(ngModel)]="newSpecialDay.date" />
+      <label class="closed-toggle">
+        <input type="checkbox" [(ngModel)]="newSpecialDay.is_closed" />
+        <span>ปิดทำการ</span>
+      </label>
+      <input type="text" placeholder="หมายเหตุ (เช่น วันสงกรานต์)" [(ngModel)]="newSpecialDay.note" class="note-input" />
+      <button pButton icon="pi pi-plus" label="เพิ่ม" (click)="addSpecialDay()"></button>
+    </div>
+  </div>
+
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+</div>

@@ -1,0 +1,224 @@
+<div class="lot-list-container">
+  @if (loading) {
+    <app-loading-spinner [overlay]="true" message="กำลังโหลดข้อมูล..."></app-loading-spinner>
+  }
+
+  <div class="list-header">
+    <div class="header-title-group">
+      <h2 class="text-xl font-bold text-gray-800">ล็อตสินค้า</h2>
+      <span class="count-badge">{{ lots.length }} ล็อต</span>
+    </div>
+    <p-button label="รับสินค้าเข้าล็อตใหม่" icon="pi pi-plus" (onClick)="openCreateDialog()"></p-button>
+  </div>
+
+  <div class="filter-bar">
+    <p-select
+      [options]="products"
+      [(ngModel)]="selectedProductId"
+      optionLabel="name"
+      optionValue="id"
+      [filter]="true"
+      [showClear]="true"
+      placeholder="ทุกสินค้า"
+      (onChange)="onFilterChange()"
+      styleClass="product-select"
+    ></p-select>
+
+    <label class="expiring-toggle">
+      <input type="checkbox" [(ngModel)]="showExpiringOnly" (change)="onFilterChange()" />
+      ใกล้หมดอายุใน 30 วัน
+    </label>
+
+    <p-button label="ล้างตัวกรอง" icon="pi pi-filter-slash" severity="secondary" [outlined]="true" (onClick)="clearFilters()"></p-button>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl">
+    <p-table [value]="lots" [loading]="loading" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 25, 50]"
+      [paginatorDropdownAppendTo]="'body'" [stripedRows]="true" [rowHover]="true" dataKey="id" class="p-datatable-sm"
+      currentPageReportTemplate="แสดง {first} ถึง {last} จาก {totalRecords} ล็อต" [showCurrentPageReport]="true">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th>สินค้า</th>
+          <th style="width: 130px;">เลขที่ล็อต</th>
+          <th style="width: 120px;">ยี่ห้อ</th>
+          <th style="width: 110px;">วันผลิต</th>
+          <th style="width: 110px;">วันหมดอายุ</th>
+          <th class="text-right" style="width: 150px;">รับเข้า</th>
+          <th class="text-right" style="width: 110px;">คงเหลือ</th>
+          <th class="text-right" style="width: 100px;">ต้นทุน/หน่วย</th>
+          <th style="width: 110px;">ผู้จำหน่าย</th>
+          <th style="width: 140px;">รายละเอียดที่ซื้อ</th>
+          <th class="text-center" style="width: 70px;">จัดการ</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-lot>
+        <tr>
+          <td class="font-medium text-gray-900">
+            <div class="product-cell">
+              <span>{{ lot.product?.name || productName(lot.product_id) }}</span>
+              @if (lot.modify_date) {
+                <i class="pi pi-history edit-history-icon" [pTooltip]="editHistoryTooltip(lot)" tooltipPosition="top"></i>
+              }
+            </div>
+          </td>
+          <td class="lot-no-cell">{{ lot.lot_no }}</td>
+          <td>{{ lot.brand || '-' }}</td>
+          <td>{{ formatDate(lot.manufacture_date) }}</td>
+          <td>
+            <span [class.text-red]="isExpired(lot)" [class.text-amber]="isExpiringSoon(lot) && !isExpired(lot)">
+              {{ formatDate(lot.expiry_date) }}
+            </span>
+            @if (isExpired(lot)) {
+              <p-tag value="หมดอายุแล้ว" severity="danger" class="ml-1"></p-tag>
+            } @else if (isExpiringSoon(lot)) {
+              <p-tag value="ใกล้หมดอายุ" severity="warn" class="ml-1"></p-tag>
+            }
+          </td>
+          <td class="text-right">
+            @if (receivedPackLine(lot)) {
+              <div class="received-cell">
+                <span class="received-pack">{{ receivedPackLine(lot) }}</span>
+                <span class="received-unit">{{ receivedUnitLine(lot) }}</span>
+              </div>
+            } @else {
+              {{ receivedDisplay(lot) }}
+            }
+          </td>
+          <td class="text-right font-semibold" [class.text-red]="lot.quantity_remaining === 0">{{ lot.quantity_remaining }} {{ lot.product?.unit }}</td>
+          <td class="text-right">{{ formatCurrency(lot.unit_cost) }}</td>
+          <td>{{ lot.supplier || '-' }}</td>
+          <td class="note-cell" [pTooltip]="lot.note" tooltipPosition="top">{{ lot.note || '-' }}</td>
+          <td class="text-center">
+            @if (lot.is_locked) {
+              <i class="pi pi-lock locked-icon" pTooltip="มีรายการการเงินอ้างอิงแล้ว แก้ไขไม่ได้" tooltipPosition="top"></i>
+            } @else {
+              <button pButton icon="pi pi-pencil" size="small" severity="warn" outlined rounded
+                (click)="openEditDialog(lot)" pTooltip="แก้ไข" tooltipPosition="top"></button>
+            }
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="11" class="text-center py-8">
+            <div class="empty-state">
+              <i class="pi pi-inbox text-6xl text-gray-300 mb-4"></i>
+              <h3 class="text-lg font-medium text-gray-600 mb-2">ไม่พบล็อตสินค้า</h3>
+              <p-button label="รับสินค้าเข้าล็อตแรก" icon="pi pi-plus" (onClick)="openCreateDialog()"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-dialog [(visible)]="showDialog" [modal]="true" [appendTo]="'body'" [style]="{ width: '480px' }"
+    [breakpoints]="{ '640px': '90vw' }" [header]="isEditMode ? 'แก้ไขล็อตสินค้า' : 'รับสินค้าเข้าล็อตใหม่'" [closable]="!saving">
+    <form [formGroup]="form" class="dialog-form">
+      <div class="field">
+        <label>สินค้า <span class="required">*</span></label>
+        <p-select formControlName="product_id" [options]="products" optionLabel="name" optionValue="id"
+          [filter]="true" placeholder="เลือกสินค้า" styleClass="full-width" (onChange)="onFormProductChange()"
+          [class.ng-invalid]="isFieldInvalid('product_id')"></p-select>
+        @if (isEditMode) {
+          <small class="field-hint">ย้าย lot ไปสินค้าอื่นไม่ได้</small>
+        }
+      </div>
+
+      <div class="field">
+        <label>เลขที่ล็อต <span class="required">*</span></label>
+        <input pInputText formControlName="lot_no" placeholder="เช่น LOT-2026-01" class="full-width"
+          [class.ng-invalid]="isFieldInvalid('lot_no')" />
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>วันผลิต</label>
+          <input type="date" formControlName="manufacture_date" class="full-width" />
+        </div>
+        <div class="field">
+          <label>วันหมดอายุ</label>
+          <input type="date" formControlName="expiry_date" class="full-width" />
+        </div>
+      </div>
+
+      @if (productHasPack()) {
+        <div class="field checkbox-field">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="use_pack" />
+            กรอกเป็นหน่วยบรรจุ ({{ selectedFormProduct()?.pack_unit }})
+          </label>
+        </div>
+      }
+
+      @if (form.get('use_pack')?.value) {
+        <div class="field-row">
+          <div class="field">
+            <label>จำนวน ({{ selectedFormProduct()?.pack_unit }}) <span class="required">*</span></label>
+            <p-inputNumber formControlName="received_pack_qty" class="full-width"></p-inputNumber>
+          </div>
+          <div class="field">
+            <label>ต้นทุน/{{ selectedFormProduct()?.pack_unit }}</label>
+            <p-inputNumber formControlName="pack_unit_cost" mode="currency" currency="THB" locale="th-TH" class="full-width"></p-inputNumber>
+          </div>
+        </div>
+        @if (packQty()) {
+          <table class="ratio-table">
+            <tbody>
+              <tr>
+                <td>ซื้อมา</td>
+                <td>{{ packQty() }} {{ selectedFormProduct()?.pack_unit }}</td>
+              </tr>
+              <tr>
+                <td>อัตราส่วน</td>
+                <td>1 {{ selectedFormProduct()?.pack_unit }} = {{ selectedFormProduct()?.pack_size }} {{ selectedFormProduct()?.unit }}</td>
+              </tr>
+              <tr class="ratio-total">
+                <td>รวมเป็น</td>
+                <td>{{ packTotalUnits() }} {{ selectedFormProduct()?.unit }}</td>
+              </tr>
+            </tbody>
+          </table>
+        }
+      } @else {
+        <div class="field-row">
+          <div class="field">
+            <label>จำนวนรับเข้า ({{ selectedFormProduct()?.unit || 'หน่วย' }}) <span class="required">*</span></label>
+            <p-inputNumber formControlName="quantity_in" class="full-width"
+              [class.ng-invalid]="isFieldInvalid('quantity_in')"></p-inputNumber>
+          </div>
+          <div class="field">
+            <label>ต้นทุน/หน่วย</label>
+            <p-inputNumber formControlName="unit_cost" mode="currency" currency="THB" locale="th-TH" class="full-width"></p-inputNumber>
+          </div>
+        </div>
+      }
+
+      <div class="field-row">
+        <div class="field">
+          <label>ผู้จำหน่าย</label>
+          <input pInputText formControlName="supplier" placeholder="ร้าน/คนที่ซื้อมา" class="full-width" />
+        </div>
+        <div class="field">
+          <label>เจ้าของยี่ห้อ</label>
+          <input pInputText formControlName="brand" placeholder="เช่น Berlin Pharmaceutical" class="full-width" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>รายละเอียดที่ซื้อ</label>
+        <textarea formControlName="note" rows="2" placeholder="ไม่บังคับ" class="full-width"></textarea>
+      </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+      <p-button label="ยกเลิก" severity="secondary" [outlined]="true" (onClick)="closeDialog()" [disabled]="saving"></p-button>
+      <p-button [label]="isEditMode ? 'บันทึกการแก้ไข' : 'บันทึก'" icon="pi pi-check" (onClick)="submit()" [disabled]="saving"></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <p-toast></p-toast>
+</div>

@@ -1,0 +1,32 @@
+<div class="portal-dashboard">
+  <div class="welcome-banner">
+    <h2>สวัสดี{{ patientName ? ' คุณ' + patientName : '' }} 👋</h2>
+    <p>ยินดีต้อนรับสู่ระบบบริการผู้ป่วยออนไลน์ Kornpassorn Care</p>
+  </div>
+
+  <div class="card-grid">
+    <div class="portal-card" (click)="goTo('/portal/questionnaire')">
+      <div class="icon">📋</div>
+      <h3>กรอกแบบสอบถามสุขภาพ</h3>
+      <p>กรอกข้อมูลเบื้องต้นก่อนเข้ารับการรักษา</p>
+    </div>
+
+    <div class="portal-card" (click)="openHospitalHours()">
+      <div class="icon">🕒</div>
+      <h3>เวลาทำการโรงพยาบาล</h3>
+      <p>ดูวันและเวลาเปิด-ปิดให้บริการ</p>
+    </div>
+
+    <div class="portal-card" (click)="goTo('/portal/profile')">
+      <div class="icon">👤</div>
+      <h3>โปรไฟล์ของฉัน</h3>
+      <p>ดูและแก้ไขข้อมูลส่วนตัว</p>
+    </div>
+
+    <div class="portal-card disabled">
+      <div class="icon">📅</div>
+      <h3>นัดหมาย / คิว</h3>
+      <p class="coming-soon">เร็วๆ นี้</p>
+    </div>
+  </div>
+</div>

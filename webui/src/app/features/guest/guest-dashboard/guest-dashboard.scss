@@ -1,0 +1,333 @@
+.guest-dashboard {
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.welcome-banner {
+  background: linear-gradient(135deg, #115e59 0%, #0d9488 55%, #0e7490 100%);
+  color: #fff;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 16px rgba(13, 148, 136, 0.2);
+
+  h2 {
+    margin: 0 0 0.4rem 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.85);
+  }
+}
+
+.status-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.06);
+
+  .status-icon {
+    font-size: 1.75rem;
+  }
+
+  h3 {
+    margin: 0 0 0.2rem 0;
+    color: #0f172a;
+    font-size: 1.05rem;
+  }
+
+  p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.875rem;
+  }
+}
+
+.dashboard-grid {
+  display: grid;
+  // ปฏิทิน (col-side) กว้างเกิน 50% ของพื้นที่ทั้งหมดตามที่ต้องการ
+  grid-template-columns: minmax(0, 0.8fr) minmax(300px, 1fr);
+  align-items: stretch;
+  gap: 1.25rem;
+}
+
+.col-main,
+.col-side {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.col-side {
+  // ปฏิทินไม่ได้สูงเท่าคอลัมน์ซ้าย (action + schedule) อยู่แล้ว -> จัดกึ่งกลางแนวตั้งแทนที่จะชิดบน
+  justify-content: center;
+}
+
+.guest-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.06);
+
+  h3 {
+    margin: 0 0 0.35rem 0;
+    font-size: 1.05rem;
+    color: #0f172a;
+
+    &.mt-4 {
+      margin-top: 1rem;
+    }
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+
+  &.action {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    .icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(13, 148, 136, 0.14);
+    }
+  }
+}
+
+.calendar-card {
+  width: 100%;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+
+  h3 {
+    margin: 0;
+  }
+
+  .nav-btn {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    color: #0f172a;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+
+    &:hover {
+      background: #f0fbfa;
+      border-color: #0d9488;
+    }
+  }
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+}
+
+.calendar-day-name {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  padding-bottom: 0.25rem;
+}
+
+.calendar-cell {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #0f172a;
+  background: #f8fafc;
+  cursor: default;
+  transition: transform 0.15s ease;
+
+  &.out-month {
+    color: #cbd5e1;
+    background: transparent;
+  }
+
+  &.today {
+    border: 2px solid #0d9488;
+    font-weight: 700;
+  }
+
+  &.closed {
+    background: #fee2e2;
+    color: #dc2626;
+    font-weight: 600;
+  }
+
+  &:hover {
+    transform: scale(1.08);
+  }
+}
+
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: #64748b;
+
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .legend-dot {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+
+    &.closed {
+      background: #fee2e2;
+      border-color: #dc2626;
+    }
+
+    &.today {
+      background: #fff;
+      border: 2px solid #0d9488;
+    }
+  }
+}
+
+.weekly-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.875rem;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &.today {
+    background: #f0fbfa;
+    border-radius: 8px;
+    padding-left: 0.5rem;
+    font-weight: 600;
+  }
+
+  .day-label {
+    width: 100px;
+    color: #0f172a;
+    flex-shrink: 0;
+  }
+
+  .hours {
+    color: #374151;
+  }
+
+  .closed {
+    color: #dc2626;
+    font-weight: 600;
+  }
+}
+
+// Notebook/tablet แคบ: คอลัมน์ปฏิทินด้านข้างไม่พอ -> วางซ้อนเป็นคอลัมน์เดียว ปฏิทินจำกัดความกว้างสูงสุดไว้ไม่ให้ยืดเต็มจอ
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-card {
+    max-width: 420px;
+    margin: 0 auto;
+  }
+}
+
+// มือถือ: การ์ดและปฏิทินยืดเต็มความกว้างจอ ลด padding/ตัวอักษรให้พอดี
+@media (max-width: 576px) {
+  .guest-dashboard {
+    padding: 0 0.25rem;
+  }
+
+  .welcome-banner {
+    padding: 1.25rem;
+
+    h2 {
+      font-size: 1.15rem;
+    }
+  }
+
+  .status-card {
+    padding: 1rem;
+  }
+
+  .dashboard-grid,
+  .col-main,
+  .col-side {
+    gap: 1rem;
+  }
+
+  .guest-card {
+    padding: 1rem;
+  }
+
+  .calendar-card {
+    max-width: 100%;
+  }
+
+  .calendar-header h3 {
+    font-size: 0.95rem;
+  }
+
+  .calendar-header .nav-btn {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 1rem;
+  }
+
+  .calendar-grid {
+    gap: 0.25rem;
+  }
+
+  .calendar-day-name {
+    font-size: 0.7rem;
+  }
+
+  .calendar-cell {
+    font-size: 0.75rem;
+    border-radius: 6px;
+  }
+
+  .calendar-legend {
+    gap: 0.6rem;
+    font-size: 0.72rem;
+  }
+}

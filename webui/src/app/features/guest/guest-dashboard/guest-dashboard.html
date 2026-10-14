@@ -1,0 +1,74 @@
+<div class="guest-dashboard">
+  <div class="welcome-banner">
+    <h2>สวัสดี 👋</h2>
+    <p>ยินดีต้อนรับสู่ระบบบริการผู้ป่วยออนไลน์ Kornpassorn Care</p>
+  </div>
+
+  <div class="status-card" *ngIf="!loading">
+    <div class="status-icon" [class.open]="todayStatus.available" [class.closed]="!todayStatus.available">
+      {{ todayStatus.available ? '🟢' : '🔴' }}
+    </div>
+    <div>
+      <h3>{{ todayStatus.available ? 'วันนี้หมออยู่' : 'วันนี้หมอไม่อยู่' }}</h3>
+      <p *ngIf="todayStatus.available">เปิดให้บริการเวลา {{ todayStatus.hours }}</p>
+      <p *ngIf="!todayStatus.available">คลินิกปิดทำการในวันนี้</p>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="col-main">
+      <div class="guest-card action" (click)="goToQuestionnaire()">
+        <div class="icon">📋</div>
+        <h3>กรอกแบบสอบถามสุขภาพ</h3>
+        <p>กรอกข้อมูลเบื้องต้นก่อนเข้ารับการปรึกษา</p>
+      </div>
+
+      <div class="guest-card schedule-card" *ngIf="!loading">
+        <h3>ตารางเวลาทำการประจำสัปดาห์</h3>
+        <div class="weekly-row" *ngFor="let day of weekly" [class.today]="day.day_of_week === todayDayOfWeek">
+          <span class="day-label">{{ dayLabels[day.day_of_week] }}</span>
+          <span class="hours" *ngIf="!day.is_closed">{{ formatTime(day.open_time) }} - {{ formatTime(day.close_time) }} น.</span>
+          <span class="closed" *ngIf="day.is_closed">หมอไม่อยู่</span>
+        </div>
+
+        <ng-container *ngIf="specialDays.length">
+          <h3 class="mt-4">วันหยุด / วันพิเศษ</h3>
+          <div class="weekly-row" *ngFor="let day of specialDays">
+            <span class="day-label">{{ formatDate(day.date) }}</span>
+            <span class="hours" *ngIf="!day.is_closed">{{ formatTime(day.open_time) }} - {{ formatTime(day.close_time) }} น.</span>
+            <span class="closed" *ngIf="day.is_closed">หมอไม่อยู่</span>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+    <div class="col-side">
+      <div class="guest-card calendar-card">
+        <div class="calendar-header">
+          <button type="button" class="nav-btn" (click)="prevMonth()" aria-label="เดือนก่อนหน้า">‹</button>
+          <h3>{{ calendarLabel }}</h3>
+          <button type="button" class="nav-btn" (click)="nextMonth()" aria-label="เดือนถัดไป">›</button>
+        </div>
+        <div class="calendar-grid">
+          <div class="calendar-day-name" *ngFor="let d of dayHeaders">{{ d }}</div>
+          <div
+            class="calendar-cell"
+            *ngFor="let day of calendarDays"
+            [class.out-month]="!day.inMonth"
+            [class.today]="day.isToday"
+            [class.closed]="day.isClosed"
+            [pTooltip]="day.tooltip"
+            tooltipPosition="top"
+            [showDelay]="150"
+          >
+            {{ day.date.getDate() }}
+          </div>
+        </div>
+        <div class="calendar-legend">
+          <span class="legend-item"><span class="legend-dot closed"></span> วันหยุด / หมอไม่อยู่</span>
+          <span class="legend-item"><span class="legend-dot today"></span> วันนี้</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

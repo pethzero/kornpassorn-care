@@ -262,9 +262,12 @@ export class AuthController {
       // จะโดนลดอายุ access token จาก permanent เหลือ 30 วันทุกครั้งที่ refresh)
       // และต้อง save access token ใหม่ลง DB ด้วย ไม่งั้น JwtStrategy หา UserToken record ไม่เจอ
       // (lookup by jti/tokenHash) แล้ว 401 ทันทีตั้งแต่ request แรกที่ใช้ access token ที่เพิ่ง refresh มา
+      const actorType = payload.role === 'patient' ? 'patient' : 'user';
       const tokens = await this.authService.issueTokenPair(
         { id: payload.sub, username: payload.username, role: payload.role },
         !!payload.remember,
+        undefined,
+        actorType,
       );
 
       res.cookie(

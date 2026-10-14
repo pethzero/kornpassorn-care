@@ -133,6 +133,7 @@
   </p-card>
 
   <p-card header="รายการการเงินล่าสุด" class="shadow-lg border-0">
+    <div class="overflow-x-auto rounded-xl">
     <p-table [value]="financeRecords" [loading]="loading" [paginator]="true" [rows]="pageSize"
       [totalRecords]="totalRecords" [showCurrentPageReport]="true"
       currentPageReportTemplate="แสดง {first} ถึง {last} จาก {totalRecords} รายการ"
@@ -224,10 +225,7 @@
         </tr>
       </ng-template>
     </p-table>
-    <p-table [value]="financeRecords" [paginator]="true" [rows]="pageSize" [totalRecords]="totalRecords" [lazy]="true"
-      (onLazyLoad)="onPageChange($event)">
-      <!-- column ใส่ตามต้องการ -->
-    </p-table>
+    </div>
   </p-card>
 
 

@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from './user.entity';
+import { Patient } from './medical.entity';
 
 @Entity('login_logs')
 export class LoginLog {
@@ -8,7 +9,12 @@ export class LoginLog {
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'user_id' })
-  user: User;
+  user?: User;
+
+  // login log ของ patient (phone+OTP) — reuse ตารางเดียวกันแทนที่จะแยกตารางใหม่
+  @ManyToOne(() => Patient, { nullable: true })
+  @JoinColumn({ name: 'patient_id' })
+  patient?: Patient;
 
   @CreateDateColumn()
   login_time: Date;

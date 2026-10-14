@@ -1,14 +1,20 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, Index } from 'typeorm';
 import { User } from './user.entity';
+import { Patient } from './medical.entity';
 
 @Entity('user_tokens')
 export class UserToken {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { nullable: true })
   @Index()
-  user: User;
+  user?: User;
+
+  // sessions ของ patient (phone+OTP login) ใช้ relation นี้แทน user เพื่อ reuse ตาราง/cleanup cron เดียวกัน
+  @ManyToOne(() => Patient, { nullable: true })
+  @Index()
+  patient?: Patient;
 
   @Column({ name: 'token_hash', nullable: true })
   @Index()
