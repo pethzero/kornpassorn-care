@@ -1,9 +1,123 @@
-<div class="bg-gray-50 rounded-2xl p-8 shadow max-w-5xl mx-auto border border-gray-200">
-  <div class="mb-4 flex items-center justify-between">
-    <h2 class="text-xl font-bold text-gray-800">รายชื่อผู้ป่วย</h2>
-    <!-- เพิ่มปุ่มถ้าต้องการ -->
-    <!-- <button class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700">+ เพิ่มผู้ป่วย</button> -->
+<div class="patient-list-container">
+  @if (deleting) {
+    <app-loading-spinner [overlay]="true" message="กำลังลบข้อมูล..."></app-loading-spinner>
+  }
+
+  <div class="list-header">
+    <div class="header-title-group">
+      <h2 class="text-xl font-bold text-gray-800">รายชื่อผู้ป่วย</h2>
+      <span class="count-badge">{{ patients.length }} คน</span>
+    </div>
+    <p-button label="เพิ่มผู้ป่วย" icon="pi pi-plus" (onClick)="navigateToAdd()"></p-button>
   </div>
+
+  <div class="search-bar">
+    <i class="pi pi-search search-icon"></i>
+    <input
+      type="text"
+      pInputText
+      [(ngModel)]="searchTerm"
+      (input)="dt.filterGlobal(searchTerm, 'contains')"
+      placeholder="ค้นหาชื่อ หรือ รหัสผู้ป่วย..."
+      class="search-input"
+    />
+  </div>
+
   <div class="overflow-x-auto rounded-xl">
- 
+    <p-table
+      #dt
+      [value]="patients"
+      [loading]="loading"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [globalFilterFields]="['patient_code', 'first_name', 'last_name', 'phone']"
+      [stripedRows]="true"
+      [rowHover]="true"
+      dataKey="id"
+      class="p-datatable-sm"
+      currentPageReportTemplate="แสดง {first} ถึง {last} จาก {totalRecords} คน"
+      [showCurrentPageReport]="true"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="patient_code" style="width: 140px;">
+            รหัสผู้ป่วย <p-sortIcon field="patient_code"></p-sortIcon>
+          </th>
+          <th pSortableColumn="first_name">
+            ผู้ป่วย <p-sortIcon field="first_name"></p-sortIcon>
+          </th>
+          <th style="width: 100px;">เพศ</th>
+          <th pSortableColumn="date_of_birth" style="width: 110px;">
+            อายุ <p-sortIcon field="date_of_birth"></p-sortIcon>
+          </th>
+          <th style="width: 140px;">เบอร์โทร</th>
+          <th class="text-center" style="width: 110px;">จัดการ</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-patient>
+        <tr>
+          <td class="patient-code">{{ patient.patient_code }}</td>
+          <td>
+            <div class="patient-cell">
+              <div class="avatar">{{ initials(patient) }}</div>
+              <div class="patient-name">
+                <span class="name">{{ fullName(patient) }}</span>
+                <span class="email" *ngIf="patient.email">{{ patient.email }}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span [class]="genderClass(patient.gender)">{{ genderLabel(patient.gender) }}</span>
+          </td>
+          <td>{{ age(patient.date_of_birth) !== null ? age(patient.date_of_birth) + ' ปี' : '-' }}</td>
+          <td>{{ patient.phone || '-' }}</td>
+          <td class="text-center">
+            <div class="action-buttons">
+              <button
+                pButton
+                icon="pi pi-pencil"
+                size="small"
+                severity="info"
+                outlined
+                rounded
+                (click)="editPatient(patient)"
+                pTooltip="แก้ไข"
+                tooltipPosition="top"
+              ></button>
+              <button
+                pButton
+                icon="pi pi-trash"
+                size="small"
+                severity="danger"
+                outlined
+                rounded
+                [disabled]="deleting"
+                (click)="confirmDelete($event, patient)"
+                pTooltip="ลบ"
+                tooltipPosition="top"
+              ></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6" class="text-center py-8">
+            <div class="empty-state">
+              <i class="pi pi-users text-6xl text-gray-300 mb-4"></i>
+              <h3 class="text-lg font-medium text-gray-600 mb-2">ไม่พบข้อมูลผู้ป่วย</h3>
+              <p class="text-gray-500 mb-4">ยังไม่มีรายชื่อผู้ป่วยในระบบ</p>
+              <p-button label="เพิ่มผู้ป่วยคนแรก" icon="pi pi-plus" (onClick)="navigateToAdd()"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
 </div>

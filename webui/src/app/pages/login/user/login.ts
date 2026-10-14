@@ -41,7 +41,7 @@ export class LoginComponent {
     this.auth.loginAsGuest().subscribe(success => {
       this.isSubmitting = false;
       if (success) {
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/guest-dashboard']);
       } else {
         this.errorMessage = 'ไม่สามารถเข้าสู่ระบบ guest ได้';
       }

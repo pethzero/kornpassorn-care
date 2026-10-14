@@ -1,0 +1,54 @@
+<div class="questionnaire-list-container">
+  <div class="list-header">
+    <h2 class="text-xl font-bold text-gray-800">แบบสอบถามผู้ป่วย</h2>
+    <span class="count-badge">{{ questionnaires.length }} รายการ</span>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl">
+    <p-table [value]="questionnaires" [loading]="loading" [paginator]="true" [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]" [stripedRows]="true" [rowHover]="true" dataKey="id"
+      class="p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>ผู้ป่วย</th>
+          <th style="width: 160px;">วันที่ส่ง</th>
+          <th style="width: 140px;">สถานะ</th>
+          <th class="text-center" style="width: 100px;">จัดการ</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-q>
+        <tr class="clickable-row" (click)="viewDetail(q)">
+          <td>
+            <div class="patient-cell">
+              <div class="avatar">{{ initials(q) }}</div>
+              <span class="name">{{ patientName(q) }}</span>
+            </div>
+          </td>
+          <td>{{ formatDate(q.created_at) }}</td>
+          <td>
+            <p-tag [value]="statusLabel(q.status)" [severity]="statusSeverity(q.status)"></p-tag>
+          </td>
+          <td class="text-center">
+            <button pButton icon="pi pi-eye" size="small" severity="info" outlined rounded
+              (click)="$event.stopPropagation(); viewDetail(q)"></button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="4" class="text-center py-8">
+            <div class="empty-state">
+              <i class="pi pi-file-edit text-6xl text-gray-300 mb-4"></i>
+              <h3 class="text-lg font-medium text-gray-600 mb-2">ยังไม่มีแบบสอบถาม</h3>
+              <p class="text-gray-500">ยังไม่มีผู้ป่วยส่งแบบสอบถามเข้ามา</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-toast></p-toast>
+</div>

@@ -1,4 +1,173 @@
-::ng-deep .mat-paginator {
-  border-radius: 0 0 1rem 1rem;
-  background: transparent;
+.patient-list-container {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.06);
+  border: 1px solid #e5e7eb;
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.count-badge {
+  background: #f0fbfa;
+  color: #0d9488;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+
+.search-bar {
+  position: relative;
+  margin-bottom: 1.25rem;
+  max-width: 22rem;
+
+  .search-icon {
+    position: absolute;
+    top: 50%;
+    left: 0.85rem;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.9rem;
+  }
+
+  .search-input {
+    width: 100%;
+    padding-left: 2.4rem;
+  }
+}
+
+.patient-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5eead4 0%, #0d9488 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.patient-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  .name {
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .email {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.patient-code {
+  font-family: 'Courier New', monospace;
+  color: #475569;
+  font-size: 0.85rem;
+}
+
+.gender-tag {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &.gender-male {
+    background: #e0f2fe;
+    color: #0369a1;
+  }
+
+  &.gender-female {
+    background: #fce7f3;
+    color: #be185d;
+  }
+
+  &.gender-other {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem 0;
+
+  h3 {
+    margin: 0.5rem 0;
+  }
+}
+
+::ng-deep .patient-list-container {
+  .p-datatable-thead > tr > th {
+    background: #f0fbfa;
+    color: #115e59;
+    font-weight: 600;
+    border-color: #e2f3f1;
+  }
+
+  .p-datatable-tbody > tr {
+    transition: background 0.15s ease;
+  }
+
+  .p-datatable-tbody > tr:hover {
+    background: #f0fbfa !important;
+  }
+
+  .p-datatable-tbody > tr.p-row-odd {
+    background: #fafcfc;
+  }
+
+  .p-paginator {
+    border-radius: 0 0 1rem 1rem;
+    background: transparent;
+  }
+
+  .p-button:not(.p-button-outlined) {
+    background: #0d9488;
+    border-color: #0d9488;
+
+    &:hover {
+      background: #115e59;
+      border-color: #115e59;
+    }
+  }
 }

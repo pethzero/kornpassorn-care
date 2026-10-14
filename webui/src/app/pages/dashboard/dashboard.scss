@@ -255,261 +255,59 @@
   animation: fadeInUp 0.6s ease-out;
 }
 
-.custom-table {
-  .badge-dept {
-    background: linear-gradient(90deg, #a7f3d0 0%, #fbcfe8 100%);
-    color: #374151;
-    padding: 0.25rem 0.75rem;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    margin-right: 0.5rem;
-  }
-  .pi {
-    margin-right: 0.25rem;
-    color: #6366f1;
-  }
-}
-
-
 .emoji {
   font-size: 1.5rem;
   vertical-align: middle;
 }
 
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 1rem 0;
+}
 
+.quick-actions-section {
+  .grid {
+    display: grid;
+  }
+}
 
-/////////////////////
-
-.card-theme {
+.quick-action-card {
+  display: block;
   background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
-  padding: 2rem 1.5rem;
-  transition: box-shadow 0.2s;
-  border: none;
-  position: relative;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-top: 3px solid transparent;
 
   &:hover {
-    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
   }
 
-  .card-header {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #222;
+  .qa-icon {
+    font-size: 1.75rem;
     margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
   }
 
-  .card-subtitle {
-    font-size: 1rem;
-    color: #6b7280;
-    margin-bottom: 1.25rem;
+  .qa-label {
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0.2rem;
   }
 
-  .card-content {
-    font-size: 1.1rem;
-    color: #222;
-  }
-
-  // Responsive
-  @media (max-width: 768px) {
-    padding: 1rem;
-    .card-header { font-size: 1rem; }
-    .card-content { font-size: 1rem; }
-  }
-}
-
-.table-theme {
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
-  padding: 1.5rem;
-  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-
-  .p-datatable {
-    border: none;
-    background: transparent;
-    font-size: 1rem;
-    color: #222;
-
-    .p-datatable-header {
-      background: transparent;
-      border-bottom: none;
-      padding-bottom: 0.5rem;
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: #222;
-    }
-
-    .p-datatable-thead > tr > th {
-      background: transparent;
-      border: none;
-      font-weight: 600;
-      color: #222;
-      padding: 1rem 0.5rem 0.75rem 0.5rem;
-      font-size: 1rem;
-      border-bottom: 2px solid #f3f4f6;
-    }
-
-    .p-datatable-tbody > tr {
-      transition: background 0.2s;
-      &:hover {
-        background: #f6f8fa;
-      }
-    }
-
-    .p-datatable-tbody > tr > td {
-      border: none;
-      padding: 1rem 0.5rem;
-      font-size: 1rem;
-      vertical-align: middle;
-      border-bottom: 1px solid #f3f4f6;
-    }
-
-    .p-datatable-footer {
-      background: transparent;
-      border-top: none;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #222;
-      padding-top: 0.5rem;
-    }
-
-    .p-paginator {
-      background: transparent;
-      border: none;
-      margin-top: 1rem;
-      .p-paginator-pages .p-paginator-page {
-        border-radius: 50%;
-        width: 2rem;
-        height: 2rem;
-        font-size: 1rem;
-        color: #222;
-        transition: background 0.2s;
-        &:hover, &.p-highlight {
-          background: #e0e7ef;
-          color: #222;
-        }
-      }
-      .p-paginator-current {
-        font-size: 0.95rem;
-        color: #6b7280;
-      }
-    }
-  }
-
-  // Avatar (ถ้ามี)
-  .avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 1rem;
-    color: #fff;
-    margin-right: 0.75rem;
-    background: #e0e7ef;
-  }
-
-  // Amount color
-  .amount-positive { color: #059669; font-weight: 600; }
-  .amount-negative { color: #dc2626; font-weight: 600; }
-}
-
-// Responsive
-@media (max-width: 768px) {
-  .table-theme {
-    padding: 0.5rem;
-    .p-datatable-thead > tr > th,
-    .p-datatable-tbody > tr > td {
-      padding: 0.5rem 0.25rem;
-      font-size: 0.9rem;
-    }
-  }
-}
-
-.dashboard {
-  .stat-card {
-    text-align: center;
-    padding: 1.5rem;
-    border-radius: 1rem;
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-
-    .stat-value {
-      font-size: 1.8rem;
-      font-weight: bold;
-    }
-    .stat-label {
-      font-size: 0.9rem;
-      opacity: 0.9;
-    }
-  }
-
-  .revenue { background: linear-gradient(135deg, #42a5f5, #478ed1); }
-  .orders { background: linear-gradient(135deg, #66bb6a, #43a047); }
-  .customers { background: linear-gradient(135deg, #ffa726, #fb8c00); }
-  .feedback { background: linear-gradient(135deg, #ab47bc, #8e24aa); }
-
-  .status-badge {
-    padding: 0.25rem 0.6rem;
-    border-radius: 12px;
+  .qa-desc {
     font-size: 0.8rem;
-    color: #fff;
-    &.delivered { background: #43a047; }
-    &.pending { background: #fbc02d; color: #000; }
-    &.cancelled { background: #e53935; }
-  }
-}
-
-
-
-.custom-table {
-  .p-datatable-thead > tr > th {
-    background: #f4f6f8;
-    font-weight: 600;
-    color: #37474f;
-    border: none;
-    padding: 0.8rem;
+    color: #64748b;
   }
 
-  .p-datatable-tbody > tr {
-    transition: background 0.3s;
-    &:nth-child(even) {
-      background: #fafafa;
-    }
-    &:hover {
-      background: #e3f2fd;
-    }
-    td {
-      padding: 0.8rem;
-      border: none;
-    }
-  }
-
-  .status-badge {
-    padding: 0.3rem 0.7rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    text-transform: capitalize;
-    color: #fff;
-
-    &.delivered { background: #43a047; }
-    &.pending { background: #fbc02d; color: #000; }
-    &.cancelled { background: #e53935; }
-  }
-
-  .p-paginator {
-    border: none;
-    padding: 0.5rem;
-    justify-content: center;
-  }
+  &.finance { border-top-color: #0d9488; }
+  &.inventory { border-top-color: #f59e0b; }
+  &.patient { border-top-color: #3b82f6; }
+  &.questionnaire { border-top-color: #8b5cf6; }
 }

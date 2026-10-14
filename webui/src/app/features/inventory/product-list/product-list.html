@@ -1,0 +1,170 @@
+<div class="product-list-container">
+  @if (loading) {
+    <app-loading-spinner [overlay]="true" message="กำลังโหลดข้อมูล..."></app-loading-spinner>
+  }
+
+  <div class="list-header">
+    <div class="header-title-group">
+      <h2 class="text-xl font-bold text-gray-800">สินค้า</h2>
+      <span class="count-badge">{{ products.length }} รายการ</span>
+    </div>
+    <p-button label="เพิ่มสินค้า" icon="pi pi-plus" (onClick)="openCreateDialog()"></p-button>
+  </div>
+
+  <div class="filter-bar">
+    <div class="search-bar">
+      <i class="pi pi-search search-icon"></i>
+      <input
+        type="text"
+        pInputText
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="onSearch()"
+        placeholder="ค้นหาชื่อสินค้า หรือ SKU..."
+        class="search-input"
+      />
+    </div>
+
+    <p-select
+      [options]="filterCategoryOptions"
+      [(ngModel)]="selectedCategory"
+      optionLabel="label"
+      optionValue="value"
+      (onChange)="onFilterChange()"
+      styleClass="category-select"
+    ></p-select>
+
+    <p-button label="ล้างตัวกรอง" icon="pi pi-filter-slash" severity="secondary" [outlined]="true" (onClick)="clearFilters()"></p-button>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl">
+    <p-table [value]="products" [loading]="loading" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 25, 50]"
+      [paginatorDropdownAppendTo]="'body'" [stripedRows]="true" [rowHover]="true" dataKey="id" class="p-datatable-sm"
+      currentPageReportTemplate="แสดง {first} ถึง {last} จาก {totalRecords} รายการ" [showCurrentPageReport]="true">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 110px;">SKU</th>
+          <th style="width: 220px;">ชื่อสินค้า</th>
+          <th style="width: 120px;">ประเภท</th>
+          <th style="width: 90px;">ใช้งานอยู่</th>
+          <th>คำอธิบาย</th>
+          <th class="text-center" style="width: 150px;">จัดการ</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-product>
+        <tr>
+          <td class="sku-cell">{{ product.sku || '-' }}</td>
+          <td>
+            <div class="name-cell">
+              <span class="font-medium text-gray-900">{{ product.name }}</span>
+              <span class="unit-line">{{ product.unit || '-' }}</span>
+              @if (product.pack_unit && product.pack_size) {
+                <span class="pack-ratio-badge">1 {{ product.pack_unit }} = {{ product.pack_size }} {{ product.unit }}</span>
+              }
+            </div>
+          </td>
+          <td><p-tag [value]="categoryLabel(product.category)"></p-tag></td>
+          <td>
+            <p-tag [value]="product.is_active ? 'ใช้งาน' : 'ปิดใช้งาน'" [severity]="product.is_active ? 'success' : 'secondary'"></p-tag>
+          </td>
+          <td class="description-cell" [pTooltip]="product.description" tooltipPosition="top">
+            {{ product.description || '-' }}
+          </td>
+          <td class="text-center">
+            <div class="action-buttons">
+              <button pButton icon="pi pi-pencil" size="small" severity="warn" outlined rounded
+                (click)="openEditDialog(product)" pTooltip="แก้ไข" tooltipPosition="top"></button>
+              <button pButton icon="pi pi-box" size="small" severity="info" outlined rounded
+                (click)="viewLots(product)" pTooltip="ดูล็อตสินค้า" tooltipPosition="top"></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6" class="text-center py-8">
+            <div class="empty-state">
+              <i class="pi pi-inbox text-6xl text-gray-300 mb-4"></i>
+              <h3 class="text-lg font-medium text-gray-600 mb-2">ไม่พบข้อมูลสินค้า</h3>
+              <p-button label="เพิ่มสินค้าแรก" icon="pi pi-plus" (onClick)="openCreateDialog()"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-dialog [(visible)]="showDialog" [modal]="true" [appendTo]="'body'" [style]="{ width: '420px' }"
+    [breakpoints]="{ '640px': '90vw' }" [header]="isEditMode ? 'แก้ไขสินค้า' : 'เพิ่มสินค้าใหม่'" [closable]="!saving">
+    <form [formGroup]="form" class="dialog-form">
+      <div class="field">
+        <label>SKU</label>
+        <input pInputText formControlName="sku" placeholder="ไม่บังคับ" class="full-width" />
+      </div>
+
+      <div class="field">
+        <label>ชื่อสินค้า <span class="required">*</span></label>
+        <input pInputText formControlName="name" placeholder="เช่น พาราเซตามอล 500mg" class="full-width"
+          [class.ng-invalid]="isFieldInvalid('name')" />
+        @if (isFieldInvalid('name')) {
+          <small class="error-message">กรุณากรอกชื่อสินค้า</small>
+        }
+      </div>
+
+      <div class="field">
+        <label>ประเภท <span class="required">*</span></label>
+        <p-select formControlName="category" [options]="formCategoryOptions" optionLabel="label" optionValue="value"
+          styleClass="full-width"></p-select>
+      </div>
+
+      <div class="field">
+        <label>หน่วยนับ (ที่จ่ายจริง)</label>
+        <input pInputText formControlName="unit" placeholder="เช่น เม็ด, ขวด" class="full-width" />
+      </div>
+
+      <div class="field checkbox-field">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="has_pack" /> ซื้อเข้าเป็นหน่วยบรรจุ (เช่น กล่อง/แผง)
+        </label>
+      </div>
+
+      @if (form.get('has_pack')?.value) {
+        <div class="field-row">
+          <div class="field">
+            <label>หน่วยบรรจุ <span class="required">*</span></label>
+            <input pInputText formControlName="pack_unit" placeholder="เช่น กล่อง" class="full-width" />
+          </div>
+          <div class="field">
+            <label>จำนวน/แพ็ค <span class="required">*</span></label>
+            <p-inputNumber formControlName="pack_size" placeholder="เช่น 30" styleClass="full-width"></p-inputNumber>
+          </div>
+        </div>
+        <small class="pack-preview">
+          1 {{ form.get('pack_unit')?.value || 'หน่วยบรรจุ' }} = {{ form.get('pack_size')?.value || '?' }} {{ form.get('unit')?.value || 'หน่วย' }}
+        </small>
+      }
+
+      <div class="field">
+        <label>คำอธิบาย</label>
+        <textarea formControlName="description" rows="2" placeholder="ไม่บังคับ" class="full-width"></textarea>
+      </div>
+
+      @if (isEditMode) {
+        <div class="field checkbox-field">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="is_active" /> ใช้งานอยู่
+          </label>
+        </div>
+      }
+    </form>
+
+    <ng-template pTemplate="footer">
+      <p-button label="ยกเลิก" severity="secondary" [outlined]="true" (onClick)="closeDialog()" [disabled]="saving"></p-button>
+      <p-button [label]="isEditMode ? 'บันทึกการแก้ไข' : 'บันทึก'" icon="pi pi-check" (onClick)="submit()" [disabled]="saving"></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <p-toast></p-toast>
+</div>

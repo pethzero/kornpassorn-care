@@ -1,0 +1,159 @@
+.hospital-schedule-container {
+  max-width: 48rem;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.06);
+  padding: 1.5rem 2rem;
+  position: relative;
+
+  @media (max-width: 576px) {
+    padding: 1.25rem 1rem;
+  }
+}
+
+.section {
+  margin-bottom: 2rem;
+
+  h3 {
+    color: #115e59;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+}
+
+.weekly-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #f1f5f9;
+
+  .day-label {
+    width: 90px;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  // จอแคบ: day-label + toggle + ช่วงเวลา (2 input time) รวมกันเกิน 375px -> ให้ wrap แทนล้นจอ
+  @media (max-width: 480px) {
+    .day-label {
+      width: 100%;
+    }
+  }
+}
+
+.closed-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #64748b;
+
+  input {
+    accent-color: #0d9488;
+  }
+}
+
+.time-range {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  input[type='time'] {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    min-width: 0;
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+
+    input[type='time'] {
+      flex: 1;
+    }
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.special-day-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.special-day-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+
+  .badge {
+    display: inline-block;
+    margin-left: 0.5rem;
+    font-size: 0.75rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: #f0fbfa;
+    color: #0d9488;
+
+    &.closed {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+  }
+
+  .note {
+    margin-left: 0.75rem;
+    color: #64748b;
+    font-size: 0.85rem;
+  }
+}
+
+.empty-hint {
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
+
+.add-special-day {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+
+  input[type='date'],
+  .note-input {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+  }
+
+  .note-input {
+    flex: 1;
+    min-width: 160px;
+  }
+}
+
+:host ::ng-deep .p-button:not(.p-button-outlined) {
+  background: #0d9488;
+  border-color: #0d9488;
+
+  &:hover {
+    background: #115e59;
+    border-color: #115e59;
+  }
+}

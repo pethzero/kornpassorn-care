@@ -144,6 +144,41 @@ export class AuthService {
     );
   }
 
+  // ================== PATIENT LOGIN (phone + OTP) ==================
+  requestPatientOtp(phone: string): Observable<{ success: boolean; expires_in: number; devOtp?: string }> {
+    return this.http.post<any>(
+      `${environment.apiUrl}/patient-auth/otp/request`,
+      { phone },
+      { withCredentials: true }
+    );
+  }
+
+  verifyPatientOtp(phone: string, otp: string): Observable<{
+    success: boolean;
+    access_token?: string;
+    patient: { id: number; first_name: string; last_name: string; phone: string; needsProfile: boolean };
+  }> {
+    return this.http.post<any>(
+      `${environment.apiUrl}/patient-auth/otp/verify`,
+      { phone, otp },
+      { withCredentials: true }
+    ).pipe(
+      tap(res => {
+        if (res?.access_token) {
+          this.setAccessToken(res.access_token);
+        }
+      })
+    );
+  }
+
+  getMyPatientProfile(): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}/patient-auth/me`);
+  }
+
+  updateMyPatientProfile(data: any): Observable<any> {
+    return this.http.patch<any>(`${environment.apiUrl}/patient-auth/me`, data);
+  }
+
   // ================== REFRESH ==================
   refreshToken(): Observable<string> {
     // มี request กำลังทำงานอยู่แล้ว -> แชร์ผลลัพธ์เดียวกัน ไม่ยิง /auth/refresh ซ้ำ (ดู comment ที่ refreshInFlight$)

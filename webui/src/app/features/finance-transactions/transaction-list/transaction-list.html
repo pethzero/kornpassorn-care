@@ -1,0 +1,152 @@
+<div class="transaction-list-container">
+  @if (loading) {
+    <app-loading-spinner [overlay]="true" message="กำลังโหลดข้อมูล..."></app-loading-spinner>
+  }
+
+  <div class="list-header">
+    <div class="header-title-group">
+      <h2 class="text-xl font-bold text-gray-800">เอกสารการเงิน</h2>
+      <span class="count-badge">{{ totalRecords | number }} เอกสาร</span>
+    </div>
+    <p-button label="สร้างเอกสารใหม่" icon="pi pi-plus" (onClick)="navigateToCreate()"></p-button>
+  </div>
+
+  <div class="summary-grid" *ngIf="summary">
+    <div class="summary-card today">
+      <div class="summary-card-header">
+        <span class="summary-icon">📅</span>
+        <div>
+          <div class="summary-title">วันนี้</div>
+          <div class="summary-subtitle">{{ summary.today.count | number }} เอกสาร</div>
+        </div>
+      </div>
+      <div class="summary-rows">
+        <div class="summary-row">
+          <span>รับเข้า</span>
+          <span class="amount in">+{{ formatCurrency(summary.today.total_in) }}</span>
+        </div>
+        <div class="summary-row">
+          <span>จ่ายออก</span>
+          <span class="amount out">-{{ formatCurrency(summary.today.total_out) }}</span>
+        </div>
+        <div class="summary-row net">
+          <span>สุทธิ</span>
+          <span class="amount">{{ formatCurrency(summary.today.net_amount) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-card year">
+      <div class="summary-card-header">
+        <span class="summary-icon">📆</span>
+        <div>
+          <div class="summary-title">ตลอดทั้งปี {{ summary.year.year + 543 }}</div>
+          <div class="summary-subtitle">{{ summary.year.count | number }} เอกสาร</div>
+        </div>
+      </div>
+      <div class="summary-rows">
+        <div class="summary-row">
+          <span>รับเข้า</span>
+          <span class="amount in">+{{ formatCurrency(summary.year.total_in) }}</span>
+        </div>
+        <div class="summary-row">
+          <span>จ่ายออก</span>
+          <span class="amount out">-{{ formatCurrency(summary.year.total_out) }}</span>
+        </div>
+        <div class="summary-row net">
+          <span>สุทธิ</span>
+          <span class="amount">{{ formatCurrency(summary.year.net_amount) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-grid">
+    <div class="field">
+      <label>ค้นหา</label>
+      <input type="text" pInputText [(ngModel)]="filters.search" placeholder="เลขที่เอกสาร หรือ หมายเหตุ..."
+        (keyup.enter)="applyFilters()" class="full-width" />
+    </div>
+
+    <div class="field">
+      <label>ประเภทเอกสาร</label>
+      <p-select [options]="docTypeOptions" [(ngModel)]="filters.doc_type" optionLabel="label" optionValue="value"
+        (onChange)="applyFilters()" styleClass="full-width"></p-select>
+    </div>
+
+    <div class="field">
+      <label>สถานะ</label>
+      <p-select [options]="statusOptions" [(ngModel)]="filters.status" optionLabel="label" optionValue="value"
+        (onChange)="applyFilters()" styleClass="full-width"></p-select>
+    </div>
+
+    <div class="field">
+      <label>วันที่เริ่มต้น</label>
+      <input type="date" [(ngModel)]="filters.start_date" (change)="applyFilters()" class="full-width" />
+    </div>
+
+    <div class="field">
+      <label>วันที่สิ้นสุด</label>
+      <input type="date" [(ngModel)]="filters.end_date" (change)="applyFilters()" class="full-width" />
+    </div>
+
+    <div class="field filter-actions">
+      <p-button label="ล้างตัวกรอง" icon="pi pi-filter-slash" severity="secondary" [outlined]="true" (onClick)="clearFilters()"></p-button>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl">
+    <p-table [value]="transactions" [loading]="loading" [lazy]="true" [paginator]="true" [rows]="pageSize"
+      [totalRecords]="totalRecords" [rowsPerPageOptions]="[10, 25, 50]" [paginatorDropdownAppendTo]="'body'"
+      (onLazyLoad)="onPage($event)" [stripedRows]="true" [rowHover]="true" dataKey="id" class="p-datatable-sm"
+      currentPageReportTemplate="แสดง {first} ถึง {last} จาก {totalRecords} เอกสาร" [showCurrentPageReport]="true">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 140px;">เลขที่เอกสาร</th>
+          <th style="width: 110px;">วันที่</th>
+          <th style="width: 110px;">ประเภท</th>
+          <th style="width: 160px;">คนไข้</th>
+          <th class="text-right" style="width: 110px;">เงินรับ</th>
+          <th class="text-right" style="width: 110px;">เงินจ่าย</th>
+          <th class="text-right" style="width: 110px;">ยอดสุทธิ</th>
+          <th style="width: 100px;">สถานะ</th>
+          <th class="text-center" style="width: 80px;">ดู</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-transaction>
+        <tr class="cursor-pointer" (click)="viewTransaction(transaction)">
+          <td class="doc-no-cell">{{ transaction.doc_no }}</td>
+          <td>{{ formatDate(transaction.doc_date) }}</td>
+          <td>{{ docTypeLabel(transaction.doc_type) }}</td>
+          <td>{{ transaction.patient ? (transaction.patient.first_name + ' ' + transaction.patient.last_name) : '-' }}</td>
+          <td class="text-right text-green">+{{ formatCurrency(transaction.total_in) }}</td>
+          <td class="text-right text-red">-{{ formatCurrency(transaction.total_out) }}</td>
+          <td class="text-right font-semibold" [class.text-green]="(transaction.net_amount || 0) >= 0" [class.text-red]="(transaction.net_amount || 0) < 0">
+            {{ formatCurrency(transaction.net_amount) }}
+          </td>
+          <td><p-tag [value]="statusLabel(transaction.status)" [severity]="statusSeverity(transaction.status)"></p-tag></td>
+          <td class="text-center">
+            <button pButton icon="pi pi-eye" size="small" severity="info" outlined rounded
+              (click)="$event.stopPropagation(); viewTransaction(transaction)"></button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="9" class="text-center py-8">
+            <div class="empty-state">
+              <i class="pi pi-inbox text-6xl text-gray-300 mb-4"></i>
+              <h3 class="text-lg font-medium text-gray-600 mb-2">ไม่พบเอกสารการเงิน</h3>
+              <p-button label="สร้างเอกสารแรก" icon="pi pi-plus" (onClick)="navigateToCreate()"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-toast></p-toast>
+</div>

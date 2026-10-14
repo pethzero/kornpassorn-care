@@ -24,6 +24,10 @@ export class Patient {
   @Column({ length: 20, nullable: true })
   phone: string;
 
+  // เก็บไว้เผื่อใช้ตอนมี API ยืนยันตัวตนบัตรประชาชนจากหน่วยงานในอนาคต ยังไม่ใช้ยืนยันตัวตนตอนนี้
+  @Column({ length: 13, nullable: true })
+  national_id: string;
+
   @Column({ length: 100, nullable: true })
   email: string;
 

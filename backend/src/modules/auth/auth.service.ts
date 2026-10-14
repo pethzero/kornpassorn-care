@@ -64,15 +64,16 @@ export class AuthService {
   }
 
   async saveToken(
-    user: any | null,
+    identity: any | null,
     rawToken: string | null,
     expiredAt: Date | null,
     jti?: string,
-    opts?: { isPermanent?: boolean; tokenType?: string; deviceInfo?: any },
+    opts?: { isPermanent?: boolean; tokenType?: string; deviceInfo?: any; actorType?: 'user' | 'patient' },
   ) {
     try {
       const tokenHash = rawToken ? this.hashToken(rawToken) : null;
       const finalJti = jti ?? uuidv4();
+      const actorType = opts?.actorType ?? 'user';
 
       // normalize + clean deviceInfo to avoid storing null fields
       const rawDeviceInfo = opts?.deviceInfo ?? null;
@@ -82,9 +83,13 @@ export class AuthService {
       const deviceIp = deviceInfo?.ip ?? null;
       const fp = deviceInfo?.fingerprint ?? null;
       const fingerprintHash = fp ? this.hashToken(fp) : null;
-        
+
       const tokenPartial = this.userTokenRepo.create({
-        ...(user ? { user: { id: user.id } as any } : {}),
+        ...(identity
+          ? actorType === 'patient'
+            ? { patient: { id: identity.id } as any }
+            : { user: { id: identity.id } as any }
+          : {}),
         tokenHash,
         jti: finalJti,
         tokenType: opts?.tokenType ?? 'access',
@@ -109,9 +114,10 @@ export class AuthService {
   // ออก access + refresh token คู่กันแล้ว save ทั้งคู่ลง DB ในที่เดียว
   // (เดิม login() กับ refresh() ต่างก็เขียน jti/payload/expiry/saveToken เองซ้ำกันทั้งสองจุด)
   async issueTokenPair(
-    identity: { id: string; username?: string; role: string },
+    identity: { id: string | number; username?: string; role: string },
     rememberMe: boolean,
     deviceInfo?: any,
+    actorType: 'user' | 'patient' = 'user',
   ) {
     const accessExpiresIn = Config.token.resolveAccessExpiry(identity.role, rememberMe);
     const isPermanent = accessExpiresIn === undefined; // admin + ADMIN_ACCESS_TOKEN_EXPIRES_IN=0
@@ -139,10 +145,12 @@ export class AuthService {
         deviceInfo,
         tokenType: 'access',
         isPermanent,
+        actorType,
       }),
       this.saveToken({ id: identity.id }, refreshToken, refreshExpiredAt, refreshJti, {
         deviceInfo,
         tokenType: 'refresh',
+        actorType,
       }),
     ]);
 
@@ -253,6 +261,17 @@ export class AuthService {
       success,
       fail_reason: failReason || undefined,
     });
+  }
+
+  // เหมือน logLogin แต่สำหรับ patient (phone+OTP) — ใช้ตาราง login_logs เดียวกัน
+  async logPatientLogin(patient: any | null, success: boolean, req: any, failReason?: string) {
+    await this.loginLogRepo.save({
+      patient: patient || undefined,
+      ip_address: req.ip,
+      user_agent: req.headers['user-agent'],
+      success,
+      fail_reason: failReason || undefined,
+    } as any);
   }
 
   // ...existing code...

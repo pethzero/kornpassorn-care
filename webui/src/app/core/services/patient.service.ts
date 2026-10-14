@@ -19,6 +19,10 @@ export class PatientService {
   }
 
 
+  getPatients(): Observable<Patient[]> {
+    return this.http.get<Patient[]>(`${environment.apiUrl}/patients`);
+  }
+
   createPatient(patient: Patient): Observable<Patient> {
     return this.http.post<Patient>(`${environment.apiUrl}/patients`, patient);
   }
@@ -29,6 +33,10 @@ export class PatientService {
 
   getPatientById(id: string): Observable<Patient> {
     return this.http.get<Patient>(`${environment.apiUrl}/patients/${id}`);
+  }
+
+  deletePatient(id: number): Observable<any> {
+    return this.http.delete(`${environment.apiUrl}/patients/${id}`);
   }
 
 

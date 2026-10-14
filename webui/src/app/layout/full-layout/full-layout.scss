@@ -1,53 +1,73 @@
+:host {
+  // Healthcare palette — shared with sidebar/header via inherited CSS custom properties
+  --hc-primary: #0d9488;
+  --hc-primary-dark: #115e59;
+  --hc-primary-light: #5eead4;
+  --hc-accent: #0ea5e9;
+  --hc-bg: #f3f8f9;
+  --hc-text: #0f172a;
+  --hc-text-muted: #64748b;
+
+  display: block;
+  height: 100%;
+}
+
 .sidenav-container {
   height: 100vh;
-  background: #f5f7fa;
+  background: var(--hc-bg);
 }
 
 .sidenav {
   // width: 250px;
   background: #fff;
-  box-shadow: 2px 0 8px 0 rgba(25, 118, 210, 0.04);
+  box-shadow: 2px 0 8px 0 rgba(13, 148, 136, 0.04);
 }
 
 .sidenav-content {
-  background: #f8f9fa;
+  background: var(--hc-bg);
 }
 
 .content {
   padding: 32px 24px 24px 24px;
-  background: #fafcff;
+  background: #fbfefe;
   min-height: calc(100vh - 60px);
   border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.03);
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.04);
   overflow-y: scroll;
   box-sizing: border-box;
-  
+
   // ซ่อน scrollbar
   &::-webkit-scrollbar {
     width: 0px;
     background: transparent;
   }
-  
+
   &::-webkit-scrollbar-thumb {
     background: transparent;
   }
-  
+
   // สำหรับ Firefox
   scrollbar-width: none;
   -ms-overflow-style: none;
+
+  // มือถือ: padding เดิม 24-32px กินพื้นที่แนวนอนไปเยอะบนจอแคบ (~375px) ลดลงให้เหลือพื้นที่ใช้งานจริงมากขึ้น
+  @media (max-width: 768px) {
+    padding: 16px 12px;
+    border-radius: 0;
+  }
 }
 
 mat-sidenav-container {
   height: 100vh;        // ให้ container ครอบคลุมเต็มจอ
-  
+
   &.sidenav-container {
-    background: #f5f7fa;
+    background: var(--hc-bg);
   }
-  
+
   // Mobile backdrop
   @media (max-width: 768px) {
     .mat-drawer-backdrop {
-      background-color: rgba(0, 0, 0, 0.6) !important;
+      background-color: rgba(15, 23, 42, 0.55) !important;
       backdrop-filter: blur(2px);
     }
   }
@@ -70,7 +90,7 @@ mat-sidenav-content {
   display: flex;
   flex-direction: column;
   height: 100vh;        // เต็มความสูง
-  background: #f5fcff;
+  background: var(--hc-bg);
   overflow: hidden;     // ซ่อน scrollbar ของ sidenav-content
   
   // ซ่อน scrollbar ทั้งหมดใน mat-sidenav-content

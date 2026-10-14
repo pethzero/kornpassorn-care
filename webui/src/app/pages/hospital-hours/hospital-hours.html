@@ -1,0 +1,36 @@
+<div class="hospital-hours-page">
+  <div class="page-header">
+    <img src="assets/picture/logo.png" alt="Logo" class="logo" />
+    <div>
+      <h1>Kornpassorn Care</h1>
+      <p>เวลาทำการโรงพยาบาล</p>
+    </div>
+  </div>
+
+  <div class="content-card" *ngIf="!loading; else loadingBlock">
+    <h2>ตารางเวลาประจำสัปดาห์</h2>
+    <div class="weekly-row" *ngFor="let day of weekly" [class.today]="day.day_of_week === todayDayOfWeek">
+      <span class="day-label">{{ dayLabels[day.day_of_week] }}</span>
+      <span class="hours" *ngIf="!day.is_closed">{{ formatTime(day.open_time) }} - {{ formatTime(day.close_time) }} น.</span>
+      <span class="closed" *ngIf="day.is_closed">ปิดทำการ</span>
+    </div>
+
+    <ng-container *ngIf="specialDays.length">
+      <h2 class="mt-6">วันหยุด / วันพิเศษ</h2>
+      <div class="special-row" *ngFor="let day of specialDays">
+        <span class="date">{{ formatDate(day.date) }}</span>
+        <span class="hours" *ngIf="!day.is_closed">{{ formatTime(day.open_time) }} - {{ formatTime(day.close_time) }} น.</span>
+        <span class="closed" *ngIf="day.is_closed">ปิดทำการ</span>
+        <span class="note" *ngIf="day.note">{{ day.note }}</span>
+      </div>
+    </ng-container>
+  </div>
+
+  <ng-template #loadingBlock>
+    <div class="content-card loading-state">กำลังโหลดข้อมูล...</div>
+  </ng-template>
+
+  <div class="back-home">
+    <a href="/login">กลับหน้าเข้าสู่ระบบ</a>
+  </div>
+</div>

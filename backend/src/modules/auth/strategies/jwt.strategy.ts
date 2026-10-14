@@ -38,12 +38,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       let tokenRecord = null as any;
       const jti: string | undefined = payload?.jti;
       if (jti) {
-        tokenRecord = await this.userTokenRepo.findOne({ where: { jti, revoked: false }, relations: ['user'] });
+        tokenRecord = await this.userTokenRepo.findOne({ where: { jti, revoked: false }, relations: ['user', 'patient'] });
       }
 
       if (!tokenRecord && token) {
         const hash = crypto.createHash('sha256').update(token).digest('hex');
-        tokenRecord = await this.userTokenRepo.findOne({ where: { tokenHash: hash, revoked: false }, relations: ['user'] });
+        tokenRecord = await this.userTokenRepo.findOne({ where: { tokenHash: hash, revoked: false }, relations: ['user', 'patient'] });
       }
 
       if (!tokenRecord) {
@@ -68,13 +68,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         throw new UnauthorizedException('Token expired');
       }
 
-      // If there is a linked user, ensure active. If no user -> allow only guest tokens.
+      // If there is a linked user/patient, ensure active. If neither -> allow only guest tokens.
       if (tokenRecord.user) {
         if (!tokenRecord.user.isActive) {
           throw new UnauthorizedException('User account is inactive');
         }
+      } else if (tokenRecord.patient) {
+        if (!tokenRecord.patient.is_active) {
+          throw new UnauthorizedException('Patient account is inactive');
+        }
       } else {
-        // allow guest tokens without user relation
+        // allow guest tokens without user/patient relation
         if (payload?.role !== 'guest') {
           throw new UnauthorizedException('User not found for token');
         }
@@ -85,11 +89,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         await this.userTokenRepo.update({ id: tokenRecord.id }, { last_used: new Date() });
       } catch (e) { /* ignore update errors */ }
 
-      // return normalized user info (works for guest and normal users)
+      // return normalized identity info (works for guest, staff user, and patient)
+      const patientName = tokenRecord.patient
+        ? `${tokenRecord.patient.first_name} ${tokenRecord.patient.last_name}`.trim()
+        : null;
+
       return {
-        userId: tokenRecord.user?.id ?? payload.sub,
-        username: tokenRecord.user?.username ?? payload.username,
-        name: tokenRecord.user?.name ?? payload.name ?? null,
+        userId: tokenRecord.user?.id ?? tokenRecord.patient?.id ?? payload.sub,
+        username: tokenRecord.user?.username ?? tokenRecord.patient?.phone ?? payload.username,
+        name: tokenRecord.user?.name ?? patientName ?? payload.name ?? null,
         role: payload.role,
         tokenId: tokenRecord.id,
         jti: tokenRecord.jti ?? payload.jti,

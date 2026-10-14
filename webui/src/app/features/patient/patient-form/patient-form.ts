@@ -10,8 +10,9 @@ import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageService } from 'primeng/api';
+import { LoadingSpinnerComponent } from '../../../ui/loading-spinner/loading-spinner';
+import { afterMinDuration } from '../../../core/utils/min-duration';
 
 @Component({
   selector: 'app-patient-form',
@@ -26,7 +27,7 @@ import { MessageService } from 'primeng/api';
     ButtonModule,
     InputTextModule,
     ToastModule,
-    ProgressSpinnerModule
+    LoadingSpinnerComponent
   ],
   providers: [MessageService]
 })
@@ -35,6 +36,7 @@ export class PatientFormComponent implements OnInit {
   isEditMode = false;
   patientId: any | null = null;
   loading = false;
+  loadingMessage = '';
 
   bloodTypes = [
     { label: 'A', value: 'A' },
@@ -79,23 +81,31 @@ export class PatientFormComponent implements OnInit {
 
   private loadPatient(id: string): void {
     this.loading = true;
+    this.loadingMessage = 'กำลังโหลดข้อมูลผู้ป่วย...';
+    const startedAt = Date.now();
     this.patientService.getPatientById(id).subscribe({
       next: (patient: Patient) => {
-        this.patientForm.patchValue(patient);
-        this.loading = false;
+        afterMinDuration(startedAt, () => {
+          this.patientForm.patchValue(patient);
+          this.loading = false;
+        });
       },
       error: (err) => {
-        this.loading = false;
-        this.messageService.add({
-          severity: 'error',
-          summary: 'ผิดพลาด',
-          detail: 'โหลดข้อมูลไม่สำเร็จ: ' + (err.error?.message || err.message)
+        afterMinDuration(startedAt, () => {
+          this.loading = false;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'ผิดพลาด',
+            detail: 'โหลดข้อมูลไม่สำเร็จ: ' + (err.error?.message || err.message)
+          });
         });
       }
     });
   }
 
   submit(): void {
+    if (this.loading) return;
+
     this.patientForm.markAllAsTouched();
     if (this.patientForm.invalid) {
       this.messageService.add({
@@ -107,6 +117,8 @@ export class PatientFormComponent implements OnInit {
     }
 
     this.loading = true;
+    this.loadingMessage = 'กำลังบันทึกข้อมูล...';
+    const startedAt = Date.now();
     const data: Patient = this.patientForm.value;
 
     const request$ = this.isEditMode && this.patientId
@@ -115,20 +127,27 @@ export class PatientFormComponent implements OnInit {
 
     request$.subscribe({
       next: () => {
-        this.loading = false;
-        this.messageService.add({
-          severity: 'success',
-          summary: 'สำเร็จ',
-          detail: this.isEditMode ? 'แก้ไขข้อมูลสำเร็จ!' : 'เพิ่มคนไข้สำเร็จ!'
+        afterMinDuration(startedAt, () => {
+          this.loading = false;
+          this.router.navigate(['/patient/list'], {
+            state: {
+              toast: {
+                severity: 'success',
+                summary: 'สำเร็จ',
+                detail: this.isEditMode ? 'แก้ไขข้อมูลสำเร็จ!' : 'เพิ่มคนไข้สำเร็จ!'
+              }
+            }
+          });
         });
-        setTimeout(() => this.router.navigate(['/patient/list']), 1500);
       },
       error: (err) => {
-        this.loading = false;
-        this.messageService.add({
-          severity: 'error',
-          summary: 'เกิดข้อผิดพลาด',
-          detail: 'เกิดข้อผิดพลาด: ' + (err.error?.message || err.message)
+        afterMinDuration(startedAt, () => {
+          this.loading = false;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'เกิดข้อผิดพลาด',
+            detail: 'เกิดข้อผิดพลาด: ' + (err.error?.message || err.message)
+          });
         });
       }
     });

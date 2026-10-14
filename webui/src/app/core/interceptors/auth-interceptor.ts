@@ -13,7 +13,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const token = localStorage.getItem('token');
 
-  const skipUrls = ['/auth/login', '/auth/guest', '/auth/csrf-token', '/auth/refresh'];
+  const skipUrls = ['/auth/login', '/auth/guest', '/auth/csrf-token', '/auth/refresh', '/patient-auth/otp'];
   if (skipUrls.some(url => req.url.includes(url))) {
     return next(req);
   }

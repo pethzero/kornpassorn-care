@@ -1,0 +1,118 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f0fbfa 0%, #f8fafc 100%);
+}
+
+.hospital-hours-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  .logo {
+    width: 56px;
+    height: 56px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: #115e59;
+  }
+
+  p {
+    margin: 0;
+    color: #64748b;
+  }
+}
+
+.content-card {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.06);
+  padding: 1.5rem;
+
+  h2 {
+    font-size: 1rem;
+    color: #115e59;
+    margin: 0 0 0.75rem 0;
+
+    &.mt-6 {
+      margin-top: 1.5rem;
+    }
+  }
+}
+
+.weekly-row,
+.special-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid #f1f5f9;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.weekly-row {
+  &.today {
+    background: #f0fbfa;
+    border-radius: 8px;
+    padding-left: 0.5rem;
+    font-weight: 600;
+  }
+
+  .day-label {
+    width: 90px;
+    color: #0f172a;
+  }
+}
+
+.special-row .date {
+  width: 140px;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.hours {
+  color: #374151;
+}
+
+.closed {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.note {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.loading-state {
+  text-align: center;
+  color: #64748b;
+}
+
+.back-home {
+  text-align: center;
+  margin-top: 1.5rem;
+
+  a {
+    color: #0d9488;
+    font-size: 0.9rem;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

@@ -1,12 +1,9 @@
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 
 // PrimeNG imports
 import { CardModule } from 'primeng/card';
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { TagModule } from 'primeng/tag';
-import { ProgressBarModule } from 'primeng/progressbar';
 import { ChartModule } from 'primeng/chart';
 
 // Custom components
@@ -22,16 +19,21 @@ export interface Patient {
   department: string;
 }
 
+interface QuickAction {
+  label: string;
+  desc: string;
+  icon: string;
+  route: string;
+  accent: 'finance' | 'inventory' | 'patient' | 'questionnaire';
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     CardModule,
-    TableModule,
-    ButtonModule,
-    TagModule,
-    ProgressBarModule,
     ChartModule,
     SimplePersonCardComponent
   ],
@@ -62,13 +64,11 @@ export class DashboardComponent implements OnInit {
   chartData: any = { labels: [], datasets: [] };
   chartOptions: any = { responsive: true, animation: false };
 
-  // orders must include `total` used in template
-  orders: Array<{ id: string; customer: string; status: string; total: number }> = [
-    { id: 'ORD001', customer: 'John Doe', status: 'delivered', total: 129.5 },
-    { id: 'ORD002', customer: 'Jane Smith', status: 'pending', total: 49.0 },
-    { id: 'ORD003', customer: 'Michael Lee', status: 'cancelled', total: 0 },
-    { id: 'ORD004', customer: 'Sara Connor', status: 'delivered', total: 220.75 },
-    { id: 'ORD005', customer: 'Tom Hardy', status: 'pending', total: 15.99 }
+  quickActions: QuickAction[] = [
+    { label: 'เอกสารการเงิน', desc: 'บันทึกรายรับ-รายจ่าย', icon: '🧾', route: '/finance-transactions/list', accent: 'finance' },
+    { label: 'คลังสินค้า', desc: 'จัดการสินค้าและล็อต', icon: '📦', route: '/inventory/products', accent: 'inventory' },
+    { label: 'ผู้ป่วย', desc: 'รายชื่อและข้อมูลผู้ป่วย', icon: '🧑‍⚕️', route: '/patient/list', accent: 'patient' },
+    { label: 'แบบสอบถาม', desc: 'แบบสอบถามของผู้ป่วย', icon: '📋', route: '/questionnaire/list', accent: 'questionnaire' },
   ];
 
   patients: Patient[] = []; // optional, keep if used elsewhere
@@ -122,13 +122,7 @@ export class DashboardComponent implements OnInit {
     this.chartOptions = { responsive: true, animation: false, plugins: { legend: { display: false } } };
   }
 
-  // trackBy for table / ngFor
-  trackByOrder(index: number, item: any) {
-    return item?.id ?? index;
-  }
-
-  // helper to avoid template errors when checking lengths
-  get useVirtualScroll(): boolean {
-    return (this.orders?.length ?? 0) > 50;
+  trackByQuickAction(index: number, item: QuickAction) {
+    return item.route;
   }
 }

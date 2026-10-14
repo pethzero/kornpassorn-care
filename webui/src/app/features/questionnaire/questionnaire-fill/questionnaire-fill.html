@@ -1,0 +1,70 @@
+<div class="questionnaire-container">
+  @if (loading) {
+    <app-loading-spinner [overlay]="true" [message]="loadingMessage"></app-loading-spinner>
+  }
+
+  <div *ngIf="submitted" class="success-panel">
+    <div class="icon">✅</div>
+    <h2>ส่งแบบสอบถามเรียบร้อยแล้ว</h2>
+    <p>ขอบคุณที่กรอกข้อมูล เจ้าหน้าที่จะตรวจสอบข้อมูลของท่านต่อไป</p>
+    <button pButton label="กลับหน้าหลัก" (click)="backToDashboard()"></button>
+  </div>
+
+  <ng-container *ngIf="!submitted">
+    <h2 class="text-xl font-bold text-gray-800 mb-4">แบบสอบถามสุขภาพ</h2>
+
+    <div class="guest-name-card" *ngIf="isGuest">
+      <p class="hint">กรอกชื่อ-นามสกุลของท่าน (ไม่บังคับ) เพื่อให้เจ้าหน้าที่ติดต่อกลับได้สะดวกขึ้น</p>
+      <div class="name-row">
+        <input type="text" class="full-width" placeholder="ชื่อ" [(ngModel)]="guestFirstName" name="guestFirstName" />
+        <input type="text" class="full-width" placeholder="นามสกุล" [(ngModel)]="guestLastName" name="guestLastName" />
+      </div>
+    </div>
+
+    <div class="question-card" *ngFor="let q of questions">
+      <label class="question-text">
+        {{ q.text }}
+        <span class="required" *ngIf="q.is_required">*</span>
+      </label>
+
+      <input *ngIf="q.type === 'text'" type="text" class="full-width" [(ngModel)]="answers[q.id]" [name]="'q_' + q.id" />
+
+      <div *ngIf="q.type === 'radio'" class="choice-group">
+        <label class="choice" *ngFor="let choice of q.choices">
+          <input type="radio" [name]="'q_' + q.id" [value]="choice" [(ngModel)]="answers[q.id]" />
+          <span>{{ choice }}</span>
+        </label>
+      </div>
+
+      <div *ngIf="q.type === 'checkbox'" class="choice-group">
+        <label class="choice" *ngFor="let choice of q.choices">
+          <input type="checkbox" [checked]="isChecked(q.id, choice)"
+            (change)="toggleCheckbox(q.id, choice, $any($event.target).checked)" />
+          <span>{{ choice }}</span>
+        </label>
+      </div>
+
+      <div *ngIf="q.type === 'yesno'" class="choice-group">
+        <label class="choice">
+          <input type="radio" [name]="'q_' + q.id" value="ใช่" [(ngModel)]="answers[q.id]" />
+          <span>ใช่</span>
+        </label>
+        <label class="choice">
+          <input type="radio" [name]="'q_' + q.id" value="ไม่ใช่" [(ngModel)]="answers[q.id]" />
+          <span>ไม่ใช่</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>หมายเหตุเพิ่มเติม (ถ้ามี)</label>
+      <textarea class="full-width" rows="3" [(ngModel)]="note" name="note"></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button pButton label="ส่งแบบสอบถาม" (click)="submit()" [disabled]="loading"></button>
+    </div>
+  </ng-container>
+
+  <p-toast></p-toast>
+</div>

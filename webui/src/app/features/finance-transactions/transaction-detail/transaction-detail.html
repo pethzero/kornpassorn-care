@@ -1,0 +1,109 @@
+<div class="transaction-detail-container">
+  @if (loading) {
+    <app-loading-spinner [overlay]="true" message="กำลังโหลดข้อมูล..."></app-loading-spinner>
+  }
+
+  @if (transaction) {
+    <p-card class="detail-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <div>
+            <button pButton icon="pi pi-arrow-left" size="small" severity="secondary" [text]="true" (click)="back()"></button>
+            <span class="doc-no">{{ transaction.doc_no }}</span>
+          </div>
+          <p-tag [value]="statusLabel(transaction.status)" [severity]="statusSeverity(transaction.status)" styleClass="status-tag"></p-tag>
+        </div>
+      </ng-template>
+
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="summary-label">ประเภทเอกสาร</span>
+          <span class="summary-value">{{ docTypeLabel(transaction.doc_type) }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">วันที่เอกสาร</span>
+          <span class="summary-value">{{ formatDate(transaction.doc_date) }}</span>
+        </div>
+        <div class="summary-item" *ngIf="transaction.patient">
+          <span class="summary-label">คนไข้</span>
+          <span class="summary-value">{{ transaction.patient!.patient_code }} - {{ transaction.patient!.first_name }} {{ transaction.patient!.last_name }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">สร้างโดย</span>
+          <span class="summary-value">{{ transaction.create_by || '-' }}</span>
+        </div>
+        <div class="summary-item full-span" *ngIf="transaction.note">
+          <span class="summary-label">หมายเหตุ</span>
+          <span class="summary-value">{{ transaction.note }}</span>
+        </div>
+      </div>
+
+      <div class="totals-summary">
+        <div class="totals-row">
+          <span>รวมเงินรับ</span>
+          <span class="text-green">+{{ formatCurrency(transaction.total_in) }}</span>
+        </div>
+        <div class="totals-row">
+          <span>รวมเงินจ่าย</span>
+          <span class="text-red">-{{ formatCurrency(transaction.total_out) }}</span>
+        </div>
+        <div class="totals-row net">
+          <span>ยอดสุทธิ</span>
+          <span [class.text-green]="(transaction.net_amount || 0) >= 0" [class.text-red]="(transaction.net_amount || 0) < 0">
+            {{ formatCurrency(transaction.net_amount) }}
+          </span>
+        </div>
+      </div>
+
+      <h4 class="items-title">รายการ</h4>
+      <div class="overflow-x-auto rounded-xl">
+        <p-table [value]="transaction.items" class="p-datatable-sm" [stripedRows]="true">
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width: 60px;">#</th>
+              <th style="width: 90px;">ทิศทาง</th>
+              <th style="width: 100px;">ประเภท</th>
+              <th>สินค้า / รายละเอียด</th>
+              <th style="width: 100px;">ล็อต</th>
+              <th class="text-right" style="width: 80px;">จำนวน</th>
+              <th class="text-right" style="width: 100px;">จำนวนเงิน</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-item>
+            <tr>
+              <td>{{ item.line_no }}</td>
+              <td>
+                <span [class.text-green]="item.direction === 'in'" [class.text-red]="item.direction === 'out'">
+                  {{ directionLabel(item.direction) }}
+                </span>
+              </td>
+              <td>{{ itemTypeLabel(item.item_type) }}</td>
+              <td>
+                <div class="flex flex-col">
+                  <span>{{ item.product?.name || item.category || '-' }}</span>
+                  <span class="text-sm text-gray-400" *ngIf="item.description">{{ item.description }}</span>
+                </div>
+              </td>
+              <td>{{ item.product_lot?.lot_no || '-' }}</td>
+              <td class="text-right">{{ item.quantity ?? '-' }}</td>
+              <td class="text-right font-semibold" [class.text-green]="item.direction === 'in'" [class.text-red]="item.direction === 'out'">
+                {{ item.direction === 'in' ? '+' : '-' }}{{ formatCurrency(item.amount) }}
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      @if (transaction.status === 'confirmed') {
+        <div class="form-actions">
+          <button pButton type="button" label="ยกเลิกเอกสาร" icon="pi pi-times" class="p-button-danger" [outlined]="true"
+            [disabled]="voiding" (click)="confirmVoid($event)"></button>
+        </div>
+      }
+    </p-card>
+  }
+
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+</div>

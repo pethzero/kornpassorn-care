@@ -1,7 +1,15 @@
-<div class="spinner-container">
-  <div class="spinner" [ngStyle]="{'width.px': size, 'height.px': size, 'border-top-color': color}"></div>
+<div class="ls-root" [class.ls-overlay]="overlay">
+  <div class="ls-panel">
+    <div class="ls-spinner" [ngStyle]="{ 'width.px': size, 'height.px': size }">
+      <div class="ls-ring"></div>
+      <div class="ls-cross">
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+    <p class="ls-message" *ngIf="message">{{ message }}</p>
+  </div>
 </div>
 
-
-<!-- <app-loading-spinner [size]="64" color="#42a5f5"></app-loading-spinner>
-<app-loading-spinner></app-loading-spinner> -->
+<!-- Inline: <app-loading-spinner message="กำลังโหลดข้อมูล..."></app-loading-spinner> -->
+<!-- Full-screen overlay: <app-loading-spinner [overlay]="true" message="กำลังบันทึกข้อมูล..."></app-loading-spinner> -->

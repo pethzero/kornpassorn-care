@@ -6,9 +6,10 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   templateUrl: './loading-spinner.html',
   styleUrls: ['./loading-spinner.scss'],
-  imports: [CommonModule] // ✅ เพิ่มตรงนี้
+  imports: [CommonModule]
 })
 export class LoadingSpinnerComponent {
-  @Input() size = 48;
-  @Input() color = '#1976d2';
+  @Input() size = 56;
+  @Input() message = '';
+  @Input() overlay = false;
 }

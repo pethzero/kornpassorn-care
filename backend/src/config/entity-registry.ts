@@ -6,7 +6,19 @@ import {
   LoginLog,
   FinanceRecord,
   Patient,
-  MedicalRecord
+  MedicalRecord,
+  PatientOtp,
+  QuestionnaireQuestion,
+  PatientQuestionnaire,
+  PatientQuestionnaireAnswer,
+  HospitalWeeklyHours,
+  HospitalSpecialDay,
+  InventoryProduct,
+  InventoryProductLot,
+  InventoryStockMovement,
+  FinanceDocSequence,
+  FinanceTransaction,
+  FinanceTransactionItem,
 } from '../database/entities';
 
 // Type definition สำหรับ Entity Class
@@ -20,6 +32,18 @@ export const DEFAULT_ENTITIES: EntityClass[] = [
   FinanceRecord,
   Patient,
   MedicalRecord,
+  PatientOtp,
+  QuestionnaireQuestion,
+  PatientQuestionnaire,
+  PatientQuestionnaireAnswer,
+  HospitalWeeklyHours,
+  HospitalSpecialDay,
+  InventoryProduct,
+  InventoryProductLot,
+  InventoryStockMovement,
+  FinanceDocSequence,
+  FinanceTransaction,
+  FinanceTransactionItem,
 ];
 
 // Entity configurations สำหรับแต่ละ database
