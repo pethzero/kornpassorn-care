@@ -132,36 +132,7 @@ export class AuthController {
     return res.status(200).json({ success: true, message: 'Logged out' });
   }
 
-  // API สำหรับขอ token โดยใช้ username/password (สำหรับ API users)
-  @Post('token')
-  async getApiToken(@Body() body: { username?: string; password?: string }, @Req() req: Request, @Res() res: Response) {
-    try {
-      const username = body.username ?? '';
-      const password = body.password ?? '';
-      if (!username || !password) {
-        return res.status(400).json({ success: false, message: 'username and password are required' });
-      }
-
-      const ua = new UAParser.UAParser(req.headers['user-agent'] || '');
-      const uaResult = ua.getResult();
-      const deviceInfo = {
-        raw: req.headers['user-agent'] || null,
-        ua: uaResult,
-        ip: ((req.headers['x-forwarded-for'] as string) || req.ip)?.split(',')[0].trim(),
-        fingerprint: (req.headers['x-client-fingerprint'] as string) || (body && (body as any).fingerprint) || null,
-      };
-
-      const result = await this.authService.getTokenByCredentials(username, password, req, deviceInfo);
-
-      if (!result.success) {
-        return res.status(401).json(result);
-      }
-      return res.json(result);
-    } catch (err) {
-      console.error('getApiToken controller error:', err);
-      return res.status(500).json({ success: false, message: 'Internal error' });
-    }
-  }
+  // POST /auth/token (API user แบบเก่าในตาราง users) ถูกเลิกใช้ — ระบบภายนอกใช้ POST /api/v1/oauth/token (api_clients)
 
 
   // Admin revoke ทุก token ของ user

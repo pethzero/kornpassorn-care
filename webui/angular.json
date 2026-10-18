@@ -32,6 +32,10 @@
               }
             ],
             "styles": [
+              "@fontsource/roboto/300.css",
+              "@fontsource/roboto/400.css",
+              "@fontsource/roboto/500.css",
+              "material-icons/iconfont/filled.css",
               "@angular/material/prebuilt-themes/azure-blue.css",
               "src/styles.scss"
             ]
@@ -56,6 +60,11 @@
                   "maximumError": "12kB"
                 }
               ],
+              "optimization": {
+                "scripts": true,
+                "styles": { "minify": true, "inlineCritical": true },
+                "fonts": { "inline": false }
+              },
               "outputHashing": "all"
             },
             "development": {
@@ -71,7 +80,8 @@
           "options": {
             "port": 4200,
             "host": "0.0.0.0",
-            "allowedHosts": ["localhost","*"]
+            "allowedHosts": ["localhost", "www.kronpatsroncare.com", "kronpatsroncare.com"],
+            "proxyConfig": "proxy.conf.json"
           },
           "configurations": {
             "production": {
@@ -104,6 +114,10 @@
               }
             ],
             "styles": [
+              "@fontsource/roboto/300.css",
+              "@fontsource/roboto/400.css",
+              "@fontsource/roboto/500.css",
+              "material-icons/iconfont/filled.css",
               "@angular/material/prebuilt-themes/azure-blue.css",
               "src/styles.scss"
             ]

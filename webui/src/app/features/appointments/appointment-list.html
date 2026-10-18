@@ -1,0 +1,114 @@
+<div class="inv-page">
+  <div class="list-header">
+    <div class="header-title-group">
+      <h2>นัดหมาย</h2>
+      <span class="count-badge">{{ total }} นัด</span>
+    </div>
+    <p-button label="เพิ่มนัดหมาย" icon="pi pi-plus" (onClick)="openCreate()"></p-button>
+  </div>
+
+  <div class="filter-bar">
+    <div class="segmented">
+      <button type="button" [class.active]="range === 'today'" (click)="setRange('today')">วันนี้</button>
+      <button type="button" [class.active]="range === 'week'" (click)="setRange('week')">7 วันข้างหน้า</button>
+      <button type="button" [class.active]="range === 'month'" (click)="setRange('month')">เดือนนี้</button>
+      <button type="button" [class.active]="range === 'custom'" (click)="setRange('custom')">กำหนดเอง</button>
+    </div>
+    @if (range === 'custom') {
+      <input type="date" class="date-input" [(ngModel)]="dateFrom" (change)="load()" />
+      <span class="cell-sub">ถึง</span>
+      <input type="date" class="date-input" [(ngModel)]="dateTo" (change)="load()" />
+    }
+    <div class="search-box">
+      <i class="pi pi-search"></i>
+      <input pInputText [(ngModel)]="search" (keyup.enter)="load()" placeholder="ชื่อ/รหัสคนไข้ หรือบริการ" />
+    </div>
+    <p-select [options]="statusOptions" [(ngModel)]="status" optionLabel="label" optionValue="value" (onChange)="load()" styleClass="status-select"></p-select>
+  </div>
+
+  <div class="day-groups" [class.loading]="loading">
+    @for (g of groups; track g.date) {
+      <section class="day">
+        <div class="day-head">
+          <span class="day-title">{{ dayLabel(g.date) }}</span>
+          @if (dayTag(g.date); as tag) { <span class="chip chip-plain">{{ tag }}</span> }
+          <span class="cell-sub">{{ g.items.length }} นัด</span>
+        </div>
+        @for (a of g.items; track a.id) {
+          <div class="appt" [class.row-muted]="a.status === 'cancelled'">
+            <span class="appt-time num">{{ timeLabel(a) }}</span>
+            <div class="appt-body">
+              <span class="cell-title">{{ patientName(a) }} <span class="cell-sub mono">{{ a.patient?.patient_code }}</span></span>
+              <span class="cell-sub">{{ a.service }}@if (a.note) { · {{ a.note }} }</span>
+            </div>
+            <span class="chip" [ngClass]="statusInfo[a.status].chip">{{ statusInfo[a.status].label }}</span>
+            <div class="row-actions">
+              @if (a.status === 'scheduled') {
+                <button type="button" class="icon-btn ok" (click)="setStatus(a, 'completed')" pTooltip="มาแล้ว" tooltipPosition="top"><i class="pi pi-check"></i></button>
+                <button type="button" class="icon-btn" (click)="setStatus(a, 'no_show')" pTooltip="ไม่มาตามนัด" tooltipPosition="top"><i class="pi pi-user-minus"></i></button>
+                <button type="button" class="icon-btn" (click)="setStatus(a, 'cancelled')" pTooltip="ยกเลิกนัด" tooltipPosition="top"><i class="pi pi-ban"></i></button>
+              } @else {
+                <button type="button" class="icon-btn" (click)="setStatus(a, 'scheduled')" pTooltip="กลับเป็นรอมา" tooltipPosition="top"><i class="pi pi-undo"></i></button>
+              }
+              <button type="button" class="icon-btn" (click)="openEdit(a)" pTooltip="แก้ไข" tooltipPosition="top"><i class="pi pi-pencil"></i></button>
+              <button type="button" class="icon-btn danger" (click)="confirmDelete(a)" pTooltip="ลบ" tooltipPosition="top"><i class="pi pi-trash"></i></button>
+            </div>
+          </div>
+        }
+      </section>
+    } @empty {
+      <div class="empty-state">
+        <i class="pi pi-calendar"></i>
+        <h3>{{ loading ? 'กำลังโหลด...' : 'ไม่มีนัดหมายในช่วงนี้' }}</h3>
+        @if (!loading) { <p-button label="เพิ่มนัดหมาย" icon="pi pi-plus" (onClick)="openCreate()"></p-button> }
+      </div>
+    }
+  </div>
+
+  <p-dialog [(visible)]="showDialog" [modal]="true" [appendTo]="'body'" [style]="{ width: '480px' }" [breakpoints]="{ '560px': '94vw' }"
+    [header]="editingId ? 'แก้ไขนัดหมาย' : 'เพิ่มนัดหมาย'" [closable]="!saving">
+    <div class="appt-form">
+      <label class="field">
+        <span>คนไข้ <em>*</em></span>
+        <p-select [options]="patientOptions" [(ngModel)]="form.patient_id" optionLabel="label" optionValue="value" [filter]="true"
+          filterBy="label" placeholder="ค้นหาชื่อ / รหัส" appendTo="body" styleClass="w-full"></p-select>
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span>วันที่ <em>*</em></span>
+          <input type="date" class="date-input" [(ngModel)]="form.appointment_date" />
+        </label>
+        <label class="field small">
+          <span>เริ่ม <em>*</em></span>
+          <input type="time" class="date-input" [(ngModel)]="form.start_time" />
+        </label>
+        <label class="field small">
+          <span>ถึง</span>
+          <input type="time" class="date-input" [(ngModel)]="form.end_time" />
+        </label>
+      </div>
+      <label class="field">
+        <span>บริการ <em>*</em></span>
+        <p-select [options]="serviceOptions" [(ngModel)]="form.service" optionLabel="label" optionValue="value" [editable]="true"
+          placeholder="เลือกหรือพิมพ์" appendTo="body" styleClass="w-full"></p-select>
+      </label>
+      @if (editingId) {
+        <label class="field">
+          <span>สถานะ</span>
+          <p-select [options]="statusOptions.slice(1)" [(ngModel)]="form.status" optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full"></p-select>
+        </label>
+      }
+      <label class="field">
+        <span>หมายเหตุ (ภายใน — ไม่ส่งให้ระบบภายนอก)</span>
+        <input pInputText [(ngModel)]="form.note" placeholder="ไม่บังคับ" />
+      </label>
+    </div>
+    <ng-template pTemplate="footer">
+      <p-button label="ยกเลิก" severity="secondary" [outlined]="true" (onClick)="showDialog = false" [disabled]="saving"></p-button>
+      <p-button label="บันทึก" icon="pi pi-check" (onClick)="save()" [loading]="saving"></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <p-confirmdialog [style]="{ width: '440px' }"></p-confirmdialog>
+  <p-toast></p-toast>
+</div>

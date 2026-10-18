@@ -1,1 +1,147 @@
-<p-chart type="bar" [data]="data" [options]="options" class="h-[30rem]" />
+<div class="inv-page">
+  <a routerLink="/finance/list" class="back-link"><i class="pi pi-arrow-left"></i> บัญชีการเงิน</a>
+
+  <div class="list-header">
+    <div class="header-title-group">
+      <h2>สรุปยอดการเงิน</h2>
+      <span class="count-badge">{{ rangeLabel() }}</span>
+    </div>
+  </div>
+
+  <!-- ช่วงเวลา: ปุ่มลัด + กำหนดเอง (เลือกเดือนเริ่ม–สิ้นสุด ไม่เกิน 36 เดือน) -->
+  <div class="range-bar">
+    <div class="segmented" role="tablist">
+      @for (p of presets; track p.value) {
+        <button type="button" [class.active]="preset === p.value" (click)="selectPreset(p.value)">{{ p.label }}</button>
+      }
+    </div>
+    @if (preset === 'custom') {
+      <div class="custom-range">
+        <input type="month" class="month-input" [(ngModel)]="customStart" (change)="applyCustom()" aria-label="เดือนเริ่ม" />
+        <span class="cell-sub">ถึง</span>
+        <input type="month" class="month-input" [(ngModel)]="customEnd" (change)="applyCustom()" aria-label="เดือนสิ้นสุด" />
+        @if (customError) { <span class="range-error">{{ customError }}</span> }
+      </div>
+    }
+  </div>
+
+  <!-- ยอดรวม + เทียบช่วงก่อนที่ยาวเท่ากัน -->
+  <div class="kpi-row">
+    <div class="kpi">
+      <span class="kpi-label"><span class="swatch" [style.background]="series.income"></span>รายรับ</span>
+      <span class="kpi-value">{{ formatMoney(summary?.income?.total) }}</span>
+      <ng-container *ngTemplateOutlet="delta; context: { $implicit: change(summary?.income?.total, prevSummary?.income?.total) }"></ng-container>
+    </div>
+    <div class="kpi">
+      <span class="kpi-label"><span class="swatch" [style.background]="series.expense"></span>รายจ่าย</span>
+      <span class="kpi-value">{{ formatMoney(summary?.expense?.total) }}</span>
+      <ng-container *ngTemplateOutlet="delta; context: { $implicit: change(summary?.expense?.total, prevSummary?.expense?.total) }"></ng-container>
+    </div>
+    <div class="kpi">
+      <span class="kpi-label">คงเหลือสุทธิ</span>
+      <span class="kpi-value">
+        {{ num(summary?.net_income) < 0 ? '−' : '' }}{{ formatMoney(abs(num(summary?.net_income))) }}
+      </span>
+      <span class="cell-sub">
+        ช่วงก่อน {{ num(prevSummary?.net_income) < 0 ? '−' : '' }}{{ formatMoney(abs(num(prevSummary?.net_income))) }}
+      </span>
+    </div>
+    <div class="kpi">
+      <span class="kpi-label">บริการคนไข้</span>
+      <span class="kpi-value">{{ summary?.service_stats?.visits ?? 0 }} <small>ครั้ง</small></span>
+      <span class="cell-sub">
+        {{ summary?.service_stats?.patients ?? 0 }} คน
+        @if (avgPerVisit()) { · เฉลี่ย {{ formatMoney(avgPerVisit()) }}/ครั้ง }
+      </span>
+    </div>
+  </div>
+  <p class="compare-note"><i class="pi pi-info-circle"></i> % เทียบกับช่วงก่อนหน้าที่ยาวเท่ากัน: {{ rangeLabel(previous) }}</p>
+
+  <ng-template #delta let-pct>
+    @if (pct === null) {
+      <span class="cell-sub">ช่วงก่อนไม่มีรายการ</span>
+    } @else {
+      <span class="delta">
+        <i [class]="pct > 0 ? 'pi pi-arrow-up' : pct < 0 ? 'pi pi-arrow-down' : 'pi pi-minus'"></i>
+        {{ abs(pct) }}% จากช่วงก่อน
+      </span>
+    }
+  </ng-template>
+
+  <!-- แนวโน้ม -->
+  <section class="panel">
+    <div class="panel-head">
+      <h3 class="panel-title">รายรับ – รายจ่าย {{ granularity === 'day' ? 'รายวัน' : 'รายเดือน' }}</h3>
+      <span class="cell-sub">ช่วงไม่เกิน 2 เดือนแสดงรายวัน ยาวกว่านั้นแสดงรายเดือน</span>
+    </div>
+    <div class="chart-box" [class.loading]="loading">
+      @if (chartData) {
+        <p-chart type="bar" [data]="chartData" [options]="chartOptions" height="100%"></p-chart>
+      }
+    </div>
+
+    <!-- ตัวเลขของกราฟ (อ่านค่าแน่นอน / ใช้แทนกราฟได้) — แสดงเฉพาะช่วงที่มีรายการ -->
+    <details class="table-view">
+      <summary>ดูเป็นตาราง</summary>
+      <div class="overflow-x-auto">
+        <table class="month-table">
+          <thead>
+            <tr>
+              <th>{{ granularity === 'day' ? 'วันที่' : 'เดือน' }}</th>
+              <th class="text-right">รายรับ</th>
+              <th class="text-right">รายจ่าย</th>
+              <th class="text-right">สุทธิ</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of trend; track p.bucket) {
+              @if (p.income || p.expense) {
+                <tr>
+                  <td>{{ bucketLabel(p.bucket, true) }}</td>
+                  <td class="text-right num">{{ p.income | number: '1.0-2' }}</td>
+                  <td class="text-right num">{{ p.expense | number: '1.0-2' }}</td>
+                  <td class="text-right num">{{ p.net < 0 ? '−' : '' }}{{ abs(p.net) | number: '1.0-2' }}</td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <!-- มาจากไหน / ไปไหน -->
+  <div class="breakdown-grid">
+    <section class="panel">
+      <h3 class="panel-title">รายรับแยกตามบริการ</h3>
+      @for (r of incomeRows; track r.label) {
+        <div class="breakdown-row">
+          <div class="breakdown-head">
+            <span class="cell-title">{{ r.label }}</span>
+            <span class="num">{{ formatMoney(r.total) }}</span>
+          </div>
+          <div class="share-bar"><span [style.width.%]="r.share" [style.background]="series.income"></span></div>
+          <span class="cell-sub">{{ r.sub }} · {{ r.share }}%</span>
+        </div>
+      } @empty {
+        <p class="cell-sub">ยังไม่มีรายรับในช่วงนี้</p>
+      }
+    </section>
+
+    <section class="panel">
+      <h3 class="panel-title">รายจ่ายไปไหน</h3>
+      @for (r of expenseRows; track r.label) {
+        <div class="breakdown-row">
+          <div class="breakdown-head">
+            <span class="cell-title">{{ r.label }}</span>
+            <span class="num">{{ formatMoney(r.total) }}</span>
+          </div>
+          <div class="share-bar"><span [style.width.%]="r.share" [style.background]="series.expense"></span></div>
+          <span class="cell-sub">{{ r.sub }} · {{ r.share }}%</span>
+        </div>
+      } @empty {
+        <p class="cell-sub">ยังไม่มีรายจ่ายในช่วงนี้</p>
+      }
+    </section>
+  </div>
+</div>

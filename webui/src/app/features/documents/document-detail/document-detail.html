@@ -1,0 +1,144 @@
+<div class="inv-page doc-detail">
+  @if (loading) {
+    <app-loading-spinner [overlay]="true" message="กำลังโหลดเอกสาร..."></app-loading-spinner>
+  }
+
+  <a routerLink="/documents" class="back-link"><i class="pi pi-arrow-left"></i> เอกสารทั้งหมด</a>
+
+  @if (doc) {
+    <!-- หัวเอกสาร -->
+    <div class="doc-head">
+      <div class="doc-head-main">
+        <span class="doc-type-label"><i [class]="typeInfo(doc.doc_type).icon"></i> {{ typeInfo(doc.doc_type).label }}</span>
+        <h2 class="mono">{{ doc.doc_no }}</h2>
+        <span class="cell-sub">{{ formatDate(doc.doc_date) }} · บันทึกโดย {{ doc.create_by }}</span>
+      </div>
+      <div class="doc-head-side">
+        @if (doc.status === 'void') {
+          <span class="chip chip-danger">ยกเลิกแล้ว</span>
+        } @else {
+          <span class="chip chip-accent">ใช้งาน</span>
+          <p-button label="ยกเลิกเอกสาร" icon="pi pi-ban" severity="secondary" [outlined]="true" size="small"
+            (onClick)="showVoidDialog = true"></p-button>
+        }
+      </div>
+    </div>
+
+    @if (doc.status === 'void') {
+      <div class="void-banner">
+        <i class="pi pi-ban"></i>
+        <div>
+          ยกเลิกโดย {{ doc.void_by }} เมื่อ {{ formatDate(doc.void_date, true) }}
+          @if (doc.void_reason) { — {{ doc.void_reason }} }
+          <span class="cell-sub">สต็อกถูกคืนแล้ว และรายการในบัญชีการเงินถูกลบออก</span>
+        </div>
+      </div>
+    }
+
+    <!-- ข้อมูลหลัก -->
+    <dl class="info-grid">
+      @if (doc.doc_type === 'patient_service') {
+        <div><dt>คนไข้</dt><dd>{{ doc.patient?.first_name }} {{ doc.patient?.last_name }} <span class="cell-sub mono">{{ doc.patient?.patient_code }}</span></dd></div>
+      }
+      @if (doc.doc_type === 'receive') {
+        <div><dt>ผู้ขาย</dt><dd>{{ doc.supplier || '-' }}</dd></div>
+      }
+      @if (doc.reason) {
+        <div><dt>เหตุผล</dt><dd>{{ doc.reason }}</dd></div>
+      }
+      <div><dt>ผลต่อสต็อก</dt><dd>{{ stockEffect() }} {{ doc.items?.length }} รายการ</dd></div>
+      @if (doc.note) {
+        <div class="span-2"><dt>หมายเหตุ</dt><dd>{{ doc.note }}</dd></div>
+      }
+    </dl>
+
+    <!-- รายการ -->
+    <div class="overflow-x-auto">
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th style="width: 2.5rem;">#</th>
+            <th>รายการ</th>
+            <th class="text-right" style="width: 12rem;">จำนวน</th>
+            @if (hasMoney()) {
+              <th class="text-right" style="width: 8rem;">ราคา/หน่วย</th>
+              <th class="text-right" style="width: 8rem;">รวม</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of doc.items; track item.id) {
+            <tr>
+              <td class="cell-sub">{{ item.line_no }}</td>
+              <td>
+                <div class="cell-stack">
+                  <span class="cell-title">
+                    {{ itemName(item) }}
+                    @if (item.item_type === 'service') { <span class="chip chip-plain">บริการ</span> }
+                  </span>
+                  @if (itemSub(item)) { <span class="cell-sub">{{ itemSub(item) }}</span> }
+                </div>
+              </td>
+              <td class="text-right">{{ qtyText(item) || '—' }}</td>
+              @if (hasMoney()) {
+                <td class="text-right cell-sub">{{ item.unit_price != null ? (num(item.unit_price) | number: '1.2-2') : '—' }}</td>
+                <td class="text-right num">{{ num(item.amount) | number: '1.2-2' }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+        @if (hasMoney()) {
+          <tfoot>
+            <tr>
+              <td colspan="4" class="text-right">รวมทั้งสิ้น</td>
+              <td class="text-right num total" [class.text-strike]="doc.status === 'void'">฿{{ num(doc.total_amount) | number: '1.2-2' }}</td>
+            </tr>
+          </tfoot>
+        }
+      </table>
+    </div>
+
+    <!-- การลงบัญชี -->
+    <div class="ledger-box">
+      <i class="pi pi-wallet"></i>
+      @if (doc.ledger_entries?.length) {
+        @for (entry of doc.ledger_entries; track entry.id) {
+          <div>
+            ลงบัญชีการเงินแล้ว:
+            <span class="chip" [ngClass]="entry.category === 'income' ? 'chip-accent' : 'chip-info'">
+              {{ entry.category === 'income' ? 'รายรับ' : 'รายจ่าย' }}
+            </span>
+            <span class="num">฿{{ num(entry.amount) | number: '1.2-2' }}</span>
+            <a routerLink="/finance/list" class="ledger-link">ดูในบัญชีการเงิน →</a>
+          </div>
+        }
+      } @else if (doc.status === 'void' && hasMoney()) {
+        <div class="cell-sub">ไม่มีรายการในบัญชีการเงิน (ถูกลบตอนยกเลิกเอกสาร)</div>
+      } @else {
+        <div class="cell-sub">เอกสารประเภทนี้ไม่มีเงินเข้า-ออก จึงไม่ลงบัญชีการเงิน</div>
+      }
+    </div>
+  }
+
+  <p-dialog [(visible)]="showVoidDialog" [modal]="true" [appendTo]="'body'" header="ยกเลิกเอกสาร" [style]="{ width: '440px' }"
+    [breakpoints]="{ '640px': '92vw' }" [closable]="!voiding">
+    <p class="void-explain">
+      ยกเลิก <strong class="mono">{{ doc?.doc_no }}</strong> แล้วระบบจะ
+    </p>
+    <ul class="void-effects">
+      <li>คืนสต็อกทุกรายการกลับเหมือนก่อนออกเอกสาร</li>
+      @if (hasMoney()) { <li>ลบรายการนี้ออกจากบัญชีการเงิน</li> }
+      <li>เอกสารยังเก็บไว้ดูย้อนหลัง (แก้ไขไม่ได้)</li>
+    </ul>
+    <label class="void-field">
+      <span>เหตุผล</span>
+      <input pInputText [(ngModel)]="voidReason" placeholder="เช่น บันทึกผิดคนไข้" />
+    </label>
+    <ng-template pTemplate="footer">
+      <p-button label="ไม่ยกเลิก" severity="secondary" [outlined]="true" (onClick)="showVoidDialog = false" [disabled]="voiding"></p-button>
+      <p-button label="ยืนยันยกเลิกเอกสาร" severity="danger" icon="pi pi-ban" (onClick)="confirmVoid()" [loading]="voiding"></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <p-toast></p-toast>
+</div>

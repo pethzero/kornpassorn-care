@@ -1,5 +1,19 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  Index,
+} from 'typeorm';
+import { Document } from './document.entity';
 
+// บัญชีการเงิน (รายรับ/รายจ่าย) — มี 2 ที่มา:
+//   1) ลงอัตโนมัติจากเอกสาร (document_id มีค่า) เช่น รับของเข้า → รายจ่าย, บริการคนไข้ → รายรับ
+//      แก้/ลบที่นี่ไม่ได้ ต้องยกเลิกที่เอกสารแทน (ยกเลิกเอกสารแล้วรายการนี้จะถูกลบตาม)
+//   2) บันทึกเองโดยตรง (document_id = null) เช่น ค่าไฟ ค่าเช่า เงินเดือน
 @Entity('finance_records')
 export class FinanceRecord {
   @PrimaryGeneratedColumn()
@@ -19,6 +33,14 @@ export class FinanceRecord {
 
   @Column({ type: 'varchar', length: 500, nullable: true })
   description: string | null;
+
+  @Column({ type: 'int', nullable: true })
+  @Index()
+  document_id: number | null;
+
+  @ManyToOne(() => Document, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'document_id' })
+  document?: Document | null;
 
   // ผู้สร้างข้อมูล
   @Column({ 

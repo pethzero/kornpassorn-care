@@ -1,122 +1,106 @@
-<div class="patient-list-container">
+<div class="inv-page">
   @if (deleting) {
     <app-loading-spinner [overlay]="true" message="กำลังลบข้อมูล..."></app-loading-spinner>
   }
 
   <div class="list-header">
     <div class="header-title-group">
-      <h2 class="text-xl font-bold text-gray-800">รายชื่อผู้ป่วย</h2>
+      <h2>คนไข้</h2>
       <span class="count-badge">{{ patients.length }} คน</span>
     </div>
-    <p-button label="เพิ่มผู้ป่วย" icon="pi pi-plus" (onClick)="navigateToAdd()"></p-button>
+    <p-button label="เพิ่มคนไข้" icon="pi pi-user-plus" (onClick)="navigateToAdd()"></p-button>
   </div>
 
-  <div class="search-bar">
-    <i class="pi pi-search search-icon"></i>
-    <input
-      type="text"
-      pInputText
-      [(ngModel)]="searchTerm"
-      (input)="dt.filterGlobal(searchTerm, 'contains')"
-      placeholder="ค้นหาชื่อ หรือ รหัสผู้ป่วย..."
-      class="search-input"
-    />
+  <div class="filter-bar">
+    <span class="search">
+      <i class="pi pi-search"></i>
+      <input type="text" pInputText [(ngModel)]="searchTerm" (input)="applyFilter()" placeholder="ค้นหาชื่อ รหัส เบอร์โทร หรือเลขบัตร" />
+      @if (searchTerm) {
+        <button type="button" class="clear" (click)="searchTerm = ''; applyFilter()" aria-label="ล้างคำค้น"><i class="pi pi-times"></i></button>
+      }
+    </span>
+    <div class="seg">
+      @for (g of genderTabs; track g.value) {
+        <button type="button" [class.active]="genderFilter === g.value" (click)="setGender(g.value)">
+          {{ g.label }} <span class="seg-count">{{ countGender(g.value) }}</span>
+        </button>
+      }
+    </div>
   </div>
 
-  <div class="overflow-x-auto rounded-xl">
-    <p-table
-      #dt
-      [value]="patients"
-      [loading]="loading"
-      [paginator]="true"
-      [rows]="10"
-      [rowsPerPageOptions]="[10, 25, 50]"
-      [globalFilterFields]="['patient_code', 'first_name', 'last_name', 'phone']"
-      [stripedRows]="true"
-      [rowHover]="true"
-      dataKey="id"
-      class="p-datatable-sm"
-      currentPageReportTemplate="แสดง {first} ถึง {last} จาก {totalRecords} คน"
-      [showCurrentPageReport]="true"
-    >
-      <ng-template pTemplate="header">
-        <tr>
-          <th pSortableColumn="patient_code" style="width: 140px;">
-            รหัสผู้ป่วย <p-sortIcon field="patient_code"></p-sortIcon>
-          </th>
-          <th pSortableColumn="first_name">
-            ผู้ป่วย <p-sortIcon field="first_name"></p-sortIcon>
-          </th>
-          <th style="width: 100px;">เพศ</th>
-          <th pSortableColumn="date_of_birth" style="width: 110px;">
-            อายุ <p-sortIcon field="date_of_birth"></p-sortIcon>
-          </th>
-          <th style="width: 140px;">เบอร์โทร</th>
-          <th class="text-center" style="width: 110px;">จัดการ</th>
-        </tr>
-      </ng-template>
+  <p-table
+    [value]="filtered"
+    [loading]="loading"
+    [paginator]="filtered.length > 15"
+    [rows]="15"
+    [rowsPerPageOptions]="[15, 30, 50]"
+    [rowHover]="true"
+    dataKey="id"
+    currentPageReportTemplate="{first}–{last} จาก {totalRecords} คน"
+    [showCurrentPageReport]="true"
+    [tableStyle]="{ 'min-width': '44rem' }"
+  >
+    <ng-template #header>
+      <tr>
+        <th pSortableColumn="first_name">คนไข้ <p-sortIcon field="first_name"></p-sortIcon></th>
+        <th style="width: 6rem">เพศ</th>
+        <th pSortableColumn="date_of_birth" style="width: 7rem">อายุ <p-sortIcon field="date_of_birth"></p-sortIcon></th>
+        <th style="width: 9.5rem">เบอร์โทร</th>
+        <th pSortableColumn="id" style="width: 8rem">ลงทะเบียน <p-sortIcon field="id"></p-sortIcon></th>
+        <th style="width: 7.5rem"></th>
+      </tr>
+    </ng-template>
 
-      <ng-template pTemplate="body" let-patient>
-        <tr>
-          <td class="patient-code">{{ patient.patient_code }}</td>
-          <td>
-            <div class="patient-cell">
-              <div class="avatar">{{ initials(patient) }}</div>
-              <div class="patient-name">
-                <span class="name">{{ fullName(patient) }}</span>
-                <span class="email" *ngIf="patient.email">{{ patient.email }}</span>
-              </div>
+    <ng-template #body let-p>
+      <tr class="clickable" (click)="open(p)">
+        <td>
+          <div class="person">
+            <span class="avatar" [ngClass]="'g-' + (gender(p.gender).key || 'none')">{{ initials(p) }}</span>
+            <div class="cell-stack">
+              <span class="cell-title">{{ name(p) }}</span>
+              <span class="cell-sub mono">{{ p.patient_code }}</span>
             </div>
-          </td>
-          <td>
-            <span [class]="genderClass(patient.gender)">{{ genderLabel(patient.gender) }}</span>
-          </td>
-          <td>{{ age(patient.date_of_birth) !== null ? age(patient.date_of_birth) + ' ปี' : '-' }}</td>
-          <td>{{ patient.phone || '-' }}</td>
-          <td class="text-center">
-            <div class="action-buttons">
-              <button
-                pButton
-                icon="pi pi-pencil"
-                size="small"
-                severity="info"
-                outlined
-                rounded
-                (click)="editPatient(patient)"
-                pTooltip="แก้ไข"
-                tooltipPosition="top"
-              ></button>
-              <button
-                pButton
-                icon="pi pi-trash"
-                size="small"
-                severity="danger"
-                outlined
-                rounded
-                [disabled]="deleting"
-                (click)="confirmDelete($event, patient)"
-                pTooltip="ลบ"
-                tooltipPosition="top"
-              ></button>
-            </div>
-          </td>
-        </tr>
-      </ng-template>
+          </div>
+        </td>
+        <td>
+          @if (gender(p.gender).key) {
+            <span class="chip" [ngClass]="gender(p.gender).key === 'female' ? 'chip-danger-soft' : gender(p.gender).key === 'male' ? 'chip-info' : 'chip-plain'">{{ gender(p.gender).label }}</span>
+          } @else {
+            <span class="cell-sub">—</span>
+          }
+        </td>
+        <td>
+          @if (age(p.date_of_birth) !== null) { <span class="num">{{ age(p.date_of_birth) }}</span> ปี } @else { <span class="cell-sub">—</span> }
+        </td>
+        <td class="mono">{{ p.phone || '—' }}</td>
+        <td class="cell-sub">{{ formatDate(p.created_at) }}</td>
+        <td (click)="$event.stopPropagation()">
+          <div class="row-actions">
+            <button type="button" class="icon-btn" (click)="open(p)" pTooltip="ดูข้อมูล" tooltipPosition="top"><i class="pi pi-eye"></i></button>
+            <button type="button" class="icon-btn" (click)="editPatient(p)" pTooltip="แก้ไข" tooltipPosition="top"><i class="pi pi-pencil"></i></button>
+            <button type="button" class="icon-btn danger" [disabled]="deleting" (click)="confirmDelete(p)" pTooltip="ลบ" tooltipPosition="top"><i class="pi pi-trash"></i></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
 
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td colspan="6" class="text-center py-8">
-            <div class="empty-state">
-              <i class="pi pi-users text-6xl text-gray-300 mb-4"></i>
-              <h3 class="text-lg font-medium text-gray-600 mb-2">ไม่พบข้อมูลผู้ป่วย</h3>
-              <p class="text-gray-500 mb-4">ยังไม่มีรายชื่อผู้ป่วยในระบบ</p>
-              <p-button label="เพิ่มผู้ป่วยคนแรก" icon="pi pi-plus" (onClick)="navigateToAdd()"></p-button>
-            </div>
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-  </div>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6">
+          <div class="empty-state">
+            @if (patients.length) {
+              <i class="pi pi-search"></i>
+              <h3>ไม่พบคนไข้ที่ตรงกับคำค้นหา</h3>
+            } @else {
+              <i class="pi pi-users"></i>
+              <h3>ยังไม่มีคนไข้ในระบบ</h3>
+              <p-button label="เพิ่มคนไข้คนแรก" icon="pi pi-user-plus" (onClick)="navigateToAdd()"></p-button>
+            }
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
 
   <p-toast></p-toast>
   <p-confirmDialog></p-confirmDialog>

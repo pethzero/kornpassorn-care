@@ -13,28 +13,24 @@ export const routes: Routes = [
     loadComponent: () => import('./finance-list/finance-list.component').then(m => m.FinanceListComponent),
     canActivate: [AuthGuard],
     data: { roles: ['user', 'admin'] },
-    title: 'รายการการเงิน'
+    title: 'บัญชีการเงิน'
   },
+  // ฟอร์มย้ายไปเป็น dialog ในหน้ารายการแล้ว — คงลิงก์เดิมไว้ให้เปิด dialog แทน
   {
     path: 'form',
-    loadComponent: () => import('./finance-form/finance-form.component').then(m => m.FinanceFormComponent),
-    canActivate: [AuthGuard],
-    data: { roles: ['user', 'admin'] },
-    title: 'เพิ่มรายการการเงิน'
+    redirectTo: '/finance/list?new=1',
+    pathMatch: 'full'
   },
   {
     path: 'form/:id',
-    loadComponent: () => import('./finance-form/finance-form.component').then(m => m.FinanceFormComponent),
-    canActivate: [AuthGuard],
-    data: { roles: ['user', 'admin'] },
-    title: 'แก้ไขรายการการเงิน'
+    redirectTo: ({ params }) => `/finance/list?edit=${params['id']}`
   },
   {
     path: 'summary',
     loadComponent: () => import('./finance-summary/finance-summary.component').then(m => m.FinanceSummaryComponent),
     canActivate: [AuthGuard],
     data: { roles: ['user', 'admin'] },
-    title: 'สรุปการเงิน'
+    title: 'สรุปยอดการเงิน'
   }
 ];
 

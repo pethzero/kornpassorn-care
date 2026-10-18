@@ -31,10 +31,15 @@ export class QueryFinanceRecordDto {
   @IsString()
   search?: string;
 
+  // 'document' = ลงจากเอกสาร, 'manual' = บันทึกเอง
+  @IsOptional()
+  @IsIn(['document', 'manual'])
+  source?: 'document' | 'manual';
+
   @IsOptional()
   @IsString()
   @IsIn(['id', 'item_name', 'amount', 'record_date', 'create_date', 'create_by'])
-  sort_by?: string = 'create_date';
+  sort_by?: string = 'record_date';
 
   @IsOptional()
   @IsString()

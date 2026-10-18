@@ -1,0 +1,126 @@
+<div class="inv-page">
+  @if (loading) {
+    <app-loading-spinner [overlay]="true" message="กำลังโหลดเอกสาร..."></app-loading-spinner>
+  }
+
+  <div class="list-header">
+    <div class="header-title-group">
+      <h2>เอกสาร</h2>
+      <span class="count-badge">{{ documents.length }} ใบ</span>
+    </div>
+    <a routerLink="/finance/list" class="ledger-link">
+      <i class="pi pi-wallet"></i> ดูบัญชีการเงิน <i class="pi pi-arrow-right"></i>
+    </a>
+  </div>
+
+  <!-- สร้างเอกสารใหม่ + สรุปเดือนนี้ในการ์ดเดียวกัน -->
+  <div class="type-cards">
+    @for (t of types; track t.value) {
+      <button type="button" class="type-card" (click)="newDocument(t.value)">
+        <span class="type-card-icon" [ngClass]="'tone-' + t.value"><i [class]="t.icon"></i></span>
+        <span class="type-card-body">
+          <span class="type-card-title">{{ t.label }}</span>
+          <span class="type-card-hint">
+            เดือนนี้ {{ summary?.month?.[t.value]?.count ?? 0 }} ใบ
+            @if (t.ledger && summary?.month?.[t.value]?.amount) {
+              · ฿{{ summary!.month[t.value].amount | number: '1.0-0' }}
+            }
+          </span>
+        </span>
+        <i class="pi pi-plus type-card-plus"></i>
+      </button>
+    }
+  </div>
+
+  <div class="type-filter" role="tablist">
+    <button type="button" class="type-filter-btn" [class.active]="selectedType === ''" (click)="selectType('')">ทั้งหมด</button>
+    @for (t of types; track t.value) {
+      <button type="button" class="type-filter-btn" [class.active]="selectedType === t.value" (click)="selectType(t.value)">
+        {{ t.short }}
+      </button>
+    }
+  </div>
+
+  <div class="filter-bar">
+    <div class="search-box">
+      <i class="pi pi-search"></i>
+      <input pInputText [(ngModel)]="searchTerm" (keyup.enter)="load()" placeholder="เลขที่เอกสาร คนไข้ ผู้ขาย หมายเหตุ..." />
+    </div>
+    <input type="date" class="date-input" [(ngModel)]="startDate" (change)="load()" title="ตั้งแต่วันที่" />
+    <span class="cell-sub">ถึง</span>
+    <input type="date" class="date-input" [(ngModel)]="endDate" (change)="load()" title="ถึงวันที่" />
+    <p-select [options]="statusOptions" [(ngModel)]="selectedStatus" optionLabel="label" optionValue="value"
+      (onChange)="load()" styleClass="status-select"></p-select>
+    <p-button label="ล้าง" icon="pi pi-filter-slash" severity="secondary" [outlined]="true" (onClick)="clearFilters()"></p-button>
+  </div>
+
+  <div class="overflow-x-auto">
+    <p-table [value]="documents" [paginator]="true" [rows]="15" [rowsPerPageOptions]="[15, 30, 50]"
+      [paginatorDropdownAppendTo]="'body'" [rowHover]="true" dataKey="id"
+      currentPageReportTemplate="แสดง {first} ถึง {last} จาก {totalRecords} ใบ" [showCurrentPageReport]="true">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 170px;">เลขที่ / วันที่</th>
+          <th style="width: 120px;">ประเภท</th>
+          <th>รายละเอียด</th>
+          <th class="text-right" style="width: 150px;">ยอดเงิน</th>
+          <th style="width: 40px;"></th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-doc>
+        <tr class="clickable-row" [class.row-muted]="doc.status === 'void'" (click)="open(doc)">
+          <td>
+            <div class="cell-stack">
+              <span class="cell-title mono doc-no">{{ doc.doc_no }}</span>
+              <span class="cell-sub">{{ formatDate(doc.doc_date) }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="chip" [ngClass]="typeChipClass(doc.doc_type)">{{ typeInfo(doc.doc_type).short }}</span>
+          </td>
+          <td>
+            <div class="cell-stack">
+              <span class="cell-ellipsis wide">
+                {{ partyLine(doc) }}
+                @if (doc.status === 'void') { <span class="chip chip-plain">ยกเลิกแล้ว</span> }
+              </span>
+              <span class="cell-sub cell-ellipsis wide">
+                {{ doc.item_count }} รายการ
+                @if (doc.note) { · {{ doc.note }} }
+              </span>
+            </div>
+          </td>
+          <td class="text-right">
+            @if (num(doc.total_amount) > 0) {
+              <div class="cell-stack" style="align-items: flex-end;">
+                <span class="num" [class.money-in]="typeInfo(doc.doc_type).ledger === 'income'"
+                  [class.text-strike]="doc.status === 'void'">
+                  {{ typeInfo(doc.doc_type).ledger === 'income' ? '+' : '−' }}{{ num(doc.total_amount) | number: '1.2-2' }}
+                </span>
+                <span class="cell-sub">{{ doc.status === 'void' ? 'ไม่ลงบัญชี' : (typeInfo(doc.doc_type).ledger === 'income' ? 'รายรับ' : 'รายจ่าย') }}</span>
+              </div>
+            } @else {
+              <span class="cell-sub">ไม่มีเงิน</span>
+            }
+          </td>
+          <td><i class="pi pi-chevron-right row-chevron"></i></td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5">
+            <div class="empty-state">
+              <i class="pi pi-file"></i>
+              <h3>ยังไม่มีเอกสาร</h3>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-toast></p-toast>
+</div>

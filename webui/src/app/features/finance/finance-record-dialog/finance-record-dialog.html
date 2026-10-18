@@ -1,0 +1,55 @@
+<p-dialog [visible]="visible" (visibleChange)="visibleChange.emit($event)" [modal]="true" [appendTo]="'body'"
+  [style]="{ width: '480px' }" [breakpoints]="{ '640px': '92vw' }" [closable]="!saving"
+  [header]="isEdit ? 'แก้ไขรายการ' : 'บันทึกรายรับ / รายจ่ายอื่น'">
+  <form [formGroup]="form" (ngSubmit)="submit()" class="record-form">
+    <p class="form-note">
+      <i class="pi pi-info-circle"></i>
+      สำหรับรายการที่ไม่มีเอกสาร เช่น ค่าไฟ ค่าเช่า — ถ้าซื้อยา/เวชภัณฑ์ หรือรับค่าบริการคนไข้ ให้ทำเป็นเอกสาร
+    </p>
+
+    <div class="category-toggle" role="radiogroup">
+      <button type="button" [class.active]="form.get('category')?.value === 'expense'" (click)="setCategory('expense')">
+        <i class="pi pi-arrow-up-right"></i> รายจ่าย
+      </button>
+      <button type="button" [class.active]="form.get('category')?.value === 'income'" (click)="setCategory('income')">
+        <i class="pi pi-arrow-down-left"></i> รายรับ
+      </button>
+    </div>
+
+    <label class="field">
+      <span>รายการ <em>*</em></span>
+      <input pInputText formControlName="item_name" placeholder="เช่น ค่าไฟฟ้า" [class.ng-invalid]="invalid('item_name')" />
+    </label>
+    <div class="suggestions">
+      @for (s of suggestions; track s) {
+        <button type="button" class="suggestion" (click)="pick(s)">{{ s }}</button>
+      }
+    </div>
+
+    <div class="field-row">
+      <label class="field">
+        <span>จำนวนเงิน (บาท) <em>*</em></span>
+        <p-inputNumber formControlName="amount" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2"
+          placeholder="0.00" styleClass="w-full" [class.ng-invalid]="invalid('amount')"></p-inputNumber>
+      </label>
+      <label class="field">
+        <span>วันที่ <em>*</em></span>
+        <input type="date" formControlName="record_date" class="date-input" />
+      </label>
+    </div>
+
+    <label class="field">
+      <span>รายละเอียด</span>
+      <input pInputText formControlName="description" placeholder="ไม่บังคับ เช่น เลขที่ใบเสร็จ" />
+    </label>
+
+    @if (errorMessage) {
+      <p class="error"><i class="pi pi-exclamation-circle"></i> {{ errorMessage }}</p>
+    }
+  </form>
+
+  <ng-template pTemplate="footer">
+    <p-button label="ยกเลิก" severity="secondary" [outlined]="true" (onClick)="close()" [disabled]="saving"></p-button>
+    <p-button [label]="isEdit ? 'บันทึกการแก้ไข' : 'บันทึก'" icon="pi pi-check" (onClick)="submit()" [loading]="saving"></p-button>
+  </ng-template>
+</p-dialog>

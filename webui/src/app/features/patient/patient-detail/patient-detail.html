@@ -1,0 +1,166 @@
+<div class="inv-page detail">
+  <a routerLink="/patient/list" class="back"><i class="pi pi-arrow-left"></i> คนไข้ทั้งหมด</a>
+
+  @if (notFound) {
+    <div class="empty-state">
+      <i class="pi pi-user-minus"></i>
+      <h3>ไม่พบคนไข้นี้ — อาจถูกลบไปแล้ว</h3>
+      <p-button label="กลับหน้ารายชื่อ" severity="secondary" [outlined]="true" routerLink="/patient/list"></p-button>
+    </div>
+  } @else {
+  @if (patient; as p) {
+    <!-- ===== หัว: ชื่อ + ปุ่มที่ใช้บ่อย ===== -->
+    <section class="hero">
+      <span class="avatar" [ngClass]="'g-' + (gender(p.gender).key || 'none')">{{ initials(p) }}</span>
+      <div class="hero-text">
+        <h2>{{ name(p) }}</h2>
+        <div class="hero-meta">
+          <span class="mono code">{{ p.patient_code }}</span>
+          @if (gender(p.gender).key) { <span class="dot">·</span> {{ gender(p.gender).label }} }
+          @if (age(p.date_of_birth) !== null) { <span class="dot">·</span> {{ age(p.date_of_birth) }} ปี }
+          @if (p.blood_type) { <span class="chip chip-danger blood">กรุ๊ปเลือด {{ p.blood_type }}</span> }
+        </div>
+      </div>
+      <div class="hero-actions">
+        <p-button label="บันทึกบริการ" icon="pi pi-heart" (onClick)="newService()"
+          pTooltip="ทำเอกสารบริการคนไข้ — ตัดสต็อกยาและลงรายรับให้อัตโนมัติ" tooltipPosition="bottom"></p-button>
+        <p-button label="นัดหมาย" icon="pi pi-calendar-plus" severity="secondary" [outlined]="true" (onClick)="newAppointment()"></p-button>
+        <p-button icon="pi pi-pencil" severity="secondary" [outlined]="true" (onClick)="edit()" pTooltip="แก้ไขข้อมูล" tooltipPosition="bottom" ariaLabel="แก้ไขข้อมูล"></p-button>
+      </div>
+    </section>
+
+    <!-- ===== ตัวเลขสรุป ===== -->
+    <section class="stats">
+      <div class="stat">
+        <span class="stat-label">มารับบริการ</span>
+        <span class="stat-value"><span class="num">{{ visitCount }}</span> ครั้ง</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">ครั้งล่าสุด</span>
+        <span class="stat-value">{{ formatDate(lastVisit) }}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">ค่าบริการรวม</span>
+        <span class="stat-value"><span class="num">{{ money(servicesTotal) }}</span> ฿</span>
+      </div>
+      <div class="stat" [class.stat-accent]="upcoming.length">
+        <span class="stat-label">นัดถัดไป</span>
+        <span class="stat-value">
+          @if (upcoming[0]; as next) { {{ dayTag(next.appointment_date) || formatDate(next.appointment_date) }} · {{ next.start_time.slice(0, 5) }} } @else { — }
+        </span>
+      </div>
+    </section>
+
+    <div class="grid">
+      <!-- ===== ซ้าย: ข้อมูลติดต่อ ===== -->
+      <section class="card info">
+        <h3 class="card-title"><i class="pi pi-id-card"></i> ข้อมูลคนไข้</h3>
+        <dl>
+          <dt>เลขบัตร ปชช.</dt>
+          <dd>
+            @if (p.national_id) {
+              <span class="mono">{{ showId ? thaiId(p.national_id) : maskedId(p.national_id) }}</span>
+              <button type="button" class="reveal" (click)="showId = !showId" [attr.aria-label]="showId ? 'ซ่อนเลขบัตร' : 'แสดงเลขบัตร'">
+                <i [class]="showId ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+              </button>
+            } @else { — }
+          </dd>
+          <dt>เบอร์โทร</dt>
+          <dd>@if (p.phone) { <a [href]="'tel:' + p.phone" class="mono">{{ phone(p.phone) }}</a> } @else { — }</dd>
+          <dt>อีเมล</dt>
+          <dd>@if (p.email) { <a [href]="'mailto:' + p.email">{{ p.email }}</a> } @else { — }</dd>
+          <dt>วันเกิด</dt>
+          <dd>{{ formatDate(p.date_of_birth) }}</dd>
+          <dt>ที่อยู่</dt>
+          <dd class="pre">{{ p.address || '—' }}</dd>
+          <dt>ลงทะเบียน</dt>
+          <dd>{{ formatDate(p.created_at) }}</dd>
+        </dl>
+      </section>
+
+      <div class="col">
+        <!-- ===== นัดหมาย ===== -->
+        <section class="card">
+          <div class="card-head">
+            <h3 class="card-title"><i class="pi pi-calendar"></i> นัดหมาย</h3>
+            <button type="button" class="link-button" (click)="newAppointment()"><i class="pi pi-plus"></i> นัดใหม่</button>
+          </div>
+
+          @for (a of upcoming; track a.id) {
+            <div class="appt upcoming">
+              <div class="appt-date">
+                <span class="appt-day">{{ formatDate(a.appointment_date, true) }}</span>
+                <span class="mono">{{ time(a) }}</span>
+              </div>
+              <div class="appt-body">
+                <span class="cell-title">{{ a.service }}</span>
+                @if (a.note) { <span class="cell-sub">{{ a.note }}</span> }
+              </div>
+              @if (dayTag(a.appointment_date); as tag) { <span class="chip chip-accent">{{ tag }}</span> }
+              <span class="chip" [ngClass]="statusInfo[a.status].chip">{{ statusInfo[a.status].label }}</span>
+            </div>
+          } @empty {
+            <p class="muted-line">ไม่มีนัดที่รออยู่</p>
+          }
+
+          @if (pastAppointments.length) {
+            <div class="sub-head">ที่ผ่านมา</div>
+            @for (a of pastShown; track a.id) {
+              <div class="appt">
+                <div class="appt-date">
+                  <span class="appt-day">{{ formatDate(a.appointment_date) }}</span>
+                  <span class="mono">{{ a.start_time.slice(0, 5) }}</span>
+                </div>
+                <div class="appt-body"><span>{{ a.service }}</span></div>
+                <span class="chip" [ngClass]="statusInfo[a.status].chip">{{ statusInfo[a.status].label }}</span>
+              </div>
+            }
+            @if (pastAppointments.length > 5) {
+              <button type="button" class="link-button more" (click)="showAllPast = !showAllPast">
+                {{ showAllPast ? 'ย่อ' : 'ดูทั้งหมด ' + pastAppointments.length + ' รายการ' }}
+              </button>
+            }
+          }
+        </section>
+
+        <!-- ===== ประวัติบริการ ===== -->
+        <section class="card">
+          <div class="card-head">
+            <h3 class="card-title"><i class="pi pi-history"></i> ประวัติบริการ</h3>
+            <button type="button" class="link-button" (click)="newService()"><i class="pi pi-plus"></i> บันทึกบริการ</button>
+          </div>
+
+          @if (loadingHistory) {
+            <p class="muted-line"><i class="pi pi-spin pi-spinner"></i> กำลังโหลด...</p>
+          } @else {
+            @for (d of services; track d.id) {
+              <a class="doc" [routerLink]="['/documents', d.id]" [class.void]="d.status === 'void'">
+                <div class="appt-date">
+                  <span class="appt-day">{{ formatDate(d.doc_date) }}</span>
+                  <span class="mono">{{ d.doc_no }}</span>
+                </div>
+                <div class="appt-body">
+                  <span class="cell-title">{{ d.note || (d.item_count ? d.item_count + ' รายการ' : 'บริการคนไข้') }}</span>
+                  @if (d.note && d.item_count) { <span class="cell-sub">{{ d.item_count }} รายการ</span> }
+                </div>
+                @if (d.status === 'void') { <span class="chip chip-plain">ยกเลิก</span> }
+                <span class="num amount">{{ money(d.total_amount) }} ฿</span>
+                <i class="pi pi-angle-right go"></i>
+              </a>
+            } @empty {
+              <div class="empty-inline">
+                <span>ยังไม่มีประวัติบริการ</span>
+                <p-button label="บันทึกบริการครั้งแรก" icon="pi pi-heart" size="small" [outlined]="true" (onClick)="newService()"></p-button>
+              </div>
+            }
+          }
+        </section>
+      </div>
+    </div>
+  } @else {
+    <p class="muted-line"><i class="pi pi-spin pi-spinner"></i> กำลังโหลดข้อมูลคนไข้...</p>
+  }
+  }
+
+  <p-toast></p-toast>
+</div>

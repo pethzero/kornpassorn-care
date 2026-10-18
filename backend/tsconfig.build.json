@@ -1,4 +1,6 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+  // build เฉพาะ src — เดิมไม่จำกัด ทำให้ tsc ไปอ่าน dist-prod/*.d.ts ของรอบก่อนเป็น input (TS5055 เขียนทับไฟล์ตัวเอง)
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "test", "dist", "dist-prod", "**/*spec.ts", "scripts"]
 }

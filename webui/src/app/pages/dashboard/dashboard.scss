@@ -1,313 +1,468 @@
-// @import '../../shared/styles/table-theme.scss';
+// โครง/chip อยู่ใน ui/styles/list-page.scss — ไฟล์นี้เฉพาะแดชบอร์ด
 
-.dashboard-container {
-  // background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  min-height: 100vh;
-  
-  // Custom card hover effects
-  :host ::ng-deep {
-    .p-card {
-      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(10px);
-      
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-      }
-      
-      .p-card-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        font-weight: 600;
-        padding: 1rem 1.5rem;
-        border-radius: 16px 16px 0 0;
-        margin: -1.25rem -1.25rem 0 -1.25rem;
-        border-bottom: none;
-      }
-      
-      .p-card-body {
-        padding: 1.5rem;
-      }
-      
-      .p-card-content {
-        padding: 0;
-      }
-    }
+$ink: #1e293b;
+$muted: #8a96a8;
+$line: #edf1f5;
+$accent: #0f766e;
+$accent-soft: #effaf8;
 
-    
-    // Tag styling
-    .p-tag {
-      font-weight: 500;
-      padding: 0.25rem 0.75rem;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      
-      &.p-tag-success {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      }
-      
-      &.p-tag-info {
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-      }
-      
-      &.p-tag-warning {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-      }
-    }
-    
-    // Chart container
-    .p-chart {
-      position: relative;
-      
-      canvas {
-        border-radius: 8px;
-      }
-    }
-  }
-  
-  // Text color classes
-  .text-green-600 {
-    color: #059669;
-  }
-  
-  .text-red-600 {
-    color: #dc2626;
-  }
-  
-  .text-gray-500 {
-    color: #6b7280;
-  }
-  
-  .font-semibold {
-    font-weight: 600;
-  }
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-// Responsive design
-@media (max-width: 768px) {
-  .dashboard-container {
-    padding: 1rem;
-    
-    :host ::ng-deep {
-      .p-card .p-card-header {
-        padding: 0.75rem 1rem;
-        font-size: 0.9rem;
-      }
-      
-      .p-card .p-card-body {
-        padding: 1rem;
-      }
-      
-      .table-theme .p-datatable-thead > tr > th,
-      .table-theme .p-datatable-tbody > tr > td {
-        padding: 0.5rem 0.25rem;
-        font-size: 0.8rem;
-      }
-    }
-  }
-}
-
-// Beautiful chart card styling
-:host ::ng-deep .beautiful-chart-card {
-  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-  border: none;
-  border-radius: 20px;
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.08),
-    0 2px 8px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(20px);
-  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-  overflow: hidden;
+// ----- แถบหัว (hero) -----
+.hero {
   position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  padding: 1.6rem 1.75rem;
+  border-radius: 20px;
+  color: #fff;
+  background: linear-gradient(120deg, #0f766e 0%, #0d9488 55%, #14b8a6 100%);
+  box-shadow: 0 10px 30px -12px rgba(15, 118, 110, 0.55);
 
-  // Glass effect overlay
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.8) 50%, transparent 100%);
-    z-index: 1;
+  @media (max-width: 640px) {
+    padding: 1.25rem;
   }
+}
 
-  &:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 
-      0 16px 48px rgba(0, 0, 0, 0.12),
-      0 8px 24px rgba(0, 0, 0, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  }
+.hero-text {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 
-  .p-card-header {
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
-    color: white;
+  h2 {
+    margin: 0;
+    font-size: 1.6rem;
     font-weight: 700;
-    padding: 1.5rem 2rem;
-    border-radius: 20px 20px 0 0;
-    margin: -1.25rem -1.25rem 0 -1.25rem;
-    border-bottom: none;
-    position: relative;
-    overflow: hidden;
-
-    // Glass effect for header
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
-      transition: left 0.6s ease;
-    }
-
-    &:hover::before {
-      left: 100%;
-    }
-
-    .chart-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin: 0;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-
-      .emoji {
-        font-size: 1.5rem;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-      }
-    }
+    letter-spacing: -0.01em;
   }
 
-  .p-card-body {
-    padding: 2rem;
-    background: transparent;
-
-    .p-card-content {
-      padding: 0;
-    }
-  }
-
-  // Chart specific styling
-  .p-chart {
-    position: relative;
-    
-    canvas {
-      border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-      transition: all 0.3s ease;
-      
-      &:hover {
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-      }
-    }
-  }
-
-  // Loading state
-  &.loading {
-    .p-card-body {
-      position: relative;
-      min-height: 300px;
-      
-      &::after {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 40px;
-        height: 40px;
-        margin: -20px 0 0 -20px;
-        border: 3px solid #f3f4f6;
-        border-top: 3px solid #6366f1;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-      }
-    }
+  p {
+    margin: 0;
+    font-size: 0.92rem;
+    color: rgba(255, 255, 255, 0.88);
   }
 }
 
-// Spin animation for loading
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+.hero-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: fit-content;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 0.78rem;
 
-// Animation keyframes
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  i {
+    font-size: 0.75rem;
   }
 }
 
-.dashboard-container > * {
-  animation: fadeInUp 0.6s ease-out;
+.hero-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
 }
 
-.emoji {
-  font-size: 1.5rem;
-  vertical-align: middle;
-}
-
-.section-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 1rem 0;
-}
-
-.quick-actions-section {
-  .grid {
-    display: grid;
-  }
-}
-
-.quick-action-card {
-  display: block;
-  background: #fff;
-  border-radius: 16px;
-  padding: 1.5rem;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+.hero-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.15rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
   text-decoration: none;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border-top: 3px solid transparent;
+  transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
 
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
+    transform: translateY(-1px);
   }
 
-  .qa-icon {
-    font-size: 1.75rem;
-    margin-bottom: 0.5rem;
+  &.solid {
+    background: #fff;
+    color: #0f766e;
+    box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.25);
   }
 
-  .qa-label {
-    font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 0.2rem;
+  &.ghost {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.22);
+    }
+  }
+}
+
+// วงกลมตกแต่งจางๆ มุมขวา
+.hero-deco {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+
+  &.one {
+    width: 16rem;
+    height: 16rem;
+    right: -4rem;
+    top: -7rem;
   }
 
-  .qa-desc {
-    font-size: 0.8rem;
-    color: #64748b;
+  &.two {
+    width: 9rem;
+    height: 9rem;
+    right: 12rem;
+    bottom: -5.5rem;
+  }
+}
+
+// ----- เมนูหน้าต่างๆ -----
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+
+  @media (max-width: 960px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.menu-tile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid $line;
+  border-radius: 14px;
+  background: #fff;
+  text-decoration: none;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+
+  &:hover {
+    border-color: #cfe9e5;
+    box-shadow: 0 6px 18px -10px rgba(15, 23, 42, 0.25);
+    transform: translateY(-1px);
+  }
+}
+
+.menu-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.menu-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $ink;
+}
+
+.menu-desc {
+  font-size: 0.75rem;
+  color: $muted;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// สีอ่อนของไอคอน (ใช้ทั้งเมนูและการ์ดตัวเลข)
+.menu-icon,
+.kpi-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 12px;
+}
+
+.menu-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+
+  i {
+    font-size: 1rem;
+  }
+}
+
+.tone-teal { background: #e6f6f3; color: #0f766e; }
+.tone-blue { background: #eaf2fd; color: #1d63c2; }
+.tone-amber { background: #fdf4e3; color: #a16207; }
+.tone-violet { background: #f1eefd; color: #5b47c9; }
+.tone-orange { background: #fdf0e8; color: #c2410c; }
+.tone-sky { background: #e8f5fb; color: #0369a1; }
+.tone-rose { background: #fdeef3; color: #be185d; }
+.tone-slate { background: #eef2f6; color: #475569; }
+
+// ----- KPI -----
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem;
+  transition: opacity 0.2s;
+
+  &.loading {
+    opacity: 0.5;
+  }
+}
+
+.kpi {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1.05rem 1.15rem;
+  border: 1px solid $line;
+  border-radius: 16px;
+  background: #fff;
+  text-decoration: none;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+
+  &:hover {
+    border-color: #cfe9e5;
+    box-shadow: 0 8px 22px -12px rgba(15, 118, 110, 0.35);
+    transform: translateY(-1px);
   }
 
-  &.finance { border-top-color: #0d9488; }
-  &.inventory { border-top-color: #f59e0b; }
-  &.patient { border-top-color: #3b82f6; }
-  &.questionnaire { border-top-color: #8b5cf6; }
+  // มีเรื่องต้องจัดการ: ขอบ/พื้นอุ่นขึ้นเล็กน้อย
+  &.attention {
+    border-color: #fde2c4;
+    background: linear-gradient(180deg, #fffaf3 0%, #fff 70%);
+  }
+}
+
+.kpi-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.kpi-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 10px;
+
+  i {
+    font-size: 0.85rem;
+  }
+}
+
+.kpi-value {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: $ink;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+
+  small {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: $muted;
+  }
+}
+
+// ----- แผง -----
+.dash-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 1rem;
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid $line;
+  border-radius: 14px;
+  min-width: 0;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: $ink;
+}
+
+.panel-link {
+  margin-top: 0.75rem;
+  font-size: 0.82rem;
+  color: $accent;
+  text-decoration: none;
+
+  &.inline {
+    margin-top: 0;
+  }
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.chart-box {
+  height: 13rem;
+
+  ::ng-deep p-chart,
+  ::ng-deep p-chart > div {
+    height: 100%;
+  }
+}
+
+// ----- ต้องจัดการ -----
+.alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.alert-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.6rem;
+  border-radius: 10px;
+  text-decoration: none;
+
+  &:hover {
+    background: #fafcfc;
+
+    .row-chevron {
+      color: $accent;
+    }
+  }
+}
+
+.alert-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+
+  &.expired,
+  &.out {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+
+  &.expiring,
+  &.low {
+    background: #fff7ed;
+    color: #b45309;
+  }
+}
+
+.alert-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.all-good {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.25rem 0.5rem;
+  color: #64748b;
+  font-size: 0.875rem;
+
+  i {
+    color: $accent;
+    font-size: 1.1rem;
+  }
+}
+
+.row-chevron {
+  color: #cbd5e1;
+  font-size: 0.7rem;
+}
+
+// ----- เอกสารล่าสุด -----
+.recent-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.recent-item {
+  display: grid;
+  grid-template-columns: 9rem 5.5rem minmax(0, 1fr) 5rem 7rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.25rem;
+  border-bottom: 1px solid #f3f5f8;
+  text-decoration: none;
+  color: $ink;
+  font-size: 0.875rem;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: #fafcfc;
+  }
+
+  &.row-muted {
+    opacity: 0.55;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr auto;
+
+    .recent-party,
+    .recent-date {
+      display: none;
+    }
+  }
+}
+
+.doc-no {
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.recent-party {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-amount {
+  text-align: right;
+}
+
+.money-in {
+  color: $accent;
 }

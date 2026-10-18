@@ -28,6 +28,12 @@ export class UserToken {
   @Column({ name: 'token_type', default: 'access' })
   tokenType?: string;
 
+  // access + refresh ที่ออกคู่กัน (= 1 อุปกรณ์) มีค่าเดียวกัน = jti ของ refresh — ใช้ในหน้า "อุปกรณ์ที่เข้าสู่ระบบ"
+  // null = token รุ่นก่อนมีคอลัมน์นี้
+  @Column({ name: 'session_id', type: 'uuid', nullable: true })
+  @Index()
+  sessionId?: string | null;
+
   @Column({ name: 'device_info', type: 'jsonb', nullable: true })
   deviceInfo?: any;
 

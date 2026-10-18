@@ -97,7 +97,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       return {
         userId: tokenRecord.user?.id ?? tokenRecord.patient?.id ?? payload.sub,
         username: tokenRecord.user?.username ?? tokenRecord.patient?.phone ?? payload.username,
-        name: tokenRecord.user?.name ?? patientName ?? payload.name ?? null,
+        // ชื่อที่แสดง: ชื่อ-นามสกุลจากตาราง users (เดิมอ่าน user.name ซึ่งไม่มีคอลัมน์นี้ → เป็น null เสมอ)
+        name:
+          [tokenRecord.user?.first_name, tokenRecord.user?.last_name].filter(Boolean).join(' ').trim() ||
+          patientName ||
+          payload.name ||
+          null,
         role: payload.role,
         tokenId: tokenRecord.id,
         jti: tokenRecord.jti ?? payload.jti,

@@ -1,0 +1,87 @@
+<p-dialog [visible]="visible" (visibleChange)="visibleChange.emit($event)" [modal]="true" [appendTo]="'body'"
+  [style]="{ width: '520px' }" [breakpoints]="{ '600px': '94vw' }" [closable]="!saving" [draggable]="false" [header]="title">
+  <div class="np-form">
+    @if (mode === 'product') {
+      <label class="field">
+        <span>ชื่อสินค้า <em>*</em></span>
+        <input pInputText [(ngModel)]="name" placeholder="เช่น Amoxicillin 500 mg" autofocus />
+      </label>
+
+      <div class="field-row">
+        <div class="field">
+          <span>ประเภท</span>
+          <div class="segmented">
+            @for (c of categoryOptions; track c.value) {
+              <button type="button" [class.active]="category === c.value" (click)="category = c.value">{{ c.label }}</button>
+            }
+          </div>
+        </div>
+        <label class="field narrow">
+          <span>ราคาขาย / {{ unit || 'หน่วย' }}</span>
+          <p-inputNumber [(ngModel)]="sellPrice" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2"
+            placeholder="ไม่บังคับ" styleClass="w-full"></p-inputNumber>
+        </label>
+      </div>
+
+      <div class="field">
+        <span>หน่วยที่จ่ายจริง (หน่วยเล็กสุดที่ตัดสต็อก) <em>*</em></span>
+        <div class="chips">
+          @for (u of unitChips; track u) {
+            <button type="button" class="chip-btn" [class.active]="unit === u" (click)="unit = u">{{ u }}</button>
+          }
+          <input pInputText class="chip-input" [(ngModel)]="unit" placeholder="อื่นๆ" />
+        </div>
+      </div>
+
+      <label class="toggle">
+        <input type="checkbox" [(ngModel)]="hasPack" />
+        <span>
+          ซื้อเป็นกล่อง / แผง
+          <small>ปิดถ้าซื้อทีละ{{ unit || 'หน่วย' }} เช่น ขวดน้ำเกลือ</small>
+        </span>
+      </label>
+    }
+
+    @if (mode === 'package' || hasPack) {
+      <div class="pack-box">
+        <label class="field">
+          <span>ยี่ห้อ / ผู้ผลิต <em>*</em></span>
+          <input pInputText [(ngModel)]="brand" placeholder="เช่น Sara, GPO, Nipro" />
+        </label>
+        <div class="field">
+          <span>ซื้อมาเป็น <em>*</em></span>
+          <div class="chips">
+            @for (u of packUnitChips; track u) {
+              <button type="button" class="chip-btn" [class.active]="packUnit === u" (click)="packUnit = u">{{ u }}</button>
+            }
+            <input pInputText class="chip-input" [(ngModel)]="packUnit" placeholder="อื่นๆ" />
+          </div>
+        </div>
+        <label class="field">
+          <span>1 {{ packUnit || 'หน่วยซื้อ' }} มีกี่{{ baseUnit }} <em>*</em></span>
+          <p-inputNumber [(ngModel)]="packSize" [min]="1" placeholder="เช่น 100" styleClass="w-full"></p-inputNumber>
+        </label>
+        <div class="ratio-preview" [class.empty]="!packSize">
+          1 {{ packUnit || 'กล่อง' }} = <strong>{{ packSize || '?' }}</strong> {{ baseUnit }}
+          @if (brand) { <span class="muted">· {{ brand }}</span> }
+        </div>
+        @if (mode === 'package') {
+          <label class="check">
+            <input type="checkbox" [(ngModel)]="isDefault" /> ตั้งเป็นแบบที่ซื้อประจำ
+          </label>
+        }
+      </div>
+    }
+
+    <p class="note"><i class="pi pi-info-circle"></i> บันทึกลงคลังสินค้าทันที แล้วเติมให้ในแถวของตาราง — รายละเอียดอื่นแก้ได้ที่หน้าสินค้า</p>
+
+    @if (error) {
+      <p class="error"><i class="pi pi-exclamation-circle"></i> {{ error }}</p>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="ยกเลิก" severity="secondary" [outlined]="true" (onClick)="close()" [disabled]="saving"></p-button>
+    <p-button [label]="mode === 'product' ? 'สร้างสินค้า' : 'เพิ่มยี่ห้อนี้'" icon="pi pi-check" (onClick)="submit()" [loading]="saving"></p-button>
+  </ng-template>
+</p-dialog>

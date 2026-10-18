@@ -1,0 +1,204 @@
+// โครงหน้า/chip อยู่ใน ui/styles/list-page.scss — ไฟล์นี้เฉพาะหน้ารายละเอียดเอกสาร
+
+.doc-detail {
+  max-width: 60rem;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #8a96a8;
+  text-decoration: none;
+  margin-bottom: 1rem;
+
+  &:hover {
+    color: #0f766e;
+  }
+
+  i {
+    font-size: 0.75rem;
+  }
+}
+
+.doc-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.doc-head-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1e293b;
+  }
+}
+
+.doc-type-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: #0f766e;
+  font-weight: 500;
+}
+
+.doc-head-side {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.void-banner {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 0.875rem;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  i {
+    margin-top: 0.15rem;
+  }
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem 1.5rem;
+  margin: 0 0 1.5rem;
+  padding: 1rem 1.25rem;
+  background: #f8fafb;
+  border-radius: 12px;
+
+  dt {
+    font-size: 0.75rem;
+    color: #8a96a8;
+    margin-bottom: 0.15rem;
+  }
+
+  dd {
+    margin: 0;
+    color: #1e293b;
+    font-size: 0.9rem;
+  }
+
+  .span-2 {
+    grid-column: 1 / -1;
+  }
+}
+
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th {
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #8a96a8;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #edf1f5;
+  }
+
+  td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #f3f5f8;
+    vertical-align: middle;
+  }
+
+  .text-right {
+    text-align: right;
+  }
+
+  tfoot td {
+    border-bottom: none;
+    padding-top: 1rem;
+    color: #64748b;
+  }
+
+  .total {
+    font-size: 1.1rem;
+  }
+}
+
+.text-strike {
+  text-decoration: line-through;
+}
+
+.ledger-box {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1.5rem;
+  padding: 0.85rem 1rem;
+  border: 1px dashed #dfe5ec;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  color: #475569;
+
+  > i {
+    color: #8a96a8;
+  }
+
+  > div {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+}
+
+.ledger-link {
+  color: #0f766e;
+  text-decoration: none;
+  font-size: 0.82rem;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.void-explain {
+  margin: 0 0 0.5rem;
+}
+
+.void-effects {
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+  color: #475569;
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+
+.void-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  color: #64748b;
+
+  input {
+    width: 100%;
+  }
+}

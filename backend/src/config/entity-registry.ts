@@ -14,11 +14,15 @@ import {
   HospitalWeeklyHours,
   HospitalSpecialDay,
   InventoryProduct,
+  InventoryProductPackage,
   InventoryProductLot,
   InventoryStockMovement,
-  FinanceDocSequence,
-  FinanceTransaction,
-  FinanceTransactionItem,
+  DocumentSequence,
+  Document,
+  DocumentItem,
+  Appointment,
+  ApiClient,
+  AppSetting,
 } from '../database/entities';
 
 // Type definition สำหรับ Entity Class
@@ -39,11 +43,15 @@ export const DEFAULT_ENTITIES: EntityClass[] = [
   HospitalWeeklyHours,
   HospitalSpecialDay,
   InventoryProduct,
+  InventoryProductPackage,
   InventoryProductLot,
   InventoryStockMovement,
-  FinanceDocSequence,
-  FinanceTransaction,
-  FinanceTransactionItem,
+  DocumentSequence,
+  Document,
+  DocumentItem,
+  Appointment,
+  ApiClient,
+  AppSetting,
 ];
 
 // Entity configurations สำหรับแต่ละ database

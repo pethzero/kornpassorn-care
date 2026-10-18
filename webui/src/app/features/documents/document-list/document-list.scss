@@ -1,0 +1,196 @@
+// โครงหน้า/ตาราง/chip อยู่ใน ui/styles/list-page.scss — ไฟล์นี้เฉพาะของหน้ารายการเอกสาร
+
+.ledger-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #475569;
+  text-decoration: none;
+  padding: 0.4rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #edf1f5;
+
+  &:hover {
+    color: #0f766e;
+    background: #f8fafb;
+  }
+
+  .pi-arrow-right {
+    font-size: 0.7rem;
+  }
+}
+
+// การ์ดสร้างเอกสาร 4 ประเภท (พร้อมสรุปเดือนนี้)
+.type-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.type-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #edf1f5;
+  border-radius: 14px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:hover {
+    border-color: #cfe9e5;
+    box-shadow: 0 2px 8px rgba(15, 118, 110, 0.06);
+
+    .type-card-plus {
+      color: #0f766e;
+    }
+  }
+}
+
+.type-card-icon {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &.tone-receive {
+    background: #f0f7ff;
+    color: #1d4ed8;
+  }
+
+  &.tone-patient_service {
+    background: #effaf8;
+    color: #0f766e;
+  }
+
+  &.tone-issue {
+    background: #f1f5f9;
+    color: #475569;
+  }
+
+  &.tone-adjust {
+    background: #fff7ed;
+    color: #b45309;
+  }
+}
+
+.type-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.type-card-title {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.92rem;
+}
+
+.type-card-hint {
+  font-size: 0.78rem;
+  color: #8a96a8;
+}
+
+.type-card-plus {
+  color: #cbd5e1;
+  font-size: 0.8rem;
+}
+
+// แท็บกรองประเภท
+.type-filter {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.type-filter-btn {
+  border: none;
+  background: transparent;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: #64748b;
+  cursor: pointer;
+
+  &:hover {
+    color: #0f766e;
+  }
+
+  &.active {
+    background: #effaf8;
+    color: #0f766e;
+    font-weight: 600;
+  }
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 14rem;
+
+  i {
+    position: absolute;
+    left: 0.8rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.85rem;
+  }
+
+  input {
+    width: 100%;
+    padding-left: 2.2rem;
+    background: #fff;
+  }
+}
+
+.date-input {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #dfe5ec;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: #475569;
+  background: #fff;
+}
+
+::ng-deep .status-select {
+  min-width: 8.5rem;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.doc-no {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.cell-ellipsis.wide {
+  max-width: 28rem;
+}
+
+.money-in {
+  color: #0f766e;
+}
+
+.text-strike {
+  text-decoration: line-through;
+}
+
+.row-chevron {
+  color: #cbd5e1;
+  font-size: 0.75rem;
+}

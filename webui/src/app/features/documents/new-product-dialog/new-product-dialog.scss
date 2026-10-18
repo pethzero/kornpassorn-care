@@ -1,0 +1,189 @@
+// โทนเดียวกับ ui/styles/list-page.scss
+
+$ink: #1e293b;
+$muted: #8a96a8;
+$line: #edf1f5;
+$accent: #0f766e;
+$accent-mid: #5fb8ad;
+$accent-soft: #effaf8;
+
+.np-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+
+  > span:first-child {
+    font-size: 0.8rem;
+    color: #64748b;
+
+    em {
+      color: #dc2626;
+      font-style: normal;
+    }
+  }
+
+  input[pInputText] {
+    width: 100%;
+  }
+
+  &.narrow {
+    flex: 0 0 9.5rem;
+  }
+}
+
+.field-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+
+  > .field:first-child {
+    flex: 1;
+  }
+}
+
+.segmented {
+  display: inline-flex;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  background: #f1f5f9;
+  border-radius: 10px;
+  width: fit-content;
+
+  button {
+    border: none;
+    background: transparent;
+    padding: 0.4rem 0.9rem;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    color: #64748b;
+    cursor: pointer;
+
+    &.active {
+      background: #fff;
+      color: $ink;
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+    }
+  }
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.chip-btn {
+  border: 1px solid $line;
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: #475569;
+  cursor: pointer;
+
+  &:hover {
+    border-color: $accent-mid;
+  }
+
+  &.active {
+    border-color: $accent;
+    background: $accent-soft;
+    color: $accent;
+    font-weight: 600;
+  }
+}
+
+.chip-input {
+  width: 6rem !important;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+}
+
+.toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: 0.875rem;
+  color: $ink;
+  cursor: pointer;
+
+  input {
+    margin-top: 0.2rem;
+  }
+
+  small {
+    display: block;
+    font-size: 0.75rem;
+    color: $muted;
+  }
+}
+
+.pack-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid $line;
+  border-radius: 12px;
+  background: #fafcfc;
+}
+
+.ratio-preview {
+  padding: 0.65rem 0.9rem;
+  background: $accent-soft;
+  border-radius: 10px;
+  color: $accent;
+
+  strong {
+    font-size: 1.05rem;
+  }
+
+  &.empty {
+    background: #f1f5f9;
+    color: $muted;
+  }
+}
+
+.muted {
+  color: $muted;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #475569;
+  cursor: pointer;
+}
+
+.note {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.78rem;
+  color: $muted;
+}
+
+.error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 0.82rem;
+}
+
+:host ::ng-deep .w-full {
+  width: 100%;
+}

@@ -10,11 +10,13 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
-import { TagModule } from 'primeng/tag';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { LoadingSpinnerComponent } from '../../../ui/loading-spinner/loading-spinner';
 import { afterMinDuration } from '../../../core/utils/min-duration';
+import { patientAge, patientGender, patientInitials, patientName } from '../patient-utils';
+
+type GenderFilter = '' | 'male' | 'female';
 
 @Component({
   selector: 'app-patient-list',
@@ -27,19 +29,31 @@ import { afterMinDuration } from '../../../core/utils/min-duration';
     InputTextModule,
     ToastModule,
     TooltipModule,
-    TagModule,
     ConfirmDialogModule,
     LoadingSpinnerComponent,
   ],
   templateUrl: './patient-list.html',
-  styleUrls: ['./patient-list.scss'],
+  styleUrls: ['../../../ui/styles/list-page.scss', './patient-list.scss'],
   providers: [MessageService, ConfirmationService],
 })
 export class PatientList implements OnInit {
+  readonly name = patientName;
+  readonly initials = patientInitials;
+  readonly gender = patientGender;
+  readonly age = patientAge;
+
   patients: Patient[] = [];
+  filtered: Patient[] = [];
   loading = false;
-  searchTerm = '';
   deleting = false;
+  searchTerm = '';
+  genderFilter: GenderFilter = '';
+
+  readonly genderTabs: { value: GenderFilter; label: string }[] = [
+    { value: '', label: 'ทั้งหมด' },
+    { value: 'female', label: 'หญิง' },
+    { value: 'male', label: 'ชาย' },
+  ];
 
   constructor(
     private router: Router,
@@ -64,83 +78,66 @@ export class PatientList implements OnInit {
     this.patientService.getPatients().subscribe({
       next: (data) => {
         afterMinDuration(startedAt, () => {
-          this.patients = data;
+          // ลงทะเบียนล่าสุดขึ้นก่อน
+          this.patients = [...data].sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+          this.applyFilter();
           this.loading = false;
         });
       },
       error: (err) => {
         afterMinDuration(startedAt, () => {
           this.loading = false;
-          this.messageService.add({
-            severity: 'error',
-            summary: 'ผิดพลาด',
-            detail: 'โหลดรายชื่อผู้ป่วยไม่สำเร็จ: ' + (err.error?.message || err.message),
-          });
+          this.toastError('โหลดรายชื่อคนไข้ไม่สำเร็จ', err);
         });
       },
     });
   }
 
-  fullName(patient: Patient): string {
-    return `${patient.first_name} ${patient.last_name}`.trim();
+  // ค้นหา ชื่อ / นามสกุล / รหัส / เบอร์โทร / เลขบัตร (ตัวเลขค้นได้ทั้งมีและไม่มีขีด)
+  applyFilter(): void {
+    const q = this.searchTerm.trim().toLowerCase();
+    const digits = q.replace(/\D/g, '');
+    this.filtered = this.patients.filter((p) => {
+      if (this.genderFilter && this.gender(p.gender).key !== this.genderFilter) return false;
+      if (!q) return true;
+      const text = `${p.first_name} ${p.last_name} ${p.patient_code} ${p.email ?? ''}`.toLowerCase();
+      const phone = (p.phone ?? '').replace(/\D/g, '');
+      const nationalId = (p.national_id ?? '').replace(/\D/g, '');
+      return text.includes(q) || (digits.length >= 3 && (phone.includes(digits) || nationalId.includes(digits)));
+    });
   }
 
-  initials(patient: Patient): string {
-    const a = patient.first_name?.charAt(0) || '';
-    const b = patient.last_name?.charAt(0) || '';
-    return (a + b).toUpperCase() || '?';
+  setGender(g: GenderFilter): void {
+    this.genderFilter = g;
+    this.applyFilter();
   }
 
-  genderLabel(gender?: string): string {
-    if (gender === 'male' || gender === 'M') return 'ชาย';
-    if (gender === 'female' || gender === 'F') return 'หญิง';
-    return gender || '-';
-  }
-
-  genderClass(gender?: string): string {
-    if (gender === 'male' || gender === 'M') return 'gender-tag gender-male';
-    if (gender === 'female' || gender === 'F') return 'gender-tag gender-female';
-    return 'gender-tag gender-other';
-  }
-
-  age(dateOfBirth?: string): number | null {
-    if (!dateOfBirth) return null;
-    const dob = new Date(dateOfBirth);
-    if (isNaN(dob.getTime())) return null;
-
-    const today = new Date();
-    let years = today.getFullYear() - dob.getFullYear();
-    const hasHadBirthdayThisYear =
-      today.getMonth() > dob.getMonth() ||
-      (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate());
-    if (!hasHadBirthdayThisYear) years--;
-    return years;
+  countGender(g: GenderFilter): number {
+    return g ? this.patients.filter((p) => this.gender(p.gender).key === g).length : this.patients.length;
   }
 
   formatDate(date?: string): string {
-    if (!date) return '-';
-    return new Intl.DateTimeFormat('th-TH', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(new Date(date));
+    if (!date) return '—';
+    return new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }).format(new Date(date));
   }
 
   navigateToAdd(): void {
     this.router.navigate(['/patient/form']);
   }
 
+  open(patient: Patient): void {
+    this.router.navigate(['/patient', patient.id]);
+  }
+
   editPatient(patient: Patient): void {
     this.router.navigate(['/patient/form'], { queryParams: { id: patient.id } });
   }
 
-  confirmDelete(event: Event, patient: Patient): void {
+  confirmDelete(patient: Patient): void {
     if (this.deleting) return;
-
     this.confirmationService.confirm({
-      target: event.target as EventTarget,
-      message: `คุณต้องการลบข้อมูลผู้ป่วย "${this.fullName(patient)}" ใช่หรือไม่?`,
-      header: 'ยืนยันการลบ',
+      header: 'ลบคนไข้',
+      message: `ลบ "${this.name(patient)}" (${patient.patient_code}) ใช่หรือไม่? นัดหมายของคนไข้จะถูกลบด้วย — ถ้ามีเอกสารบริการแล้วจะลบไม่ได้`,
       icon: 'pi pi-exclamation-triangle',
       rejectButtonProps: { label: 'ยกเลิก', severity: 'secondary', outlined: true },
       acceptButtonProps: { label: 'ลบ', severity: 'danger' },
@@ -156,24 +153,21 @@ export class PatientList implements OnInit {
       next: () => {
         afterMinDuration(startedAt, () => {
           this.deleting = false;
-          this.messageService.add({
-            severity: 'success',
-            summary: 'สำเร็จ',
-            detail: 'ลบข้อมูลผู้ป่วยเรียบร้อยแล้ว',
-          });
+          this.messageService.add({ severity: 'success', summary: 'ลบแล้ว', detail: this.name(patient) });
           this.loadPatients();
         });
       },
       error: (err) => {
         afterMinDuration(startedAt, () => {
           this.deleting = false;
-          this.messageService.add({
-            severity: 'error',
-            summary: 'ผิดพลาด',
-            detail: 'ลบข้อมูลไม่สำเร็จ: ' + (err.error?.message || err.message),
-          });
+          this.toastError('ลบไม่สำเร็จ', err);
         });
       },
     });
+  }
+
+  private toastError(summary: string, err: any): void {
+    const msg = err?.error?.message;
+    this.messageService.add({ severity: 'error', summary, detail: Array.isArray(msg) ? msg.join(', ') : msg || err.message, life: 6000 });
   }
 }

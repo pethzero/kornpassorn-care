@@ -1,24 +1,55 @@
-<button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="User menu" class="user-menu-btn">
-  <mat-icon class="menu-head-icon">account_circle</mat-icon>
+<button type="button" class="user-trigger" [matMenuTriggerFor]="userMenu" aria-label="เมนูผู้ใช้">
+  <span class="avatar" [ngClass]="'role-' + (user?.role || 'guest')">{{ initials }}</span>
+  <span class="who">
+    <span class="who-name">{{ displayName }}</span>
+    <span class="who-role">{{ roleLabel }}</span>
+  </span>
+  <mat-icon class="chev">expand_more</mat-icon>
 </button>
 
-<mat-menu
-  #userMenu="matMenu"
-  [xPosition]="'after'"   
-  [yPosition]="'below'" 
-  class="custom-menu"
->
-  <div class="px-4 py-2">
-    <strong>{{ user?.name }}</strong>
-    <div class="text-xs text-gray-500">{{ user?.role }}</div>
+<mat-menu #userMenu="matMenu" xPosition="before" yPosition="below" class="user-menu-panel">
+  <div class="card-head" (click)="$event.stopPropagation()">
+    <span class="avatar lg" [ngClass]="'role-' + (user?.role || 'guest')">{{ initials }}</span>
+    <div class="card-text">
+      <strong>{{ displayName }}</strong>
+      @if (user && user.username && user.username !== displayName) {
+        <span class="uname">{{ user.username }}</span>
+      }
+      <span class="role-chip" [ngClass]="'role-' + (user?.role || 'guest')">{{ roleLabel }}</span>
+    </div>
   </div>
-  <mat-divider></mat-divider>
-  <button mat-menu-item (click)="goToSettings()">
-    <mat-icon>settings</mat-icon>
-    <span>ตั้งค่า</span>
-  </button>
-  <button mat-menu-item (click)="logout()">
-    <mat-icon>logout</mat-icon>
-    <span>ออกจากระบบ</span>
-  </button>
+
+  <div class="menu-items">
+    @if (isStaff) {
+      <button mat-menu-item (click)="go('/settings', 'account')">
+        <mat-icon>person_outline</mat-icon><span>บัญชีของฉัน</span>
+      </button>
+      <button mat-menu-item (click)="go('/settings', 'sessions')">
+        <mat-icon>devices</mat-icon><span>อุปกรณ์ที่เข้าสู่ระบบ</span>
+      </button>
+      @if (user?.role === 'admin') {
+        <div class="group-label">ผู้ดูแลระบบ</div>
+        <button mat-menu-item (click)="go('/settings', 'users')">
+          <mat-icon>group</mat-icon><span>ผู้ใช้งาน</span>
+        </button>
+        <button mat-menu-item (click)="go('/settings', 'clinic')">
+          <mat-icon>storefront</mat-icon><span>คลินิก & บริการ</span>
+        </button>
+        <button mat-menu-item (click)="go('/api-clients')">
+          <mat-icon>vpn_key</mat-icon><span>API Clients</span>
+        </button>
+      }
+    }
+    @if (user?.role === 'patient') {
+      <button mat-menu-item (click)="go('/portal/profile')">
+        <mat-icon>person_outline</mat-icon><span>ข้อมูลของฉัน</span>
+      </button>
+    }
+  </div>
+
+  <div class="menu-foot">
+    <button mat-menu-item class="logout" (click)="logout()">
+      <mat-icon>logout</mat-icon><span>ออกจากระบบ</span>
+    </button>
+  </div>
 </mat-menu>

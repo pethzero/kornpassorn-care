@@ -1,615 +1,175 @@
-.finance-list-container {
-  // Basic container styles for new design
-  &.p-6 {
-    padding: 1.5rem;
-  }
-
-  &.bg-gray-50 {
-    background-color: #f9fafb;
-  }
-
-  &.min-h-screen {
-    min-height: 100vh;
-  }
-
-  // Stats cards grid
-  .grid {
-    display: grid;
-    gap: 1.5rem;
-
-    &.grid-cols-1 {
-      grid-template-columns: repeat(1, minmax(0, 1fr));
-    }
-
-    &.grid-cols-2 {
-      @media (min-width: 640px) {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    &.grid-cols-4 {
-      @media (min-width: 1024px) {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-      }
-    }
-
-    &.gap-6 {
-      gap: 1.5rem;
-    }
-
-    &.mb-8 {
-      margin-bottom: 2rem;
-    }
-  }
-
-  // Text utilities
-  .text-2xl {
-    font-size: 1.5rem;
-    line-height: 2rem;
-  }
-
-  .text-lg {
-    font-size: 1.125rem;
-    line-height: 1.75rem;
-  }
-
-  .text-sm {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-  }
-
-  .text-xs {
-    font-size: 0.75rem;
-    line-height: 1rem;
-  }
-
-  .text-6xl {
-    font-size: 3.75rem;
-    line-height: 1;
-  }
-
-  .font-bold {
-    font-weight: 700;
-  }
-
-  .font-semibold {
-    font-weight: 600;
-  }
-
-  .font-medium {
-    font-weight: 500;
-  }
-
-  // Color utilities
-  .text-gray-800 {
-    color: #1f2937;
-  }
-
-  .text-gray-700 {
-    color: #374151;
-  }
-
-  .text-gray-600 {
-    color: #4b5563;
-  }
-
-  .text-gray-500 {
-    color: #6b7280;
-  }
-
-  .text-gray-400 {
-    color: #9ca3af;
-  }
-
-  .text-gray-300 {
-    color: #d1d5db;
-  }
-
-  .text-gray-900 {
-    color: #111827;
-  }
-
-  .text-green-600 {
-    color: #059669;
-  }
-
-  .text-red-600 {
-    color: #dc2626;
-  }
-
-  .text-white {
-    color: #ffffff;
-  }
-
-  // Background utilities
-  .bg-green-100 {
-    background-color: #dcfce7;
-  }
-
-  .bg-red-100 {
-    background-color: #fee2e2;
-  }
-
-  // Hover effects
-  .hover\:bg-gray-50:hover {
-    background-color: #f9fafb;
-  }
-
-  // Filter Grid Layout
-  .filter-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr auto;
-    gap: 16px;
-    align-items: end;
-    margin-bottom: 16px;
-
-    @media (max-width: 1200px) {
-      grid-template-columns: 1fr 1fr 1fr;
-      .filter-actions {
-        grid-column: 1 / -1;
-        justify-self: center;
-      }
-    }
-
-    @media (max-width: 768px) {
-      grid-template-columns: 1fr;
-      .filter-actions {
-        justify-self: stretch;
-      }
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-
-      label {
-        font-weight: 500;
-        color: #374151;
-        font-size: 0.875rem;
-      }
-
-      .p-inputgroup {
-        display: flex;
-        align-items: stretch;
-      }
-
-      // Custom form styles
-      .form-select,
-      .form-input {
-        width: 100%;
-        padding: 0.5rem 0.75rem;
-        border: 1px solid #d1d5db;
-        border-radius: 0.375rem;
-        font-size: 0.875rem;
-        line-height: 1.25rem;
-        
-        &:focus {
-          outline: none;
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-      }
-    }
-  }
-
-  // Layout utilities
-  .flex {
-    display: flex;
-
-    &.justify-between {
-      justify-content: space-between;
-    }
-
-    &.items-center {
-      align-items: center;
-    }
-
-    &.gap-3 {
-      gap: 0.75rem;
-    }
-
-    &.mb-6 {
-      margin-bottom: 1.5rem;
-    }
-
-    &.flex-col {
-      flex-direction: column;
-    }
-
-    &.gap-2 {
-      gap: 0.5rem;
-    }
-
-    &.justify-center {
-      justify-content: center;
-    }
-
-    &.items-end {
-      align-items: flex-end;
-    }
-  }
-
-  .block {
-    display: block;
-  }
-
-  .w-full {
-    width: 100%;
-  }
-
-  .w-12 {
-    width: 3rem;
-  }
-
-  .h-12 {
-    height: 3rem;
-  }
-
-  .rounded-lg {
-    border-radius: 0.5rem;
-  }
-
-  .text-right {
-    text-align: right;
-  }
-
-  .text-center {
-    text-align: center;
-  }
-
-  // Spacing utilities
-  .mb-1 {
-    margin-bottom: 0.25rem;
-  }
-
-  .mb-2 {
-    margin-bottom: 0.5rem;
-  }
-
-  .mb-4 {
-    margin-bottom: 1rem;
-  }
-
-  .mb-6 {
-    margin-bottom: 1.5rem;
-  }
-
-  .mt-1 {
-    margin-top: 0.25rem;
-  }
-
-  .ml-2 {
-    margin-left: 0.5rem;
-  }
-
-  .py-8 {
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-  }
-
-  // Filter field styles
-  .field {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-
-    label {
-      font-weight: 500;
-      color: #333;
-      font-size: 0.9em;
-    }
-
-    .p-inputgroup {
-      display: flex;
-    }
-
-    // Custom form styles
-    .form-select, .form-input {
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      font-size: 0.875rem;
-      line-height: 1.25rem;
-      background-color: #fff;
-      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-
-      &:focus {
-        outline: none;
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-      }
-
-      &:hover {
-        border-color: #9ca3af;
-      }
-    }
-
-    .form-select {
-      cursor: pointer;
-    }
-  }
-
-  // Table specific styles
-  .table-card {
-    .loading-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px;
-      gap: 16px;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      
-      h3 {
-        margin: 16px 0 8px 0;
-        color: #666;
-      }
-
-      p {
-        color: #999;
-        margin-bottom: 24px;
-      }
-    }
-
-    // Table row hover effect
-    ::ng-deep .p-datatable .p-datatable-tbody > tr:hover {
-      background-color: #f8fafc;
-    }
-
-    // Custom table cell styles
-    .font-mono {
-      font-family: 'Courier New', monospace;
-    }
-
-    .text-sm {
-      font-size: 0.875rem;
-    }
-
-    .text-muted {
-      color: #6b7280;
-    }
-
-    .ml-2 {
-      margin-left: 0.5rem;
-    }
-
-    .font-semibold {
-      font-weight: 600;
-    }
-
-    .font-bold {
-      font-weight: 700;
-    }
-
-    .text-lg {
-      font-size: 1.125rem;
-    }
-
-    .text-green-600 {
-      color: #059669;
-    }
-
-    .text-red-600 {
-      color: #dc2626;
-    }
-
-    .text-right {
-      text-align: right;
-    }
-
-    .text-center {
-      text-align: center;
-    }
-
-    .text-6xl {
-      font-size: 3.75rem;
-    }
-
-    .mb-4 {
-      margin-bottom: 1rem;
-    }
-
-    .date-info {
-      display: flex;
-      align-items: center;
-    }
-
-    .item-info {
-      .item-name {
-        font-weight: 500;
-        margin-bottom: 2px;
-      }
-
-      .item-description {
-        font-size: 0.85em;
-        color: #666;
-      }
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-    }
-  }
-
-  // Responsive adjustments
-  @media (max-width: 768px) {
-    padding: 10px;
-
-    .page-header {
-      flex-direction: column;
-      gap: 16px;
-      align-items: stretch;
-
-      .header-actions {
-        justify-content: center;
-      }
-    }
-
-    // Hide less important columns on mobile
-    ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(1),
-    ::ng-deep .p-datatable .p-datatable-tbody > tr > td:nth-child(1),
-    ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(6),
-    ::ng-deep .p-datatable .p-datatable-tbody > tr > td:nth-child(6) {
-      display: none;
-    }
-  }
-
-  // Custom PrimeNG overrides
-  // ::ng-deep .p-card {
-  //   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  //   border-radius: 8px;
-  // }
-
-  ::ng-deep .p-datatable {
-    .p-datatable-header {
-      background: #f8fafc;
-      border: 1px solid #e5e7eb;
-    }
-
-    .p-datatable-thead > tr > th {
-      background: #f1f5f9;
-      border: 1px solid #e5e7eb;
-      font-weight: 600;
-      color: #374151;
-    }
-
-    .p-datatable-tbody > tr > td {
-      border: 1px solid #e5e7eb;
-      padding: 12px;
-    }
-
-    .p-paginator {
-      background: #f8fafc;
-      border: 1px solid #e5e7eb;
-      border-top: none;
-    }
-  }
-
-  // ::ng-deep .p-button {
-  //   &.p-button-outlined {
-  //     border-width: 1px;
-  //   }
-
-  //   &.p-button-sm {
-  //     padding: 0.25rem 0.5rem;
-  //     font-size: 0.75rem;
-  //   }
-  // }
-
-  ::ng-deep .p-tag {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-  }
+// โครงหน้า/ตาราง/chip/ปุ่มไอคอน อยู่ใน ui/styles/list-page.scss — ไฟล์นี้เฉพาะหน้าบัญชีการเงิน
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
-.custom-add-btn {
-  background: linear-gradient(90deg, #16a34a, #22c55e);
-  color: white;
-  font-weight: 600;
-  border-radius: 12px;
-  padding: 0.4rem 1.2rem;
-  box-shadow: 0 4px 10px rgba(22, 163, 74, 0.3);
-  transition: all 0.3s ease;
-}
-
-.custom-add-btn:hover {
-  background: linear-gradient(90deg, #15803d, #16a34a);
-  box-shadow: 0 6px 14px rgba(22, 163, 74, 0.4);
-}
-
-.custom-summary-btn {
-  background: linear-gradient(90deg, #2563eb, #3b82f6);
-  color: white;
-  font-weight: 600;
-  border-radius: 12px;
-  padding: 0.4rem 1.2rem;
-  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
-  transition: all 0.3s ease;
-}
-
-.custom-summary-btn:hover {
-  background: linear-gradient(90deg, #1e40af, #2563eb);
-  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.4);
-}
-
-.p-confirm-dialog .p-confirm-dialog-accept {
-  background-color: #22c55e;
-  color: white;
-  border: none;
-  border-radius: 0.375rem;
-}
-.p-confirm-dialog .p-confirm-dialog-accept:hover {
-  background-color: #16a34a;
-}
-
-.p-confirm-dialog .p-confirm-dialog-reject {
-  background-color: #ef4444;
-  color: white;
-  border: none;
-  border-radius: 0.375rem;
-}
-.p-confirm-dialog .p-confirm-dialog-reject:hover {
-  background-color: #dc2626;
-}
-/////////////
-
-
-.finance-summary-card {
-  transition: all 0.3s ease;
-  border-radius: 16px;
+.plain-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  color: #475569;
+  text-decoration: none;
 
   &:hover {
-    transform: translateY(-4px);
+    color: #0f766e;
+  }
+}
+
+// ปุ่มกลุ่มแบบ segmented (ช่วงเวลา / รายรับ-รายจ่าย)
+.segmented {
+  display: inline-flex;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  background: #f1f5f9;
+  border-radius: 10px;
+  flex-wrap: wrap;
+
+  button {
+    border: none;
+    background: transparent;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    color: #64748b;
+    cursor: pointer;
+
+    &:hover {
+      color: #0f766e;
+    }
+
+    &.active {
+      background: #fff;
+      color: #1e293b;
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+    }
   }
 
-  .p-card-header {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    color: #fff;
+  &.small button {
+    padding: 0.3rem 0.7rem;
+  }
+}
+
+.period-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.custom-range {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.date-input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #dfe5ec;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: #475569;
+  background: #fff;
+}
+
+// ยอดรวม 3 ช่อง
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid #edf1f5;
+  border-radius: 14px;
+}
+
+.kpi-label {
+  font-size: 0.8rem;
+  color: #8a96a8;
+}
+
+.kpi-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  font-variant-numeric: tabular-nums;
+
+  &.income {
+    color: #0f766e;
+  }
+
+  &.negative {
+    color: #b45309;
+  }
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 14rem;
+
+  i {
+    position: absolute;
+    left: 0.8rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.85rem;
+  }
+
+  input {
+    width: 100%;
+    padding-left: 2.2rem;
+    background: #fff;
+  }
+}
+
+::ng-deep .source-select {
+  min-width: 9rem;
+}
+
+.cell-ellipsis.wide {
+  max-width: 26rem;
+}
+
+.money-in {
+  color: #0f766e;
+}
+
+// ลิงก์ไปเอกสารต้นทาง
+.doc-ref {
+  display: inline-flex;
+  flex-direction: column;
+  text-decoration: none;
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.35;
+
+  .mono {
+    color: #0f766e;
     font-weight: 600;
-    font-size: 1.25rem;
   }
 
-  .total-records {
-    background: linear-gradient(180deg, #ffffff, #f9fafb);
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
-
-    .info {
-      text-align: left;
-
-      p {
-        color: #6b7280;
-        margin: 0;
-      }
-
-      h2 {
-        margin: 0;
-        color: #2563eb;
-        font-weight: 700;
-      }
-    }
-
-    .icon-box {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: #eff6ff;
-      border: 2px solid #bfdbfe;
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-
-      i {
-        color: #3b82f6;
-        font-size: 1.75rem;
-      }
-    }
+  &:hover .mono {
+    text-decoration: underline;
   }
+}
+
+.icon-btn.danger:hover {
+  background: #fef2f2;
+  color: #b91c1c;
 }

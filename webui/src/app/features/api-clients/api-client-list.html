@@ -1,0 +1,143 @@
+<div class="inv-page">
+  <div class="list-header">
+    <div class="header-title-group">
+      <h2>API Clients</h2>
+      <span class="count-badge">ระบบภายนอกที่เรียก API ได้</span>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/developers" target="_blank" class="plain-link"><i class="pi pi-book"></i> เอกสาร API</a>
+      <p-button label="สร้าง API client" icon="pi pi-plus" (onClick)="openCreate()"></p-button>
+    </div>
+  </div>
+
+  <p class="intro">
+    แต่ละระบบที่จะเชื่อมต่อ (เช่น แอปร้านยา, ระบบแจ้งเตือนนัด) ได้ <strong>Client ID + Client Secret</strong> ของตัวเอง
+    เอาไปแลก access token ที่ <code>POST /api/v1/oauth/token</code> — แยกจากบัญชีผู้ใช้ของคน และใช้ได้เฉพาะสิทธิ์ที่เลือกให้
+  </p>
+
+  <div class="client-list" [class.loading]="loading">
+    @for (c of clients; track c.id) {
+      <div class="client" [class.row-muted]="!c.is_active">
+        <div class="client-main">
+          <div class="client-title">
+            <span class="cell-title">{{ c.name }}</span>
+            <span class="chip" [ngClass]="statusChip(c).cls">{{ statusChip(c).label }}</span>
+          </div>
+          <div class="client-meta">
+            <span class="mono id-pill" (click)="copy(c.client_id, 'id-' + c.id)" pTooltip="คลิกเพื่อคัดลอก" tooltipPosition="top">
+              {{ c.client_id }} <i [class]="copied === 'id-' + c.id ? 'pi pi-check' : 'pi pi-copy'"></i>
+            </span>
+            <span class="cell-sub">secret ลงท้าย <span class="mono">…{{ c.secret_hint }}</span></span>
+          </div>
+          <div class="scope-list">
+            @for (s of c.scopes; track s) {
+              <span class="scope" [pTooltip]="scopeLabel(s)" tooltipPosition="top"><i class="pi pi-key"></i> {{ s }}</span>
+            }
+          </div>
+          <span class="cell-sub">
+            ใช้ล่าสุด {{ formatDate(c.last_used_at) }} · สร้างโดย {{ c.create_by }} {{ formatDate(c.create_date) }}
+            @if (c.expires_at) { · หมดอายุ {{ formatDate(c.expires_at) }} }
+            @if (c.note) { · {{ c.note }} }
+          </span>
+        </div>
+        <div class="row-actions">
+          <button type="button" class="icon-btn" (click)="toggleActive(c)" [pTooltip]="c.is_active ? 'ปิดใช้งาน (หยุดทันที)' : 'เปิดใช้งาน'" tooltipPosition="top">
+            <i [class]="c.is_active ? 'pi pi-pause' : 'pi pi-play'"></i>
+          </button>
+          <button type="button" class="icon-btn" (click)="openExpiry(c)" [pTooltip]="c.is_expired ? 'ต่ออายุ' : 'ตั้งวันหมดอายุ'" tooltipPosition="top">
+            <i class="pi pi-calendar"></i>
+          </button>
+          <button type="button" class="icon-btn" (click)="confirmRotate(c)" pTooltip="สร้าง secret ใหม่" tooltipPosition="top"><i class="pi pi-refresh"></i></button>
+          <button type="button" class="icon-btn danger" (click)="confirmDelete(c)" pTooltip="ลบ" tooltipPosition="top"><i class="pi pi-trash"></i></button>
+        </div>
+      </div>
+    } @empty {
+      <div class="empty-state">
+        <i class="pi pi-key"></i>
+        <h3>{{ loading ? 'กำลังโหลด...' : 'ยังไม่มีระบบภายนอกที่เชื่อมต่อ' }}</h3>
+      </div>
+    }
+  </div>
+
+  <!-- สร้างใหม่ -->
+  <p-dialog [(visible)]="showCreate" [modal]="true" [appendTo]="'body'" header="สร้าง API client" [style]="{ width: '500px' }"
+    [breakpoints]="{ '560px': '94vw' }" [closable]="!saving">
+    <div class="form">
+      <label class="field">
+        <span>ชื่อระบบที่จะเชื่อมต่อ <em>*</em></span>
+        <input pInputText [(ngModel)]="form.name" placeholder="เช่น แอปแจ้งเตือนนัด ร้านยา ABC" />
+      </label>
+      <div class="field">
+        <span>สิทธิ์ (scope) <em>*</em> — ให้เท่าที่จำเป็น</span>
+        @for (s of scopes; track s.key) {
+          <label class="scope-option" [class.on]="form.scopes.includes(s.key)">
+            <input type="checkbox" [checked]="form.scopes.includes(s.key)" (change)="toggleScope(s.key)" />
+            <span><span class="mono">{{ s.key }}</span><span class="cell-sub block">{{ s.description }}</span></span>
+          </label>
+        }
+      </div>
+      <div class="field-row">
+        <label class="field">
+          <span>หมดอายุ (ไม่บังคับ — ใช้ได้ถึงสิ้นวันที่เลือก)</span>
+          <input type="date" class="date-input" [(ngModel)]="form.expires_at" [min]="today" />
+        </label>
+        <label class="field">
+          <span>หมายเหตุ</span>
+          <input pInputText [(ngModel)]="form.note" placeholder="เช่น ผู้ติดต่อ" />
+        </label>
+      </div>
+    </div>
+    <ng-template pTemplate="footer">
+      <p-button label="ยกเลิก" severity="secondary" [outlined]="true" (onClick)="showCreate = false" [disabled]="saving"></p-button>
+      <p-button label="สร้าง" icon="pi pi-check" (onClick)="create()" [loading]="saving"></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- secret ครั้งเดียว -->
+  <p-dialog [visible]="!!revealed" (visibleChange)="!$event && (revealed = null)" [modal]="true" [appendTo]="'body'" header="ส่งข้อมูลนี้ให้ผู้เชื่อมต่อ"
+    [style]="{ width: '540px' }" [breakpoints]="{ '600px': '94vw' }" [closable]="false">
+    @if (revealed) {
+      <div class="reveal">
+        <p class="reveal-warn"><i class="pi pi-exclamation-triangle"></i> <strong>Client Secret แสดงครั้งเดียว</strong> — คัดลอกเก็บไว้ตอนนี้ ปิดหน้าต่างแล้วดูอีกไม่ได้ (ถ้าหาย ให้สร้าง secret ใหม่)</p>
+        <label class="field">
+          <span>Client ID</span>
+          <div class="copy-row"><input pInputText class="mono" [value]="revealed.client.client_id" readonly />
+            <button type="button" class="icon-btn" (click)="copy(revealed.client.client_id, 'id')"><i [class]="copied === 'id' ? 'pi pi-check' : 'pi pi-copy'"></i></button></div>
+        </label>
+        <label class="field">
+          <span>Client Secret</span>
+          <div class="copy-row"><input pInputText class="mono" [value]="revealed.client_secret" readonly />
+            <button type="button" class="icon-btn" (click)="copy(revealed.client_secret, 'secret')"><i [class]="copied === 'secret' ? 'pi pi-check' : 'pi pi-copy'"></i></button></div>
+        </label>
+        <label class="field">
+          <span>ขอ token ที่</span>
+          <div class="copy-row"><input pInputText class="mono" [value]="apiBase + '/oauth/token'" readonly />
+            <button type="button" class="icon-btn" (click)="copy(apiBase + '/oauth/token', 'url')"><i [class]="copied === 'url' ? 'pi pi-check' : 'pi pi-copy'"></i></button></div>
+        </label>
+        <p class="cell-sub">วิธีใช้ทั้งหมดอยู่ใน <a routerLink="/developers" target="_blank">เอกสาร API</a> — ส่งลิงก์นี้ให้ผู้เชื่อมต่อได้ (secret ห้ามส่งทางช่องทางสาธารณะ)</p>
+      </div>
+    }
+    <ng-template pTemplate="footer">
+      <p-button label="คัดลอกเก็บไว้แล้ว ปิด" icon="pi pi-check" (onClick)="revealed = null"></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- ตั้ง/ต่อวันหมดอายุ -->
+  <p-dialog [visible]="!!expiryTarget" (visibleChange)="!$event && (expiryTarget = null)" [modal]="true" [appendTo]="'body'"
+    [header]="'วันหมดอายุ — ' + (expiryTarget?.name || '')" [style]="{ width: '400px' }" [breakpoints]="{ '460px': '94vw' }">
+    <div class="form">
+      <label class="field">
+        <span>ใช้ได้ถึงสิ้นวันที่</span>
+        <input type="date" class="date-input" [(ngModel)]="expiryDate" [min]="today" />
+      </label>
+      <span class="cell-sub">หรือกด "ไม่มีวันหมดอายุ" — ปิดใช้งานเองได้ทุกเมื่อด้วยปุ่ม ⏸</span>
+    </div>
+    <ng-template #footer>
+      <p-button label="ไม่มีวันหมดอายุ" severity="secondary" [outlined]="true" (onClick)="saveExpiry(null)"></p-button>
+      <p-button label="บันทึก" icon="pi pi-check" [disabled]="!expiryDate" (onClick)="saveExpiry(expiryDate)"></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <p-confirmdialog [style]="{ width: '460px' }"></p-confirmdialog>
+  <p-toast></p-toast>
+</div>

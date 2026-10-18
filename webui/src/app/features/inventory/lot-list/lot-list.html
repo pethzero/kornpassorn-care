@@ -1,14 +1,37 @@
-<div class="lot-list-container">
+<div class="lot-list-container inv-page">
   @if (loading) {
     <app-loading-spinner [overlay]="true" message="กำลังโหลดข้อมูล..."></app-loading-spinner>
   }
 
+  <app-inventory-tabs></app-inventory-tabs>
+
+  @if (filteredProduct(); as fp) {
+    <!-- กำลังดูล็อตของสินค้าตัวเดียว (มักมาจากหน้าสินค้า) — มีปุ่มกลับให้ชัด -->
+    <div class="product-context">
+      <button pButton type="button" icon="pi pi-arrow-left" label="กลับหน้าสินค้า" size="small" severity="secondary"
+        [outlined]="true" (click)="backToProducts()"></button>
+      <div class="product-context-info">
+        <span class="product-context-name">{{ fp.name }}</span>
+        <span class="product-context-meta">
+          @if (!showExpiringOnly) { คงเหลือรวม <span class="num">{{ totalRemaining() | number: '1.0-2' }}</span> {{ fp.unit }} · }
+          {{ fp.packages?.length || 0 }} ยี่ห้อ/ขนาดบรรจุ
+        </span>
+      </div>
+      <button type="button" class="link-button" (click)="clearFilters()">ดูทุกสินค้า</button>
+    </div>
+  }
+
   <div class="list-header">
     <div class="header-title-group">
-      <h2 class="text-xl font-bold text-gray-800">ล็อตสินค้า</h2>
+      <h2>ล็อตสินค้า</h2>
       <span class="count-badge">{{ lots.length }} ล็อต</span>
     </div>
-    <p-button label="รับสินค้าเข้าล็อตใหม่" icon="pi pi-plus" (onClick)="openCreateDialog()"></p-button>
+    <div class="header-actions">
+      <p-button label="ตั้งยอดยกมา" icon="pi pi-inbox" severity="secondary" [outlined]="true" (onClick)="openCreateDialog()"
+        pTooltip="ใส่สต็อกที่มีอยู่แล้วตอนเริ่มใช้ระบบ — ไม่ลงบัญชีการเงิน" tooltipPosition="bottom"></p-button>
+      <p-button label="รับของเข้า" icon="pi pi-download" (onClick)="receiveDocument()"
+        pTooltip="ทำเอกสารรับของเข้า (ลงบัญชีรายจ่ายให้อัตโนมัติ)" tooltipPosition="bottom"></p-button>
+    </div>
   </div>
 
   <div class="filter-bar">
@@ -34,80 +57,115 @@
 
   <div class="overflow-x-auto rounded-xl">
     <p-table [value]="lots" [loading]="loading" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 25, 50]"
-      [paginatorDropdownAppendTo]="'body'" [stripedRows]="true" [rowHover]="true" dataKey="id" class="p-datatable-sm"
+      [paginatorDropdownAppendTo]="'body'" [rowHover]="true" dataKey="id"
       currentPageReportTemplate="แสดง {first} ถึง {last} จาก {totalRecords} ล็อต" [showCurrentPageReport]="true">
 
       <ng-template pTemplate="header">
         <tr>
-          <th>สินค้า</th>
-          <th style="width: 130px;">เลขที่ล็อต</th>
-          <th style="width: 120px;">ยี่ห้อ</th>
-          <th style="width: 110px;">วันผลิต</th>
-          <th style="width: 110px;">วันหมดอายุ</th>
-          <th class="text-right" style="width: 150px;">รับเข้า</th>
-          <th class="text-right" style="width: 110px;">คงเหลือ</th>
-          <th class="text-right" style="width: 100px;">ต้นทุน/หน่วย</th>
-          <th style="width: 110px;">ผู้จำหน่าย</th>
-          <th style="width: 140px;">รายละเอียดที่ซื้อ</th>
-          <th class="text-center" style="width: 70px;">จัดการ</th>
+          <th style="min-width: 220px;">สินค้า / ล็อต</th>
+          <th style="width: 190px;">ยี่ห้อ / บรรจุ</th>
+          <th style="width: 170px;">หมดอายุ</th>
+          <th class="text-right" style="width: 170px;">คงเหลือ</th>
+          <th class="text-right" style="width: 110px;">ทุน/หน่วย</th>
+          <th style="width: 200px;">ผู้จำหน่าย / หมายเหตุ</th>
+          <th style="width: 88px;"></th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-lot>
-        <tr>
-          <td class="font-medium text-gray-900">
-            <div class="product-cell">
-              <span>{{ lot.product?.name || productName(lot.product_id) }}</span>
-              @if (lot.modify_date) {
-                <i class="pi pi-history edit-history-icon" [pTooltip]="editHistoryTooltip(lot)" tooltipPosition="top"></i>
+        <tr [class.row-alert]="isExpired(lot)">
+          <td>
+            <div class="cell-stack">
+              <span class="cell-title">
+                @if (selectedProductId) {
+                  {{ lot.product?.name || productName(lot.product_id) }}
+                } @else {
+                  <button type="button" class="link-button" (click)="filterByProduct(lot.product_id)"
+                    pTooltip="ดูเฉพาะล็อตของสินค้านี้" tooltipPosition="top">{{ lot.product?.name || productName(lot.product_id) }}</button>
+                }
+                @if (lot.modify_date) {
+                  <i class="pi pi-history edit-history-icon" [pTooltip]="editHistoryTooltip(lot)" tooltipPosition="top"></i>
+                }
+              </span>
+              <span class="cell-sub">ล็อต <span class="mono">{{ lot.lot_no }}</span> · รับ {{ formatDate(lot.received_date) }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="cell-stack">
+              <span>{{ lot.brand || '-' }}</span>
+              @if (receivedPackLine(lot)) {
+                <span class="cell-sub">{{ receivedPackLine(lot) }} {{ lot.product?.unit }}</span>
+              } @else {
+                <span class="cell-sub">รับเป็น{{ lot.product?.unit || 'หน่วย' }}</span>
               }
             </div>
           </td>
-          <td class="lot-no-cell">{{ lot.lot_no }}</td>
-          <td>{{ lot.brand || '-' }}</td>
-          <td>{{ formatDate(lot.manufacture_date) }}</td>
           <td>
-            <span [class.text-red]="isExpired(lot)" [class.text-amber]="isExpiringSoon(lot) && !isExpired(lot)">
-              {{ formatDate(lot.expiry_date) }}
-            </span>
-            @if (isExpired(lot)) {
-              <p-tag value="หมดอายุแล้ว" severity="danger" class="ml-1"></p-tag>
-            } @else if (isExpiringSoon(lot)) {
-              <p-tag value="ใกล้หมดอายุ" severity="warn" class="ml-1"></p-tag>
-            }
+            <div class="cell-stack">
+              <span [class.text-danger]="isExpired(lot)" [class.text-warn]="isExpiringSoon(lot) && !isExpired(lot)">
+                {{ formatDate(lot.expiry_date) }}
+              </span>
+              @if (isExpired(lot)) {
+                <span><span class="chip chip-danger">หมดอายุแล้ว</span></span>
+              } @else if (isExpiringSoon(lot)) {
+                <span><span class="chip chip-warn">อีก {{ daysToExpiry(lot) }} วัน</span></span>
+              } @else if (lot.manufacture_date) {
+                <span class="cell-sub">ผลิต {{ formatDate(lot.manufacture_date) }}</span>
+              }
+            </div>
           </td>
           <td class="text-right">
-            @if (receivedPackLine(lot)) {
-              <div class="received-cell">
-                <span class="received-pack">{{ receivedPackLine(lot) }}</span>
-                <span class="received-unit">{{ receivedUnitLine(lot) }}</span>
+            <div class="cell-stack" style="align-items: flex-end;">
+              <span>
+                <span class="num" [class.text-danger]="num(lot.quantity_remaining) === 0">{{ num(lot.quantity_remaining) | number: '1.0-2' }}</span>
+                <span class="unit">/ {{ num(lot.quantity_in) | number: '1.0-2' }} {{ lot.product?.unit }}</span>
+              </span>
+              <div class="stock-bar" [class.low]="remainingPercent(lot) <= 25" [class.empty]="remainingPercent(lot) === 0">
+                <span [style.width.%]="remainingPercent(lot)"></span>
               </div>
+            </div>
+          </td>
+          <td class="text-right">
+            @if (lot.unit_cost != null) {
+              <span class="num">{{ lot.unit_cost | number: '1.2-2' }}</span>
             } @else {
-              {{ receivedDisplay(lot) }}
+              <span class="cell-sub">-</span>
             }
           </td>
-          <td class="text-right font-semibold" [class.text-red]="lot.quantity_remaining === 0">{{ lot.quantity_remaining }} {{ lot.product?.unit }}</td>
-          <td class="text-right">{{ formatCurrency(lot.unit_cost) }}</td>
-          <td>{{ lot.supplier || '-' }}</td>
-          <td class="note-cell" [pTooltip]="lot.note" tooltipPosition="top">{{ lot.note || '-' }}</td>
-          <td class="text-center">
-            @if (lot.is_locked) {
-              <i class="pi pi-lock locked-icon" pTooltip="มีรายการการเงินอ้างอิงแล้ว แก้ไขไม่ได้" tooltipPosition="top"></i>
-            } @else {
-              <button pButton icon="pi pi-pencil" size="small" severity="warn" outlined rounded
-                (click)="openEditDialog(lot)" pTooltip="แก้ไข" tooltipPosition="top"></button>
-            }
+          <td>
+            <div class="cell-stack">
+              <span class="cell-ellipsis">{{ lot.supplier || '-' }}</span>
+              @if (lot.note) {
+                <span class="cell-sub cell-ellipsis" [pTooltip]="lot.note" tooltipPosition="top">{{ lot.note }}</span>
+              }
+            </div>
+          </td>
+          <td>
+            <div class="row-actions">
+              <button type="button" class="icon-btn" (click)="openHistory(lot)" pTooltip="ดูรายละเอียดและประวัติล็อต" tooltipPosition="left">
+                <i class="pi pi-search"></i>
+              </button>
+              @if (lot.is_locked) {
+                <button type="button" class="icon-btn" disabled pTooltip="มีเอกสารอ้างอิงแล้ว แก้ไขไม่ได้ (ยกเลิกเอกสารแทน)" tooltipPosition="left">
+                  <i class="pi pi-lock"></i>
+                </button>
+              } @else {
+                <button type="button" class="icon-btn" (click)="openEditDialog(lot)" pTooltip="แก้ไข" tooltipPosition="left">
+                  <i class="pi pi-pencil"></i>
+                </button>
+              }
+            </div>
           </td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="11" class="text-center py-8">
+          <td colspan="7">
             <div class="empty-state">
-              <i class="pi pi-inbox text-6xl text-gray-300 mb-4"></i>
-              <h3 class="text-lg font-medium text-gray-600 mb-2">ไม่พบล็อตสินค้า</h3>
-              <p-button label="รับสินค้าเข้าล็อตแรก" icon="pi pi-plus" (onClick)="openCreateDialog()"></p-button>
+              <i class="pi pi-inbox"></i>
+              <h3>ไม่พบล็อตสินค้า</h3>
+              <p-button label="รับของเข้า" icon="pi pi-download" (onClick)="receiveDocument()"></p-button>
             </div>
           </td>
         </tr>
@@ -116,7 +174,7 @@
   </div>
 
   <p-dialog [(visible)]="showDialog" [modal]="true" [appendTo]="'body'" [style]="{ width: '480px' }"
-    [breakpoints]="{ '640px': '90vw' }" [header]="isEditMode ? 'แก้ไขล็อตสินค้า' : 'รับสินค้าเข้าล็อตใหม่'" [closable]="!saving">
+    [breakpoints]="{ '640px': '90vw' }" [header]="isEditMode ? 'แก้ไขล็อตสินค้า' : 'ตั้งยอดยกมา (ไม่ลงบัญชี)'" [closable]="!saving">
     <form [formGroup]="form" class="dialog-form">
       <div class="field">
         <label>สินค้า <span class="required">*</span></label>
@@ -145,23 +203,37 @@
         </div>
       </div>
 
-      @if (productHasPack()) {
+      @if (selectedFormProduct()) {
+        <div class="field">
+          <label>ยี่ห้อ / ขนาดบรรจุ</label>
+          <p-select formControlName="package_id" [options]="packageOptions()" optionValue="id" [showClear]="true"
+            placeholder="ไม่ระบุ (รับเป็นหน่วยย่อย)" appendTo="body" styleClass="full-width" (onChange)="onPackageChange()">
+            <ng-template let-pkg pTemplate="item">{{ packageLabel(pkg) }}</ng-template>
+            <ng-template let-pkg pTemplate="selectedItem">{{ packageLabel(pkg) }}</ng-template>
+          </p-select>
+          @if (!packageOptions().length) {
+            <small class="field-hint">สินค้านี้ยังไม่ได้เพิ่มยี่ห้อ/ขนาดบรรจุ — เพิ่มได้ที่หน้าสินค้า</small>
+          }
+        </div>
+      }
+
+      @if (selectedPackage()) {
         <div class="field checkbox-field">
           <label class="checkbox-label">
             <input type="checkbox" formControlName="use_pack" />
-            กรอกเป็นหน่วยบรรจุ ({{ selectedFormProduct()?.pack_unit }})
+            กรอกเป็นหน่วยบรรจุ ({{ selectedPackage()?.pack_unit }})
           </label>
         </div>
       }
 
-      @if (form.get('use_pack')?.value) {
+      @if (form.get('use_pack')?.value && selectedPackage()) {
         <div class="field-row">
           <div class="field">
-            <label>จำนวน ({{ selectedFormProduct()?.pack_unit }}) <span class="required">*</span></label>
+            <label>จำนวน ({{ selectedPackage()?.pack_unit }}) <span class="required">*</span></label>
             <p-inputNumber formControlName="received_pack_qty" class="full-width"></p-inputNumber>
           </div>
           <div class="field">
-            <label>ต้นทุน/{{ selectedFormProduct()?.pack_unit }}</label>
+            <label>ต้นทุน/{{ selectedPackage()?.pack_unit }}</label>
             <p-inputNumber formControlName="pack_unit_cost" mode="currency" currency="THB" locale="th-TH" class="full-width"></p-inputNumber>
           </div>
         </div>
@@ -170,11 +242,11 @@
             <tbody>
               <tr>
                 <td>ซื้อมา</td>
-                <td>{{ packQty() }} {{ selectedFormProduct()?.pack_unit }}</td>
+                <td>{{ packQty() }} {{ selectedPackage()?.pack_unit }} ({{ selectedPackage()?.brand }})</td>
               </tr>
               <tr>
                 <td>อัตราส่วน</td>
-                <td>1 {{ selectedFormProduct()?.pack_unit }} = {{ selectedFormProduct()?.pack_size }} {{ selectedFormProduct()?.unit }}</td>
+                <td>1 {{ selectedPackage()?.pack_unit }} = {{ selectedPackage()?.pack_size }} {{ selectedFormProduct()?.unit }}</td>
               </tr>
               <tr class="ratio-total">
                 <td>รวมเป็น</td>
@@ -202,10 +274,12 @@
           <label>ผู้จำหน่าย</label>
           <input pInputText formControlName="supplier" placeholder="ร้าน/คนที่ซื้อมา" class="full-width" />
         </div>
-        <div class="field">
-          <label>เจ้าของยี่ห้อ</label>
-          <input pInputText formControlName="brand" placeholder="เช่น Berlin Pharmaceutical" class="full-width" />
-        </div>
+        @if (!selectedPackage()) {
+          <div class="field">
+            <label>เจ้าของยี่ห้อ</label>
+            <input pInputText formControlName="brand" placeholder="เช่น Berlin Pharmaceutical" class="full-width" />
+          </div>
+        }
       </div>
 
       <div class="field">
@@ -218,6 +292,123 @@
       <p-button label="ยกเลิก" severity="secondary" [outlined]="true" (onClick)="closeDialog()" [disabled]="saving"></p-button>
       <p-button [label]="isEditMode ? 'บันทึกการแก้ไข' : 'บันทึก'" icon="pi pi-check" (onClick)="submit()" [disabled]="saving"></p-button>
     </ng-template>
+  </p-dialog>
+
+  <!-- รายละเอียดล็อต: ข้อมูลล็อต + เข้า-ออกครั้งไหน จากเอกสารอะไร เหลือเท่าไหร่ -->
+  <p-dialog [(visible)]="showHistory" [modal]="true" [appendTo]="'body'" [style]="{ width: '720px' }"
+    [breakpoints]="{ '760px': '94vw' }" [dismissableMask]="true">
+    <ng-template pTemplate="header">
+      <div class="history-title">
+        <span class="title">ล็อต <span class="mono">{{ detailLot?.lot_no }}</span></span>
+        <span class="subtitle">{{ detailLot?.product?.name || history?.lot?.product_name }}</span>
+      </div>
+    </ng-template>
+
+    @if (historyLoading) {
+      <div class="history-empty"><i class="pi pi-spin pi-spinner"></i> กำลังโหลด...</div>
+    } @else if (history && detailLot) {
+      <!-- ข้อมูลล็อต -->
+      <dl class="lot-info">
+        <div>
+          <dt>ยี่ห้อ / บรรจุ</dt>
+          <dd>
+            {{ detailLot.brand || '-' }}
+            @if (detailLot.pack_unit && detailLot.pack_size) {
+              <span class="cell-sub">· {{ detailLot.pack_unit }}ละ {{ detailLot.pack_size }} {{ detailLot.product?.unit }}</span>
+            }
+            @if (detailLot.package?.description) { <span class="cell-sub block">{{ detailLot.package?.description }}</span> }
+          </dd>
+        </div>
+        <div>
+          <dt>วันหมดอายุ</dt>
+          <dd [class.text-danger]="isExpired(detailLot)" [class.text-warn]="isExpiringSoon(detailLot) && !isExpired(detailLot)">
+            {{ formatDate(detailLot.expiry_date) }}
+            <span class="cell-sub">· {{ daysLeftLabel(detailLot) }}</span>
+          </dd>
+        </div>
+        <div>
+          <dt>วันผลิต</dt>
+          <dd>{{ formatDate(detailLot.manufacture_date) }}</dd>
+        </div>
+        <div>
+          <dt>รับเข้าเมื่อ</dt>
+          <dd>
+            {{ formatDate(detailLot.received_date) }}
+            @if (lotReceiveDoc(); as doc) {
+              <a class="doc-link mono" [routerLink]="['/documents', doc.id]" (click)="showHistory = false">{{ doc.doc_no }}</a>
+            } @else {
+              <span class="cell-sub">· ตั้งยอดยกมา</span>
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>ผู้จำหน่าย</dt>
+          <dd>{{ detailLot.supplier || '-' }}</dd>
+        </div>
+        <div>
+          <dt>ทุน / {{ detailLot.product?.unit || 'หน่วย' }}</dt>
+          <dd>
+            {{ detailLot.unit_cost != null ? (num(detailLot.unit_cost) | number: '1.2-2') : '-' }}
+            @if (remainingValue(detailLot) != null) {
+              <span class="cell-sub">· มูลค่าคงเหลือ ฿{{ remainingValue(detailLot) | number: '1.2-2' }}</span>
+            }
+          </dd>
+        </div>
+        @if (detailLot.note) {
+          <div class="span-all">
+            <dt>หมายเหตุ</dt>
+            <dd>{{ detailLot.note }}</dd>
+          </div>
+        }
+      </dl>
+
+      <div class="history-stats">
+        <div><span class="cell-sub">รับเข้า</span><span><span class="num">{{ history.lot.quantity_in | number: '1.0-2' }}</span><span class="unit">{{ history.lot.unit }}</span></span></div>
+        <div><span class="cell-sub">ใช้ไป</span><span><span class="num">{{ history.lot.quantity_in - history.lot.quantity_remaining | number: '1.0-2' }}</span><span class="unit">{{ history.lot.unit }}</span></span></div>
+        <div><span class="cell-sub">คงเหลือ</span><span><span class="num">{{ history.lot.quantity_remaining | number: '1.0-2' }}</span><span class="unit">{{ history.lot.unit }}</span></span></div>
+      </div>
+
+      <h4 class="history-heading">ประวัติการเคลื่อนไหว</h4>
+      <div class="history-table-wrap">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th style="width: 6.5rem;">วันที่</th>
+              <th>เกิดอะไรขึ้น</th>
+              <th class="text-right" style="width: 6rem;">จำนวน</th>
+              <th class="text-right" style="width: 6rem;">คงเหลือ</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of history.movements; track m.id) {
+              <tr [class.row-muted]="m.document?.status === 'void' && m.kind !== 'reversal'">
+                <td class="cell-sub">{{ formatDate(m.date) }}</td>
+                <td>
+                  <div class="cell-stack">
+                    <span class="history-what">
+                      <span class="chip" [ngClass]="movementChipClass(m)">{{ movementLabel(m) }}</span>
+                      @if (m.document) {
+                        <a class="doc-link mono" [routerLink]="['/documents', m.document.id]" (click)="showHistory = false">{{ m.document.doc_no }}</a>
+                        @if (m.document.status === 'void' && m.kind !== 'reversal') { <span class="chip chip-plain">ยกเลิกแล้ว</span> }
+                      }
+                    </span>
+                    @if (m.document?.party || m.note) {
+                      <span class="cell-sub">{{ m.document?.party || m.note }}</span>
+                    }
+                  </div>
+                </td>
+                <td class="text-right num" [class.qty-in]="m.quantity > 0" [class.qty-out]="m.quantity < 0">
+                  {{ m.quantity > 0 ? '+' : '−' }}{{ abs(m.quantity) | number: '1.0-2' }}
+                </td>
+                <td class="text-right cell-sub">{{ m.balance | number: '1.0-2' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="4" class="history-empty">ยังไม่มีการเคลื่อนไหว</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
   </p-dialog>
 
   <p-toast></p-toast>

@@ -1,8 +1,8 @@
 // src/auth/auth.service.ts
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, IsNull, MoreThan, Repository } from 'typeorm';
 // Update the import path to the correct location of user.entity.ts
 import * as bcrypt from 'bcrypt';
 import { User } from '../../database/entities/user.entity';
@@ -28,6 +28,8 @@ export class AuthService {
     if (!user) return null;
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) return null;
+    // บัญชีที่ admin ปิดใช้งานต้อง login ไม่ได้ (เดิมไม่เช็ก — ปิดบัญชีแล้วยัง login ใหม่ได้)
+    if (!user.isActive) return null;
     return user;
   }
 
@@ -68,7 +70,7 @@ export class AuthService {
     rawToken: string | null,
     expiredAt: Date | null,
     jti?: string,
-    opts?: { isPermanent?: boolean; tokenType?: string; deviceInfo?: any; actorType?: 'user' | 'patient' },
+    opts?: { isPermanent?: boolean; tokenType?: string; deviceInfo?: any; actorType?: 'user' | 'patient'; sessionId?: string },
   ) {
     try {
       const tokenHash = rawToken ? this.hashToken(rawToken) : null;
@@ -93,6 +95,7 @@ export class AuthService {
         tokenHash,
         jti: finalJti,
         tokenType: opts?.tokenType ?? 'access',
+        sessionId: opts?.sessionId ?? null,
         deviceInfo: deviceInfo ?? null,
         deviceIp: deviceIp ?? null,
         fingerprint: fingerprintHash,
@@ -114,7 +117,7 @@ export class AuthService {
   // ออก access + refresh token คู่กันแล้ว save ทั้งคู่ลง DB ในที่เดียว
   // (เดิม login() กับ refresh() ต่างก็เขียน jti/payload/expiry/saveToken เองซ้ำกันทั้งสองจุด)
   async issueTokenPair(
-    identity: { id: string | number; username?: string; role: string },
+    identity: { id: string | number; username?: string; role: string; first_name?: string; last_name?: string; name?: string },
     rememberMe: boolean,
     deviceInfo?: any,
     actorType: 'user' | 'patient' = 'user',
@@ -122,8 +125,11 @@ export class AuthService {
     const accessExpiresIn = Config.token.resolveAccessExpiry(identity.role, rememberMe);
     const isPermanent = accessExpiresIn === undefined; // admin + ADMIN_ACCESS_TOKEN_EXPIRES_IN=0
     const accessJti = uuidv4();
+    // ชื่อที่แสดงบนหัวเว็บ — ใส่ใน token ให้หน้าเว็บแสดงได้ทันทีหลัง login
+    const name =
+      [identity.first_name, identity.last_name].filter(Boolean).join(' ').trim() || identity.name || identity.username;
     const accessToken = this.generateJwt(
-      { sub: identity.id, username: identity.username, role: identity.role, jti: accessJti },
+      { sub: identity.id, username: identity.username, name, role: identity.role, jti: accessJti },
       accessExpiresIn,
     );
     const accessExpiresInSeconds = Config.token.parseExpiresIn(accessExpiresIn);
@@ -146,11 +152,13 @@ export class AuthService {
         tokenType: 'access',
         isPermanent,
         actorType,
+        sessionId: refreshJti,
       }),
       this.saveToken({ id: identity.id }, refreshToken, refreshExpiredAt, refreshJti, {
         deviceInfo,
         tokenType: 'refresh',
         actorType,
+        sessionId: refreshJti,
       }),
     ]);
 
@@ -205,20 +213,94 @@ export class AuthService {
   }
 
   // revoke all tokens for a given userId, return number of rows affected
-  async revokeAllTokensOfUser(userId: string, opts?: { revokedBy?: string; reason?: string }): Promise<number> {
+  // exceptJtis: เว้น token ที่ใช้อยู่ (เช่น เปลี่ยนรหัสผ่านตัวเอง → ออกจากเครื่องอื่น แต่เครื่องนี้ยังใช้ต่อได้)
+  // คืนจำนวน "อุปกรณ์" ที่ออกจากระบบ (นับจาก refresh token — 1 อุปกรณ์มี access + refresh คู่กัน)
+  async revokeAllTokensOfUser(userId: string, opts?: { revokedBy?: string; reason?: string; exceptJtis?: string[] }): Promise<number> {
     if (!userId) return 0;
-    const result = await this.userTokenRepo.createQueryBuilder()
-      .update()
-      .set({
-        revoked: true,
-        revokedAt: new Date(),
-        revokedBy: opts?.revokedBy ?? undefined,
-        revokedReason: opts?.reason ?? undefined,
-      })
-      .where('"userId" = :userId', { userId })
-      .andWhere('revoked = false')
-      .execute();
-    return result.affected ?? 0;
+    const except = (opts?.exceptJtis ?? []).filter(Boolean);
+    // refresh ก่อน (นับจำนวนอุปกรณ์จากตรงนี้) แล้วตามด้วย token ที่เหลือ
+    const revoke = (refreshOnly: boolean) => {
+      const qb = this.userTokenRepo.createQueryBuilder()
+        .update()
+        .set({
+          revoked: true,
+          revokedAt: new Date(),
+          revokedBy: opts?.revokedBy ?? undefined,
+          revokedReason: opts?.reason ?? undefined,
+        })
+        .where('"userId" = :userId', { userId })
+        .andWhere('revoked = false');
+      if (refreshOnly) qb.andWhere(`token_type = 'refresh'`);
+      if (except.length) qb.andWhere('(jti IS NULL OR jti NOT IN (:...except))', { except });
+      return qb.execute();
+    };
+    const devices = (await revoke(true)).affected ?? 0;
+    await revoke(false);
+    return devices;
+  }
+
+  // ===== อุปกรณ์ที่ login (session) =====
+  // 1 session = refresh token 1 ตัว + access token ที่ออกคู่กันใน issueTokenPair (session_id เดียวกัน = jti ของ refresh)
+  // ต้อง revoke refresh ด้วย — ไม่งั้นอุปกรณ์นั้นแค่ refresh แล้วกลับมาใช้ต่อได้
+  // token รุ่นเก่าที่ไม่มี session_id: จับคู่จากเวลาที่ออก (ห่างกันไม่กี่ ms) แทน
+  private static readonly LEGACY_PAIR_WINDOW_MS = 2000;
+
+  // jti ของ refresh token ในอุปกรณ์เดียวกับ access token นี้
+  async findRefreshJtiOfAccess(userId: string, accessJti: string): Promise<string | null> {
+    const access = await this.userTokenRepo.findOne({ where: { jti: accessJti, user: { id: userId } as any } });
+    if (!access) return null;
+    if (access.sessionId) return access.sessionId;
+    const at = new Date(access.created_at).getTime();
+    const rows = await this.userTokenRepo.find({
+      select: ['jti', 'created_at'] as any,
+      where: { user: { id: userId } as any, tokenType: 'refresh', sessionId: IsNull(), created_at: this.legacyWindow(access.created_at) as any },
+    });
+    rows.sort((a, b) => Math.abs(new Date(a.created_at).getTime() - at) - Math.abs(new Date(b.created_at).getTime() - at));
+    return rows[0]?.jti ?? null;
+  }
+
+  private legacyWindow(createdAt: Date) {
+    const t = new Date(createdAt).getTime();
+    return Between(new Date(t - AuthService.LEGACY_PAIR_WINDOW_MS), new Date(t + AuthService.LEGACY_PAIR_WINDOW_MS));
+  }
+
+  async listSessions(userId: string, currentAccessJti?: string) {
+    const base = { user: { id: userId } as any, tokenType: 'refresh', revoked: false };
+    const rows = await this.userTokenRepo.find({
+      select: ['id', 'jti', 'created_at', 'last_used', 'expired_at', 'deviceInfo', 'deviceIp'] as any,
+      // ยังไม่หมดอายุ (null = ไม่มีวันหมดอายุ)
+      where: [
+        { ...base, expired_at: MoreThan(new Date()) },
+        { ...base, expired_at: IsNull() },
+      ],
+      order: { created_at: 'DESC' },
+    });
+    const currentJti = currentAccessJti ? await this.findRefreshJtiOfAccess(userId, currentAccessJti) : null;
+    return rows
+      .map((r) => ({
+        id: r.id,
+        created_at: r.created_at,
+        last_used: r.last_used,
+        expired_at: r.expired_at,
+        deviceInfo: r.deviceInfo,
+        deviceIp: r.deviceIp,
+        current: r.jti === currentJti,
+      }))
+      .sort((a, b) => Number(b.current) - Number(a.current));
+  }
+
+  // ออกจากระบบ session ของตัวเอง (id = แถว refresh token)
+  async revokeSession(userId: string, sessionRowId: string) {
+    const refresh = await this.userTokenRepo.findOne({ where: { id: sessionRowId, tokenType: 'refresh', user: { id: userId } as any } });
+    if (!refresh) throw new NotFoundException('ไม่พบอุปกรณ์นี้');
+    const set = { revoked: true, revokedAt: new Date(), revokedBy: userId, revokedReason: 'session revoked by owner' };
+    const owner = { user: { id: userId } as any, revoked: false };
+    if (refresh.sessionId) {
+      await this.userTokenRepo.update({ ...owner, sessionId: refresh.sessionId }, set);
+    } else {
+      await this.userTokenRepo.update({ id: refresh.id }, set);
+      await this.userTokenRepo.update({ ...owner, tokenType: 'access', sessionId: IsNull(), created_at: this.legacyWindow(refresh.created_at) as any }, set);
+    }
   }
 
   // auth.service.ts
@@ -275,86 +357,13 @@ export class AuthService {
   }
 
   // ...existing code...
-  // now accept deviceInfo and pass it to saveToken
-  async getTokenByCredentials(username: string, password: string, req: any, deviceInfo?: any) {
-    try {
-      if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
-        await this.logApiKeyUsage(null, false, req, 'Username or password is missing or invalid type');
-        return { success: false, message: 'Username และ Password จำเป็นต้องระบุ' };
-      }
-
-      const apiUser = await this.userService.findByUsername(username);
-      if (!apiUser || apiUser.role !== 'api') {
-        await this.logApiKeyUsage(null, false, req, 'API user not found or invalid role');
-        return { success: false, message: 'API user ไม่ถูกต้องหรือไม่มีสิทธิ์' };
-      }
-      if (!apiUser.isActive) {
-        await this.logApiKeyUsage(apiUser, false, req, 'API user is inactive');
-        return { success: false, message: 'API user ถูกปิดการใช้งาน' };
-      }
-
-      const isPasswordValid = await bcrypt.compare(password, apiUser.password_hash);
-      if (!isPasswordValid) {
-        await this.logApiKeyUsage(apiUser, false, req, 'Invalid password');
-        return { success: false, message: 'Password ไม่ถูกต้อง' };
-      }
-
-      const jti = uuidv4();
-      const payload = {
-        sub: apiUser.id,
-        username: apiUser.username,
-        role: apiUser.role,
-        api_token: true,
-        jti,
-      };
-
-      const expiresIn = Config.token.API_TOKEN_EXPIRES_IN;
-      const token = this.jwtService.sign(payload, { expiresIn });
-
-      const expiresInSeconds = Config.token.parseExpiresIn(expiresIn);
-      const expiredAt = expiresInSeconds > 0 ? new Date(Date.now() + expiresInSeconds * 1000) : null;
-
-      // save token with deviceInfo (token_hash + jti stored)
-      await this.saveToken(apiUser, token, expiredAt, jti, { tokenType: 'api', deviceInfo });
-
-      await this.logApiKeyUsage(apiUser, true, req);
-
-      return {
-        success: true,
-        access_token: token,
-        expires_in: expiresInSeconds,
-        expired_at: expiredAt ? expiredAt.toISOString() : null,
-        jti,
-        user_role: apiUser.role
-      };
-    } catch (error) {
-      console.error('Error in getTokenByCredentials:', error);
-      await this.logApiKeyUsage(null, false, req, `System error: ${error?.message || error}`);
-      return { success: false, message: 'เกิดข้อผิดพลาดภายในระบบ' };
-    }
-  }
-  // ...existing code...
-  // บันทึก log การใช้ API key
-  async logApiKeyUsage(user: User | null, success: boolean, req: any, failReason?: string) {
-    await this.loginLogRepo.save({
-      user: user || undefined,
-      ip_address: req.ip,
-      user_agent: req.headers['user-agent'],
-      success,
-      fail_reason: failReason || undefined,
-    });
-  }
-
-
-
-  // ...existing code...
   async findSessionsForUser(userId: string) {
     if (!userId) return [];
     return this.userTokenRepo.find({
+      // ห้าม relations: ['user'] / tokenHash — เดิมส่ง password_hash ของ user และ hash ของ token กลับไปที่หน้าเว็บ
       where: { user: { id: userId } as any },
-      relations: ['user'],
       order: { created_at: 'DESC' },
-      select: ['id', 'jti', 'tokenHash', 'tokenType', 'expired_at', 'revoked', 'last_used', 'created_at', 'is_permanent', 'deviceInfo', 'deviceIp'] as any,
+      select: ['id', 'jti', 'tokenType', 'expired_at', 'revoked', 'last_used', 'created_at', 'is_permanent', 'deviceInfo', 'deviceIp'] as any,
     });
   }
 

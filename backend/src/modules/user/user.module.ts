@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../../database/entities/user.entity';
 import { UserService } from './user.service';
-import { UserController } from './user.controller';
 import { DatabaseModule } from '../../config/database.module';
 
 @Module({
@@ -10,7 +9,8 @@ import { DatabaseModule } from '../../config/database.module';
     DatabaseModule,                // ensures DB connection registered
   ],
   providers: [UserService],
-  controllers: [UserController],
+  // GET /users/:id เดิมเปิดให้ทุกคนที่ login — แทนด้วย StaffUsersController (admin) ใน auth module
+  controllers: [],
   exports: [UserService], // export so other modules (Auth) can inject UserService
 })
 export class UserModule {}

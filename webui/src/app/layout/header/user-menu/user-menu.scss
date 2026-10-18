@@ -1,66 +1,239 @@
-/* ให้พื้นหลังขาว และปรับความกว้าง */
-::ng-deep .mat-mdc-menu-panel.custom-menu {
-    background: white !important;
-    color: #333;
-    width: 250px;
-    /* default สำหรับ desktop */
-    transform-origin: top;
-    animation: slideDown 0.25s ease-out;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-}
+$ink: #1e293b;
+$muted: #8a96a8;
+$accent: #0f766e;
 
-@keyframes slideDown {
-    0% {
-        transform: translateY(-10px);
-        opacity: 0;
-    }
-
-    100% {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-
-/* Responsive: โทรศัพท์จอเล็ก */
-@media (max-width: 640px) {
-    ::ng-deep .mat-mdc-menu-panel.custom-menu {
-        width: 90vw !important;
-        /* 90% ของหน้าจอ */
-        max-width: 320px;
-    }
-}
-
-.user-menu-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border-radius: 50%;
-  background: transparent;
-  transition: background 0.18s;
-  height: 48px;
-  width: 48px;
-  min-width: 48px;
-
-  &:hover, &:focus {
-    background: #e6f7f5 !important;
-    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.12);
+// สีอวตารตาม role — ใช้ทั้งปุ่มหัวเว็บและการ์ดในเมนู
+@mixin role-colors {
+  &.role-admin {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  }
+  &.role-user {
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+  }
+  &.role-patient {
+    background: linear-gradient(135deg, #f472b6, #db2777);
+  }
+  &.role-guest {
+    background: linear-gradient(135deg, #94a3b8, #64748b);
   }
 }
 
-.menu-head-icon {
-  font-size: 36px;
-  width: 44px !important;
-  height: 44px !important;
-  color: #0d9488;
-  background: #e6f7f5;
-  border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.1);
-  display: flex;
+.user-trigger {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  margin: 0 auto;
-  transition: background 0.18s, color 0.18s;
+  gap: 0.6rem;
+  padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover,
+  &[aria-expanded='true'] {
+    background: #f4f8f8;
+    border-color: #e3eceb;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #99d5cf;
+    outline-offset: 2px;
+  }
+
+  .chev {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: $muted;
+    transition: transform 0.2s;
+  }
+
+  &[aria-expanded='true'] .chev {
+    transform: rotate(180deg);
+  }
 }
 
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px #e2e8f0;
+  @include role-colors;
+
+  &.lg {
+    width: 3rem;
+    height: 3rem;
+    font-size: 1.1rem;
+    box-shadow: none;
+  }
+}
+
+.who {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+  max-width: 11rem;
+}
+
+.who-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: $ink;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.who-role {
+  font-size: 0.72rem;
+  color: $muted;
+}
+
+// จอเล็ก: เหลือแค่อวตาร
+@media (max-width: 640px) {
+  .who,
+  .user-trigger .chev {
+    display: none;
+  }
+  .user-trigger {
+    padding: 0.2rem;
+  }
+}
+
+// ===== แผงเมนู (อยู่ใน overlay นอก component → ต้อง ::ng-deep) =====
+::ng-deep .mat-mdc-menu-panel.user-menu-panel {
+  width: 272px;
+  max-width: calc(100vw - 32px);
+  border-radius: 16px !important;
+  background: #fff !important;
+  border: 1px solid #edf1f5;
+  box-shadow: 0 16px 40px -12px rgba(15, 23, 42, 0.22) !important;
+  margin-top: 6px;
+
+  .mat-mdc-menu-content {
+    padding: 0;
+  }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 1rem 1rem 0.9rem;
+    background: linear-gradient(180deg, #f3faf9, #fff);
+    border-bottom: 1px solid #f1f5f9;
+    cursor: default;
+  }
+
+  .card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+
+    strong {
+      font-size: 0.95rem;
+      color: $ink;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  .uname {
+    font-size: 0.75rem;
+    color: $muted;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  .role-chip {
+    align-self: flex-start;
+    margin-top: 0.2rem;
+    padding: 0.1rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: #f1f5f9;
+    color: #475569;
+
+    &.role-admin {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+    &.role-user {
+      background: #effaf8;
+      color: $accent;
+    }
+    &.role-patient {
+      background: #fdf2f8;
+      color: #be185d;
+    }
+  }
+
+  .menu-items {
+    padding: 0.35rem 0.4rem;
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  .group-label {
+    margin: 0.5rem 0.75rem 0.15rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: $muted;
+  }
+
+  .mat-mdc-menu-item {
+    min-height: 40px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    color: #334155;
+
+    .mat-icon {
+      margin-right: 0.75rem;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: #64748b;
+    }
+
+    &:hover:not([disabled]) {
+      background: #f4f8f8;
+
+      .mat-icon {
+        color: $accent;
+      }
+    }
+  }
+
+  .menu-foot {
+    padding: 0.35rem 0.4rem;
+    border-top: 1px solid #f1f5f9;
+
+    .logout,
+    .logout .mat-icon {
+      color: #dc2626;
+    }
+
+    .logout:hover:not([disabled]) {
+      background: #fef2f2;
+
+      .mat-icon {
+        color: #dc2626;
+      }
+    }
+  }
+}
