@@ -24,6 +24,13 @@ export class PatientController {
     return res.status(HttpStatus.OK).json(data);
   }
 
+  // GET /patients/next-code — รหัสคนไข้ถัดไป (ตัวเลขล้วนมากสุด + 1 เติม 0 ให้ยาวเท่าเดิม เช่น 000001 → 000002)
+  // ต้องอยู่เหนือ @Get(':id') ไม่งั้น "next-code" จะถูกตีความเป็น id
+  @Get('next-code')
+  async nextCode(@Res() res: Response) {
+    return res.status(HttpStatus.OK).json({ code: await this.patientService.nextCode() });
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: number, @Res() res: Response) {
     const data = await this.patientService.findOne(Number(id));

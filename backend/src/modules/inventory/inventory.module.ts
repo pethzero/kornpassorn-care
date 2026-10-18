@@ -11,6 +11,6 @@ import { DatabaseModule } from '../../config/database.module';
   ],
   controllers: [InventoryController],
   providers: [InventoryService],
-  exports: [InventoryService], // ให้ FinanceTransactionModule เรียกใช้ตัดสต็อกภายใน transaction เดียวกันได้
+  exports: [InventoryService], // ให้ DocumentModule เรียกใช้ตัดสต็อกภายใน transaction เดียวกันได้
 })
 export class InventoryModule {}

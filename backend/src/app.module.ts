@@ -12,7 +12,11 @@ import { PatientModule } from './modules/medical/patient/patient.module';
 import { QuestionnaireModule } from './modules/medical/questionnaire/questionnaire.module';
 import { HospitalScheduleModule } from './modules/hospital-schedule/hospital-schedule.module';
 import { FinanceModule } from './modules/finance/finance.module';
-import { FinanceTransactionModule } from './modules/finance/transactions/finance-transaction.module';
+import { DocumentModule } from './modules/documents/document.module';
+import { AppointmentModule } from './modules/appointments/appointment.module';
+import { ApiClientModule } from './modules/api-clients/api-client.module';
+import { PublicApiModule } from './modules/public-api/public-api.module';
+import { SettingsModule } from './modules/settings/settings.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { ProtectedModule } from './modules/protected/protected.module';
 import { DummyModule } from './modules/dummy/dummy.module';
@@ -35,7 +39,12 @@ import { ProfileController } from './modules/profile/profile.controller';
     // ให้ frontend กับ backend อยู่ origin เดียวกัน (port เดียว) ใช้ได้กับ Cloudflare Tunnel
     // ที่ชี้ทั้ง domain มาที่ localhost:3000 จุดเดียว
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', '..', 'webui', 'dist', 'webui', 'browser'),
+      // production เสิร์ฟ build ของตัวเอง (dist/webui-prod) — ไม่โดน ng build ตอนพัฒนา (dist/webui) เขียนทับ
+      rootPath: join(
+        __dirname, '..', '..', 'webui', 'dist',
+        process.env.NODE_ENV === 'production' ? 'webui-prod' : 'webui',
+        'browser',
+      ),
       exclude: ['/api/{*splat}'],
     }),
 
@@ -47,7 +56,11 @@ import { ProfileController } from './modules/profile/profile.controller';
     HospitalScheduleModule,
     FinanceModule,
     InventoryModule,
-    FinanceTransactionModule,
+    DocumentModule,
+    AppointmentModule,
+    ApiClientModule, // admin จัดการระบบภายนอก (/api/api-clients)
+    PublicApiModule, // API สำหรับระบบภายนอก (/api/v1/*)
+    SettingsModule, // ข้อมูลคลินิก + รายการบริการ (/api/settings/clinic)
     ProtectedModule,
     DummyModule,
   ],

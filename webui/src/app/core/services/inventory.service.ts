@@ -10,6 +10,7 @@ import {
   InventoryLotQueryParams,
   InventoryListResponse,
   InventoryItemResponse,
+  LotMovementsResult,
 } from '../models/inventory.model';
 
 @Injectable({ providedIn: 'root' })
@@ -47,6 +48,11 @@ export class InventoryService {
     return this.http.patch<InventoryItemResponse<InventoryProduct>>(`${this.apiUrl}/products/${id}`, product);
   }
 
+  // ลบได้เฉพาะสินค้าที่ยังไม่มีล็อต/เอกสาร (backend ตรวจ) — ที่ใช้แล้วให้ปิดใช้งานแทน
+  deleteProduct(id: number): Observable<{ success: boolean; message: string }> {
+    return this.http.delete<{ success: boolean; message: string }>(`${this.apiUrl}/products/${id}`);
+  }
+
   getLots(query: InventoryLotQueryParams = {}): Observable<InventoryListResponse<InventoryProductLot>> {
     return this.http.get<InventoryListResponse<InventoryProductLot>>(`${this.apiUrl}/lots`, {
       params: this.toHttpParams(query),
@@ -55,6 +61,10 @@ export class InventoryService {
 
   createLot(lot: InventoryProductLot): Observable<InventoryItemResponse<InventoryProductLot>> {
     return this.http.post<InventoryItemResponse<InventoryProductLot>>(`${this.apiUrl}/lots`, lot);
+  }
+
+  getLotMovements(id: number): Observable<{ success: boolean; data: LotMovementsResult }> {
+    return this.http.get<{ success: boolean; data: LotMovementsResult }>(`${this.apiUrl}/lots/${id}/movements`);
   }
 
   updateLot(id: number, lot: Partial<InventoryProductLot>): Observable<InventoryItemResponse<InventoryProductLot>> {

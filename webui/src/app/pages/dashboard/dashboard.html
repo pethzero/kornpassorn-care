@@ -1,43 +1,128 @@
-<div class="dashboard-container p-6 bg-gray-50 min-h-screen">
-  <!-- Simple Person Cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <app-simple-person-card title="คนไข้ที่มารักษา" [value]="stats.activePatients" subtitle="ผู้ป่วยที่มารับการรักษาวันนี้"></app-simple-person-card>
-    <app-simple-person-card title="แพทย์เวรวันนี้" [value]="stats.doctorsOnDuty" subtitle="แพทย์ที่ปฏิบัติงานในวันนี้" iconColor="green" status="พร้อมรักษา"></app-simple-person-card>
-    <app-simple-person-card title="พยาบาลเวรวันนี้" [value]="stats.nursesOnDuty" subtitle="พยาบาลที่ปฏิบัติงานในวันนี้" iconColor="pink" status="พร้อมดูแล"></app-simple-person-card>
-    <app-simple-person-card title="คิวรอตรวจ" [value]="stats.waitingQueue" subtitle="ผู้ป่วยที่รอการตรวจรักษา" iconColor="orange" status="รอตรวจ"></app-simple-person-card>
-  </div>
-
-  <!-- Quick actions -->
-  <div class="quick-actions-section mb-8">
-    <h2 class="section-title">ทางลัด</h2>
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
-      <a
-        *ngFor="let action of quickActions; trackBy: trackByQuickAction"
-        [routerLink]="action.route"
-        class="quick-action-card"
-        [ngClass]="action.accent"
-      >
-        <div class="qa-icon">{{ action.icon }}</div>
-        <div class="qa-label">{{ action.label }}</div>
-        <div class="qa-desc">{{ action.desc }}</div>
-      </a>
+<div class="inv-page dashboard">
+  <!-- แถบหัว: ทักทาย + สรุปวันนี้ + สร้างเอกสารที่ใช้บ่อย -->
+  <header class="hero">
+    <div class="hero-text">
+      <span class="hero-date"><i class="pi pi-calendar"></i> {{ todayLabel }}</span>
+      <h2>{{ greeting }} 👋</h2>
+      <p>{{ loading ? 'กำลังโหลดข้อมูลวันนี้...' : todaySummary }}</p>
     </div>
+    <div class="hero-actions">
+      <a class="hero-btn ghost" routerLink="/documents/new" [queryParams]="{ type: 'receive' }"><i class="pi pi-download"></i> รับของเข้า</a>
+      <a class="hero-btn solid" routerLink="/documents/new" [queryParams]="{ type: 'patient_service' }"><i class="pi pi-plus"></i> บริการคนไข้</a>
+    </div>
+    <span class="hero-deco one" aria-hidden="true"></span>
+    <span class="hero-deco two" aria-hidden="true"></span>
+  </header>
+
+  <!-- เมนูหน้าต่างๆ -->
+  <nav class="menu-grid" aria-label="เมนู">
+    @for (s of shortcuts; track s.label) {
+      <a class="menu-tile" [routerLink]="s.route" [queryParams]="s.query">
+        <span class="menu-icon" [ngClass]="'tone-' + s.tone"><i [class]="s.icon"></i></span>
+        <span class="menu-text">
+          <span class="menu-label">{{ s.label }}</span>
+          <span class="menu-desc">{{ s.desc }}</span>
+        </span>
+      </a>
+    }
+  </nav>
+
+  <!-- ตัวเลขหลัก -->
+  <div class="kpi-row" [class.loading]="loading">
+    <a class="kpi" routerLink="/documents" [queryParams]="{ type: 'patient_service' }">
+      <span class="kpi-label"><span class="kpi-icon tone-teal"><i class="pi pi-heart"></i></span> บริการคนไข้วันนี้</span>
+      <span class="kpi-value">{{ visitsToday }} <small>ครั้ง</small></span>
+      <span class="cell-sub">รายรับวันนี้ {{ money(incomeToday) }}</span>
+    </a>
+    <a class="kpi" routerLink="/finance/summary">
+      <span class="kpi-label"><span class="kpi-icon tone-blue"><i class="pi pi-wallet"></i></span> รายรับเดือนนี้</span>
+      <span class="kpi-value">{{ money(month?.income?.total) }}</span>
+      <span class="cell-sub">รายจ่าย {{ money(month?.expense?.total) }} · สุทธิ {{ num(month?.net_income) < 0 ? '−' : '' }}{{ money(num(month?.net_income) < 0 ? -num(month?.net_income) : month?.net_income) }}</span>
+    </a>
+    <a class="kpi" routerLink="/inventory/products" [class.attention]="outOfStock.length || lowStock.length">
+      <span class="kpi-label"><span class="kpi-icon tone-violet"><i class="pi pi-box"></i></span> ของหมด / ใกล้หมด</span>
+      <span class="kpi-value">{{ outOfStock.length + lowStock.length }} <small>สินค้า</small></span>
+      <span class="cell-sub">หมดแล้ว {{ outOfStock.length }} · ต่ำกว่าจุดสั่งซื้อ {{ lowStock.length }}</span>
+    </a>
+    <a class="kpi" routerLink="/inventory/lots" [class.attention]="expiredLots.length || expiringLots.length">
+      <span class="kpi-label"><span class="kpi-icon tone-orange"><i class="pi pi-clock"></i></span> หมดอายุ / ใกล้หมดอายุ</span>
+      <span class="kpi-value">{{ expiredLots.length + expiringLots.length }} <small>ล็อต</small></span>
+      <span class="cell-sub">หมดอายุแล้ว {{ expiredLots.length }} · ภายใน 30 วัน {{ expiringLots.length }}</span>
+    </a>
   </div>
 
-  <!-- Charts Section -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <p-card styleClass="beautiful-chart-card">
-      <ng-template pTemplate="header">
-        <div class="chart-title"><span class="emoji">📊</span> สัดส่วนเพศผู้ป่วย</div>
-      </ng-template>
-      <p-chart type="pie" [data]="patientGenderChart" [options]="patientGenderChartOptions" style="height:300px"></p-chart>
-    </p-card>
+  <div class="dash-grid">
+    <!-- รายรับ 14 วัน -->
+    <section class="panel">
+      <div class="panel-head">
+        <h3 class="panel-title">รายรับ 14 วันล่าสุด</h3>
+        <span class="cell-sub">รวม {{ money(trendTotal) }}</span>
+      </div>
+      <div class="chart-box">
+        @if (chartData) {
+          <p-chart type="bar" [data]="chartData" [options]="chartOptions" height="100%"></p-chart>
+        }
+      </div>
+      <a routerLink="/finance/summary" class="panel-link">ดูสรุปยอดการเงิน →</a>
+    </section>
 
-    <p-card styleClass="beautiful-chart-card">
-      <ng-template pTemplate="header">
-        <div class="chart-title"><span class="emoji">📈</span> ผู้ป่วยรายเดือน</div>
-      </ng-template>
-      <p-chart type="bar" [data]="monthlyPatientsChart" [options]="monthlyPatientsChartOptions" style="height:300px"></p-chart>
-    </p-card>
+    <!-- สิ่งที่ต้องจัดการ -->
+    <section class="panel">
+      <div class="panel-head">
+        <h3 class="panel-title">ต้องจัดการ</h3>
+        @if (alerts.length) { <span class="chip chip-warn">{{ alerts.length }}</span> }
+      </div>
+      <div class="alert-list">
+        @for (a of alerts.slice(0, 6); track a.title + a.detail) {
+          <a class="alert-item" [routerLink]="a.route" [queryParams]="a.query">
+            <span class="alert-icon" [class]="'alert-icon ' + a.kind"><i [class]="alertIcon(a.kind)"></i></span>
+            <span class="alert-body">
+              <span class="cell-title">{{ a.title }}</span>
+              <span class="cell-sub">{{ a.detail }}</span>
+            </span>
+            <i class="pi pi-chevron-right row-chevron"></i>
+          </a>
+        } @empty {
+          <div class="all-good">
+            <i class="pi pi-check-circle"></i>
+            <span>ไม่มีของหมด ใกล้หมด หรือใกล้หมดอายุ</span>
+          </div>
+        }
+        @if (alerts.length > 6) {
+          <a routerLink="/inventory/lots" class="panel-link">ดูอีก {{ alerts.length - 6 }} รายการ →</a>
+        }
+      </div>
+    </section>
   </div>
+
+  <!-- เอกสารล่าสุด -->
+  <section class="panel">
+    <div class="panel-head">
+      <h3 class="panel-title">เอกสารล่าสุด</h3>
+      <a routerLink="/documents" class="panel-link inline">ดูทั้งหมด →</a>
+    </div>
+    <div class="recent-list">
+      @for (d of recentDocs; track d.id) {
+        <a class="recent-item" [routerLink]="['/documents', d.id]" [class.row-muted]="d.status === 'void'">
+          <span class="mono doc-no">{{ d.doc_no }}</span>
+          <span class="chip" [ngClass]="typeChipClass(d.doc_type)">{{ typeInfo(d.doc_type).short }}</span>
+          <span class="recent-party">
+            {{ partyLine(d) }}
+            @if (d.status === 'void') { <span class="chip chip-plain">ยกเลิก</span> }
+          </span>
+          <span class="cell-sub recent-date">{{ shortDate(d.doc_date) }}</span>
+          <span class="num recent-amount" [class.money-in]="typeInfo(d.doc_type).ledger === 'income'">
+            @if (num(d.total_amount) > 0) {
+              {{ typeInfo(d.doc_type).ledger === 'income' ? '+' : '−' }}{{ num(d.total_amount) | number: '1.0-2' }}
+            } @else {
+              <span class="cell-sub">—</span>
+            }
+          </span>
+        </a>
+      } @empty {
+        <p class="cell-sub">ยังไม่มีเอกสาร</p>
+      }
+    </div>
+  </section>
+
 </div>

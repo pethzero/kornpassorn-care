@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -67,6 +68,13 @@ export class InventoryController {
     return { success: true, message: 'อัปเดตสินค้าเรียบร้อยแล้ว', data };
   }
 
+  // DELETE /api/inventory/products/:id — ลบได้เมื่อไม่มีสต็อกเหลือ และไม่อยู่ในเอกสารที่ยังใช้งาน
+  @Delete('products/:id')
+  async removeProduct(@Param('id', ParseIntPipe) id: number) {
+    const data = await this.inventoryService.removeProduct(id);
+    return { success: true, message: `ลบสินค้า "${data.name}" แล้ว`, data };
+  }
+
   // ----- Lots -----
 
   @Post('lots')
@@ -85,6 +93,13 @@ export class InventoryController {
   @Get('lots/:id')
   async findOneLot(@Param('id', ParseIntPipe) id: number) {
     const data = await this.inventoryService.findOneLot(id);
+    return { success: true, data };
+  }
+
+  // GET /api/inventory/lots/:id/movements — ประวัติล็อต (เอกสารที่รับเข้า/ตัดออก/คืน + คงเหลือหลังแต่ละครั้ง)
+  @Get('lots/:id/movements')
+  async getLotMovements(@Param('id', ParseIntPipe) id: number) {
+    const data = await this.inventoryService.getLotMovements(id);
     return { success: true, data };
   }
 

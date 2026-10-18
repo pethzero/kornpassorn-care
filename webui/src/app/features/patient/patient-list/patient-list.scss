@@ -1,173 +1,115 @@
-.patient-list-container {
-  background: #fff;
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.06);
-  border: 1px solid #e5e7eb;
-  max-width: 72rem;
-  margin: 0 auto;
-}
+// โครงหน้า/ตาราง/chip อยู่ใน ui/styles/list-page.scss
 
-.list-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-  flex-wrap: wrap;
-}
+$ink: #1e293b;
+$muted: #8a96a8;
+$accent: #0f766e;
 
-.header-title-group {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.count-badge {
-  background: #f0fbfa;
-  color: #0d9488;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-}
-
-.search-bar {
+.search {
   position: relative;
-  margin-bottom: 1.25rem;
-  max-width: 22rem;
+  flex: 1;
+  min-width: 14rem;
+  max-width: 26rem;
 
-  .search-icon {
+  > i {
     position: absolute;
+    left: 0.8rem;
     top: 50%;
-    left: 0.85rem;
     transform: translateY(-50%);
-    color: #94a3b8;
-    font-size: 0.9rem;
+    color: $muted;
+    font-size: 0.85rem;
   }
 
-  .search-input {
+  input {
     width: 100%;
-    padding-left: 2.4rem;
+    padding-left: 2.2rem;
+    padding-right: 2rem;
+  }
+
+  .clear {
+    position: absolute;
+    right: 0.4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: $muted;
+    cursor: pointer;
+    padding: 0.3rem;
+
+    i {
+      font-size: 0.75rem;
+    }
   }
 }
 
-.patient-cell {
+.seg {
+  display: inline-flex;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  background: #eef2f5;
+  border-radius: 10px;
+
+  button {
+    border: none;
+    background: transparent;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    color: #64748b;
+    cursor: pointer;
+
+    &.active {
+      background: #fff;
+      color: $ink;
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+    }
+  }
+
+  .seg-count {
+    margin-left: 0.2rem;
+    color: $muted;
+    font-weight: 400;
+    font-size: 0.78rem;
+  }
+}
+
+.person {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
 .avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 2.3rem;
+  height: 2.3rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, #5eead4 0%, #0d9488 100%);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-
-.patient-name {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-
-  .name {
-    font-weight: 600;
-    color: #0f172a;
-  }
-
-  .email {
-    font-size: 0.75rem;
-    color: #94a3b8;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-}
-
-.patient-code {
-  font-family: 'Courier New', monospace;
-  color: #475569;
   font-size: 0.85rem;
-}
+  font-weight: 700;
+  color: #475569;
+  background: #eef2f5;
 
-.gender-tag {
-  display: inline-block;
-  padding: 0.2rem 0.65rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-
-  &.gender-male {
-    background: #e0f2fe;
-    color: #0369a1;
-  }
-
-  &.gender-female {
-    background: #fce7f3;
+  &.g-female {
     color: #be185d;
+    background: #fdf2f8;
   }
 
-  &.gender-other {
-    background: #f1f5f9;
-    color: #64748b;
-  }
-}
-
-.action-buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 2rem 0;
-
-  h3 {
-    margin: 0.5rem 0;
+  &.g-male {
+    color: #1d4ed8;
+    background: #eff6ff;
   }
 }
 
-::ng-deep .patient-list-container {
-  .p-datatable-thead > tr > th {
-    background: #f0fbfa;
-    color: #115e59;
-    font-weight: 600;
-    border-color: #e2f3f1;
-  }
+.chip.chip-danger-soft {
+  background: #fdf2f8;
+  color: #be185d;
+}
 
-  .p-datatable-tbody > tr {
-    transition: background 0.15s ease;
-  }
-
-  .p-datatable-tbody > tr:hover {
-    background: #f0fbfa !important;
-  }
-
-  .p-datatable-tbody > tr.p-row-odd {
-    background: #fafcfc;
-  }
-
-  .p-paginator {
-    border-radius: 0 0 1rem 1rem;
-    background: transparent;
-  }
-
-  .p-button:not(.p-button-outlined) {
-    background: #0d9488;
-    border-color: #0d9488;
-
-    &:hover {
-      background: #115e59;
-      border-color: #115e59;
-    }
-  }
+tr.clickable {
+  cursor: pointer;
 }

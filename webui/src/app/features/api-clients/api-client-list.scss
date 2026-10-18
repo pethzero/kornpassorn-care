@@ -1,0 +1,207 @@
+// โครงหน้า/chip/ปุ่มไอคอน อยู่ใน ui/styles/list-page.scss
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.plain-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  color: #475569;
+  text-decoration: none;
+
+  &:hover {
+    color: #0f766e;
+  }
+}
+
+.intro {
+  margin: -0.25rem 0 1.25rem;
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.6;
+
+  code {
+    font-size: 0.8rem;
+    background: #f1f5f9;
+    padding: 0.05rem 0.35rem;
+    border-radius: 6px;
+  }
+}
+
+.client-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+
+  &.loading {
+    opacity: 0.5;
+  }
+}
+
+.client {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid #edf1f5;
+  border-radius: 14px;
+
+  &.row-muted {
+    opacity: 0.6;
+  }
+}
+
+.client-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.client-title,
+.client-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.id-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #1e293b;
+  cursor: pointer;
+
+  i {
+    font-size: 0.75rem;
+    color: #8a96a8;
+  }
+
+  &:hover i {
+    color: #0f766e;
+  }
+}
+
+.scope-list {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.scope {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: #f0f7ff;
+  color: #1d4ed8;
+  font-size: 0.75rem;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+
+  i {
+    font-size: 0.65rem;
+  }
+}
+
+.form,
+.reveal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 0;
+
+  > span {
+    font-size: 0.8rem;
+    color: #64748b;
+
+    em {
+      color: #dc2626;
+      font-style: normal;
+    }
+  }
+
+  input[pInputText] {
+    width: 100%;
+  }
+}
+
+.field-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.date-input {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #dfe5ec;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.scope-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #edf1f5;
+  border-radius: 10px;
+  cursor: pointer;
+
+  &.on {
+    border-color: #5fb8ad;
+    background: #effaf8;
+  }
+
+  input {
+    margin-top: 0.2rem;
+  }
+
+  .mono {
+    font-size: 0.85rem;
+    color: #1e293b;
+  }
+
+  .block {
+    display: block;
+  }
+}
+
+.reveal-warn {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.copy-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+
+  input {
+    flex: 1;
+    font-size: 0.82rem;
+  }
+}

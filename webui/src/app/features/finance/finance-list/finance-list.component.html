@@ -1,235 +1,138 @@
-<div class="finance-list-container p-6 bg-gray-50 min-h-screen">
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <p-card
-      class="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden text-gray-800">
-      <ng-template pTemplate="header">
-        <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 font-semibold text-xl">
-          รายการเงิน
-        </div>
-      </ng-template>
-
-      <div class="p-4 space-y-4">
-        <p class="text-lg font-bold text-gray-700">รายการทั้งหมด: {{ totalRecords | number }}</p>
-        <div class="rounded-xl bg-gray-50 p-3 shadow-inner">
-          <h3 class="font-semibold text-gray-800 text-lg mb-2">สรุปการเงินวันนี้</h3>
-          <div class="space-y-3">
-            <div class="flex justify-between">
-              <span class="text-green-600 font-semibold">รายรับ:</span>
-              <span class="text-green-700 font-bold">+{{ getTodaySummary().income | number }} ฿</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-red-600 font-semibold">รายจ่าย:</span>
-              <span class="text-red-700 font-bold">-{{ getTodaySummary().expense | number }} ฿</span>
-            </div>
-            <hr />
-            <div class="flex justify-between">
-              <span class="font-semibold text-gray-700">ยอดสุทธิ:</span>
-              <span [ngClass]="{
-              'text-green-600': getTodaySummary().net >= 0,
-              'text-red-600': getTodaySummary().net < 0
-            }" class="font-bold">
-                {{ getTodaySummary().net | number }} ฿
-              </span>
-            </div>
-          </div>
-        </div>
-
-
-        <div class="rounded-xl bg-gray-50 p-3 shadow-inner">
-          <h3 class="font-semibold text-gray-800 text-lg mb-2">สรุปการเงินเดือนที่แล้ว</h3>
-          <div class="space-y-3">
-            <div class="flex justify-between">
-              <span class="text-green-600 font-semibold">รายรับ:</span>
-              <span class="text-green-700 font-bold">+{{ getLastMonthSummary().income | number }} ฿</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-red-600 font-semibold">รายจ่าย:</span>
-              <span class="text-red-700 font-bold">-{{ getLastMonthSummary().expense | number }} ฿</span>
-            </div>
-            <hr />
-            <div class="flex justify-between">
-              <span class="font-semibold text-gray-700">ยอดสุทธิ:</span>
-              <span [ngClass]="{
-              'text-green-600': getLastMonthSummary().net >= 0,
-              'text-red-600': getLastMonthSummary().net < 0
-            }" class="font-bold">
-                {{ getLastMonthSummary().net | number }} ฿
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </p-card>
-
-
-
-
-
-
-  </div>
-
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">
-      💰 รายการการเงิน
-    </h1>
-    <div class="flex gap-3">
-      <p-button label="เพิ่มรายการ" icon="pi pi-plus" (onClick)="navigateToAdd()">
-      </p-button>
-
-      <p-button label="สรุปยอด" icon="pi pi-chart-bar" (onClick)="navigateToSummary()">
-      </p-button>
+<div class="inv-page">
+  <div class="list-header">
+    <div class="header-title-group">
+      <h2>บัญชีการเงิน</h2>
+      <span class="count-badge">{{ periodLabel() }}</span>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/finance/summary" class="plain-link"><i class="pi pi-chart-bar"></i> สรุปยอด</a>
+      <p-button label="บันทึกรายรับ/รายจ่ายอื่น" icon="pi pi-plus" (onClick)="openCreate()"
+        pTooltip="ค่าไฟ ค่าเช่า เงินเดือน ฯลฯ — ซื้อยาหรือรับค่าบริการให้ทำเป็นเอกสาร" tooltipPosition="bottom"></p-button>
     </div>
   </div>
 
-
-  <p-card header="🔍 ตัวกรองข้อมูล" class="shadow-lg border-0 mb-6">
-    <div class="filter-grid">
-      <!-- Search -->
-      <div class="field">
-        <label for="search" class="block text-sm font-medium text-gray-700 mb-1">ค้นหา</label>
-        <div class="p-inputgroup" style="height:2.5rem">
-          <input id="search" type="text" pInputText [(ngModel)]="searchTerm" placeholder="ชื่อรายการ หรือ คำอธิบาย..."
-            (keyup.enter)="onSearch()" class="w-full h-full" />
-          <p-button icon="pi pi-search" (onClick)="onSearch()" styleClass="h-full"></p-button>
-        </div>
-      </div>
-
-      <!-- Category -->
-      <div class="field">
-        <label for="category" class="block text-sm font-medium text-gray-700 mb-1">ประเภท</label>
-        <select id="category" [(ngModel)]="selectedCategory" (change)="onFilterChange()"
-          class="form-select w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-          <option value="">ทุกประเภท</option>
-          <option value="income">💰 รายรับ</option>
-          <option value="expense">💸 รายจ่าย</option>
-        </select>
-      </div>
-
-
-
-      <div class="field">
-        <label for="startDate" class="block text-sm font-medium text-gray-700 mb-1">วันที่เริ่มต้น</label>
-        <p-datepicker [(ngModel)]="startDate" (onSelect)="onDateRangeChange()" dateFormat="dd/mm/yy" showIcon="true"
-          placeholder="เลือกวันที่เริ่มต้น" [showButtonBar]="true"
-          inputStyleClass="form-select w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></p-datepicker>
-      </div>
-
-      <div class="field">
-        <label for="endDate" class="block text-sm font-medium text-gray-700 mb-1">
-          วันที่สิ้นสุด
-        </label>
-        <p-datepicker [(ngModel)]="endDate" (onSelect)="onDateRangeChange()" dateFormat="dd/mm/yy" showIcon="true"
-          placeholder="เลือกวันที่สิ้นสุด" [showButtonBar]="true"
-          inputStyleClass="form-select w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></p-datepicker>
-      </div>
-
-
-      <div class="field filter-actions flex items-end">
-        <p-button label="ล้างตัวกรอง" icon="pi pi-filter-slash" (onClick)="clearFilters()" severity="secondary"
-          [outlined]="true">
-        </p-button>
-      </div>
+  <!-- ช่วงเวลา -->
+  <div class="period-bar">
+    <div class="segmented" role="tablist">
+      @for (p of periods; track p.value) {
+        <button type="button" [class.active]="period === p.value" (click)="applyPeriod(p.value)">{{ p.label }}</button>
+      }
     </div>
-  </p-card>
+    @if (period === 'custom') {
+      <div class="custom-range">
+        <input type="date" class="date-input" [(ngModel)]="startDate" (change)="onCustomDateChange()" />
+        <span class="cell-sub">ถึง</span>
+        <input type="date" class="date-input" [(ngModel)]="endDate" (change)="onCustomDateChange()" />
+      </div>
+    }
+  </div>
 
-  <p-card header="รายการการเงินล่าสุด" class="shadow-lg border-0">
-    <div class="overflow-x-auto rounded-xl">
-    <p-table [value]="financeRecords" [loading]="loading" [paginator]="true" [rows]="pageSize"
-      [totalRecords]="totalRecords" [showCurrentPageReport]="true"
-      currentPageReportTemplate="แสดง {first} ถึง {last} จาก {totalRecords} รายการ"
-      [rowsPerPageOptions]="[5, 10, 25, 50]" class="p-datatable-sm" [tableStyle]="{ 'min-width': '50rem' }">
+  <!-- ยอดรวมช่วงที่เลือก -->
+  <div class="kpi-row">
+    <div class="kpi">
+      <span class="kpi-label">รายรับ</span>
+      <span class="kpi-value income">{{ formatMoney(summary?.income?.total) }}</span>
+      <span class="cell-sub">จากเอกสาร {{ formatMoney(sourceTotal('income', 'document')) }} · บันทึกเอง {{ formatMoney(sourceTotal('income', 'manual')) }}</span>
+    </div>
+    <div class="kpi">
+      <span class="kpi-label">รายจ่าย</span>
+      <span class="kpi-value">{{ formatMoney(summary?.expense?.total) }}</span>
+      <span class="cell-sub">ซื้อของเข้า {{ formatMoney(sourceTotal('expense', 'document')) }} · อื่นๆ {{ formatMoney(sourceTotal('expense', 'manual')) }}</span>
+    </div>
+    <div class="kpi">
+      <span class="kpi-label">คงเหลือสุทธิ</span>
+      <span class="kpi-value" [class.negative]="num(summary?.net_income) < 0">
+        {{ num(summary?.net_income) < 0 ? '−' : '' }}{{ formatMoney(num(summary?.net_income) < 0 ? -num(summary?.net_income) : summary?.net_income) }}
+      </span>
+      <span class="cell-sub">{{ (summary?.income?.count ?? 0) + (summary?.expense?.count ?? 0) }} รายการ</span>
+    </div>
+  </div>
 
-      <ng-template pTemplate="loading">
-        <div class="loading-container">
-          <p-progressSpinner></p-progressSpinner>
-          <p>กำลังโหลดข้อมูล...</p>
-        </div>
-      </ng-template>
+  <!-- ตัวกรอง -->
+  <div class="filter-bar">
+    <div class="segmented small">
+      <button type="button" [class.active]="category === ''" (click)="setCategory('')">ทั้งหมด</button>
+      <button type="button" [class.active]="category === 'income'" (click)="setCategory('income')">รายรับ</button>
+      <button type="button" [class.active]="category === 'expense'" (click)="setCategory('expense')">รายจ่าย</button>
+    </div>
+    <div class="search-box">
+      <i class="pi pi-search"></i>
+      <input pInputText [(ngModel)]="searchTerm" (keyup.enter)="reload()" placeholder="ชื่อรายการ รายละเอียด เลขที่เอกสาร..." />
+    </div>
+    <p-select [options]="sourceOptions" [(ngModel)]="source" optionLabel="label" optionValue="value"
+      (onChange)="reload()" styleClass="source-select"></p-select>
+  </div>
+
+  <div class="overflow-x-auto">
+    <p-table [value]="records" [lazy]="true" (onLazyLoad)="onLazyLoad($event)" [loading]="loading"
+      [paginator]="true" [rows]="rows" [first]="first" [totalRecords]="totalRecords" [rowsPerPageOptions]="[15, 30, 50]"
+      [paginatorDropdownAppendTo]="'body'" [rowHover]="true" dataKey="id"
+      currentPageReportTemplate="{first}–{last} จาก {totalRecords} รายการ" [showCurrentPageReport]="true">
 
       <ng-template pTemplate="header">
         <tr>
-          <th style="width: 80px;">รูปภาพ</th>
-          <th pSortableColumn="item_name">
-            รายการ <p-sortIcon field="item_name"></p-sortIcon>
-          </th>
-          <th pSortableColumn="amount" class="text-right">
-            จำนวนเงิน <p-sortIcon field="amount"></p-sortIcon>
-          </th>
-          <th class="text-center" style="width: 120px;">ดูข้อมูล</th>
+          <th style="width: 110px;">วันที่</th>
+          <th>รายการ</th>
+          <th style="width: 150px;">ที่มา</th>
+          <th class="text-right" style="width: 150px;">จำนวนเงิน</th>
+          <th style="width: 88px;"></th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-record>
-        <tr class="hover:bg-gray-50">
+        <tr>
+          <td class="cell-sub">{{ formatDate(record.record_date) }}</td>
           <td>
-            <div class="flex items-center justify-center w-12 h-12 rounded-lg"
-              [class.bg-green-100]="record.category === 'income'" [class.bg-red-100]="record.category === 'expense'">
-              <i [class]="record.category === 'income' ? 'pi pi-arrow-up text-green-600' : 'pi pi-arrow-down text-red-600'"
-                class="text-xl"></i>
+            <div class="cell-stack">
+              <span class="cell-title cell-ellipsis wide">{{ record.item_name }}</span>
+              @if (record.description) {
+                <span class="cell-sub cell-ellipsis wide" [pTooltip]="record.description" tooltipPosition="top">{{ record.description }}</span>
+              }
             </div>
           </td>
-
           <td>
-            <div class="flex flex-col">
-              <span class="font-medium text-gray-900">{{ record.item_name }}</span>
-              <div class="flex items-center gap-2 mt-1">
-                <span class="text-sm text-gray-500">{{ formatDate(record.record_date) }}</span>
-                <p-tag [value]="getCategoryLabel(record.category)" [severity]="getCategorySeverity(record.category)"
-                  class="text-xs">
-                </p-tag>
-              </div>
-              <span class="text-sm text-gray-400 mt-1" *ngIf="record.description">
-                {{ truncateText(record.description, 50) }}
-              </span>
-            </div>
+            @if (record.document) {
+              <a class="doc-ref" [routerLink]="['/documents', record.document.id]" pTooltip="เปิดเอกสาร" tooltipPosition="top">
+                <span>{{ sourceLabel(record) }}</span>
+                <span class="mono">{{ record.document.doc_no }}</span>
+              </a>
+            } @else {
+              <span class="chip chip-plain">บันทึกเอง</span>
+            }
           </td>
-
           <td class="text-right">
-            <span class="font-semibold text-lg" [class.text-green-600]="record.category === 'income'"
-              [class.text-red-600]="record.category === 'expense'">
-              {{ record.category === 'income' ? '+' : '-' }}{{ formatCurrency(record.amount) }}
+            <span class="num" [class.money-in]="record.category === 'income'">
+              {{ record.category === 'income' ? '+' : '−' }}{{ num(record.amount) | number: '1.2-2' }}
             </span>
           </td>
-
-          <td class="text-center">
-            <div class="flex justify-center gap-2">
-              <button pButton icon="pi pi-eye" size="small" severity="info" outlined (click)="viewRecord(record)"
-                pTooltip="ดูรายละเอียด" tooltipPosition="top" rounded>
-              </button>
-              <button pButton icon="pi pi-pencil" size="small" severity="warn" outlined (click)="editRecord(record)"
-                pTooltip="แก้ไข" tooltipPosition="top" rounded>
-              </button>
-              <button pButton icon="pi pi-trash" size="small" severity="danger" outlined
-                (click)="confirmDelete($event, record)" pTooltip="ลบ" tooltipPosition="top" rounded>
-              </button>
-              <!-- <button pButton icon="pi pi-trash" size="small" severity="danger" outlined (click)="confirmDelete(record)"
-                pTooltip="ลบ" tooltipPosition="top" rounded>
-              </button> -->
+          <td>
+            <div class="row-actions">
+              @if (record.document_id) {
+                <button type="button" class="icon-btn" disabled
+                  pTooltip="ลงจากเอกสาร — แก้/ลบที่นี่ไม่ได้ ให้ยกเลิกที่เอกสาร" tooltipPosition="left"><i class="pi pi-lock"></i></button>
+              } @else {
+                <button type="button" class="icon-btn" (click)="openEdit(record)" pTooltip="แก้ไข" tooltipPosition="top"><i class="pi pi-pencil"></i></button>
+                <button type="button" class="icon-btn danger" (click)="confirmDelete(record)" pTooltip="ลบ" tooltipPosition="top"><i class="pi pi-trash"></i></button>
+              }
             </div>
           </td>
-
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="4" class="text-center py-8">
+          <td colspan="5">
             <div class="empty-state">
-              <i class="pi pi-inbox text-6xl text-gray-300 mb-4"></i>
-              <h3 class="text-lg font-medium text-gray-600 mb-2">ไม่พบข้อมูล</h3>
-              <p class="text-gray-500 mb-4">ยังไม่มีรายการการเงิน กรุณาเพิ่มรายการใหม่</p>
-              <p-button label="เพิ่มรายการแรก" icon="pi pi-plus" (onClick)="navigateToAdd()" severity="success">
-              </p-button>
+              <i class="pi pi-wallet"></i>
+              <h3>ไม่มีรายการในช่วงนี้</h3>
             </div>
           </td>
         </tr>
       </ng-template>
     </p-table>
-    </div>
-  </p-card>
+  </div>
 
-
+  <app-finance-record-dialog [(visible)]="showDialog" [record]="editing" (saved)="onSaved($event)"></app-finance-record-dialog>
+  <p-confirmdialog [style]="{ width: '420px' }"></p-confirmdialog>
   <p-toast></p-toast>
-
-  <p-confirmDialog></p-confirmDialog>
 </div>

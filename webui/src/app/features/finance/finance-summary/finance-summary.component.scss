@@ -1,0 +1,269 @@
+// โครงหน้า/chip อยู่ใน ui/styles/list-page.scss — ไฟล์นี้เฉพาะหน้าสรุปยอด
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #8a96a8;
+  text-decoration: none;
+  margin-bottom: 0.75rem;
+
+  &:hover {
+    color: #0f766e;
+  }
+
+  i {
+    font-size: 0.75rem;
+  }
+}
+
+.segmented {
+  display: inline-flex;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  background: #f1f5f9;
+  border-radius: 10px;
+
+  button {
+    border: none;
+    background: transparent;
+    padding: 0.4rem 0.85rem;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    color: #64748b;
+    cursor: pointer;
+
+    &.active {
+      background: #fff;
+      color: #1e293b;
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+    }
+  }
+}
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid #edf1f5;
+  border-radius: 14px;
+}
+
+.kpi-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: #8a96a8;
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.kpi-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel {
+  padding: 1.1rem 1.25rem;
+  border: 1px solid #edf1f5;
+  border-radius: 14px;
+  margin-bottom: 1rem;
+}
+
+.panel-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.chart-box {
+  position: relative;
+  height: 18rem;
+  transition: opacity 0.2s;
+
+  &.loading {
+    opacity: 0.4;
+  }
+
+  ::ng-deep p-chart,
+  ::ng-deep p-chart > div {
+    height: 100%;
+  }
+}
+
+.table-view {
+  margin-top: 0.75rem;
+
+  summary {
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: #64748b;
+
+    &:hover {
+      color: #0f766e;
+    }
+  }
+}
+
+.month-table {
+  width: 100%;
+  margin-top: 0.5rem;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+
+  th {
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.75rem;
+    color: #8a96a8;
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid #edf1f5;
+  }
+
+  td {
+    padding: 0.5rem 0.6rem;
+    border-bottom: 1px solid #f3f5f8;
+  }
+
+  .num {
+    font-weight: 500;
+  }
+}
+
+.breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 1rem;
+
+  .panel {
+    margin-bottom: 0;
+  }
+}
+
+.breakdown-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.55rem 0;
+
+  & + & {
+    border-top: 1px solid #f3f5f8;
+  }
+}
+
+.breakdown-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.share-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: #eef2f6;
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+  }
+}
+
+// ----- ช่วงเวลาแบบเลือกเอง + เทียบช่วงก่อน -----
+.range-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+
+  .segmented {
+    flex-wrap: wrap;
+  }
+}
+
+.custom-range {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.month-input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #dfe5ec;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: #475569;
+  background: #fff;
+}
+
+.range-error {
+  font-size: 0.8rem;
+  color: #b91c1c;
+}
+
+.kpi-value small {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #8a96a8;
+}
+
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: #64748b;
+
+  i {
+    font-size: 0.7rem;
+  }
+}
+
+.compare-note {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: -0.4rem 0 1rem;
+  font-size: 0.78rem;
+  color: #8a96a8;
+
+  i {
+    font-size: 0.75rem;
+  }
+}
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+
+  .panel-title {
+    margin: 0;
+  }
+}

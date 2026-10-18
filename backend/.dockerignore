@@ -1,0 +1,10 @@
+# ห้ามมี secret ใน image — ค่าจริงส่งเข้ามาตอนรันเท่านั้น
+.env
+.env.*
+node_modules
+dist
+dist-prod
+test
+scripts
+coverage
+*.log

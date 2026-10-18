@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   FinanceRecord,
   FinanceSummary,
   FinanceQueryParams,
-  PaginatedResponse
+  MonthlyFinance,
+  PaginatedResponse,
+  TrendPoint
 } from '../models/finance.model';
 
 @Injectable({
@@ -33,16 +35,8 @@ export class FinanceService {
         params = params.set(key, value.toString());
       }
     });
-
-    // ✅ ดึง token จาก localStorage
-    const token = localStorage.getItem('token') || '';
-    const headers = new HttpHeaders({
-      Authorization: `Bearer ${token}`
-    });
-    console.log('TOKEN',token);
-
-
-    return this.http.get<PaginatedResponse<FinanceRecord>>(this.apiUrl, { params, headers });
+    // token แนบให้โดย auth interceptor อยู่แล้ว (เดิมแนบเองซ้ำ + console.log token ออกมา — เอาออกเพราะทำให้ token รั่วใน console)
+    return this.http.get<PaginatedResponse<FinanceRecord>>(this.apiUrl, { params });
   }
 
 
@@ -60,6 +54,16 @@ export class FinanceService {
 
   deleteFinanceRecord(id: number): Observable<{ success: boolean; message: string }> {
     return this.http.delete<{ success: boolean; message: string }>(`${this.apiUrl}/${id}`);
+  }
+
+  getTrend(startDate: string, endDate: string, granularity: 'day' | 'month'): Observable<{ success: boolean; data: TrendPoint[] }> {
+    const params = new HttpParams().set('start_date', startDate).set('end_date', endDate).set('granularity', granularity);
+    return this.http.get<{ success: boolean; data: TrendPoint[] }>(`${this.apiUrl}/reports/trend`, { params });
+  }
+
+  getMonthlyReport(months = 6): Observable<{ success: boolean; data: MonthlyFinance[] }> {
+    const params = new HttpParams().set('months', String(months));
+    return this.http.get<{ success: boolean; data: MonthlyFinance[] }>(`${this.apiUrl}/reports/monthly`, { params });
   }
 
   getDailyReport(startDate?: string, endDate?: string): Observable<any> {

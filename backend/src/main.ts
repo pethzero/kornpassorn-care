@@ -1,3 +1,5 @@
+// ต้องเป็นบรรทัดแรก: โหลด .env.<NODE_ENV> ก่อน config อื่นถูก import (ดู config/load-env.ts)
+import './config/load-env';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { json } from 'express';
@@ -38,15 +40,19 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new LoggingInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter());
-  // Swagger setup
-  const config = new DocumentBuilder()
-    .setTitle('Kornpassorn Care API')
-    .setDescription('API documentation')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/openapi', app, document);
-  await app.listen(process.env.PORT || 3000);
+  // Swagger (/api/openapi) — ปิดได้ด้วย SWAGGER_ENABLED=false (production ปิดไว้ ไม่ให้คนนอกเห็นรายการ API ทั้งหมด)
+  if (process.env.SWAGGER_ENABLED !== 'false') {
+    const config = new DocumentBuilder()
+      .setTitle('Kornpassorn Care API')
+      .setDescription('API documentation')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/openapi', app, document);
+  }
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+  console.log(`[${process.env.NODE_ENV || 'dev'}] listening on :${port} · database "${process.env.DB_NAME || 'kornpassorn_db_dev'}"`);
 }
 bootstrap();

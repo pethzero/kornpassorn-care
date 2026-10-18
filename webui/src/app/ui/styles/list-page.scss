@@ -1,0 +1,339 @@
+// สไตล์ร่วมของหน้ารายการ (คลังสินค้า / เอกสาร) — โทนเรียบ สบายตา ใช้สีเน้น (teal) สีเดียว
+// สถานะใช้ chip พื้นอ่อน แทน tag สีเข้ม; ใช้สีแดงเฉพาะเรื่องที่ต้องจัดการจริง (หมด/หมดอายุ)
+
+$ink: #1e293b;
+$ink-soft: #475569;
+$muted: #8a96a8;
+$line: #edf1f5;
+$surface: #ffffff;
+$surface-soft: #f8fafb;
+$accent: #0f766e;
+$accent-soft: #effaf8;
+
+.inv-page {
+  background: $surface;
+  border-radius: 18px;
+  padding: 1.75rem 2rem 1.5rem;
+  border: 1px solid $line;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  max-width: 80rem;
+  margin: 0 auto;
+  position: relative;
+  color: $ink;
+
+  @media (max-width: 640px) {
+    padding: 1.25rem 1rem;
+  }
+}
+
+// ----- หัวหน้า + ตัวกรอง -----
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.header-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: $ink;
+  }
+}
+
+.count-badge {
+  color: $muted;
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: $surface-soft;
+  border-radius: 12px;
+  flex-wrap: wrap;
+}
+
+// ----- เนื้อหาในเซลล์ -----
+.cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.cell-title {
+  font-weight: 500;
+  color: $ink;
+  line-height: 1.35;
+}
+
+.cell-sub {
+  font-size: 0.78rem;
+  color: $muted;
+  line-height: 1.35;
+}
+
+.cell-ellipsis {
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mono {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: $ink;
+}
+
+.unit {
+  color: $muted;
+  font-size: 0.82rem;
+  margin-left: 0.15rem;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-danger {
+  color: #c2410c;
+}
+
+.text-warn {
+  color: #b45309;
+}
+
+// ----- chip สถานะ (พื้นอ่อน ตัวอักษรเข้มพอให้อ่านง่าย) -----
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+  background: #f1f5f9;
+  color: $ink-soft;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.7;
+  }
+
+  &.chip-plain::before {
+    display: none;
+  }
+
+  &.chip-accent {
+    background: $accent-soft;
+    color: $accent;
+  }
+
+  &.chip-warn {
+    background: #fff7ed;
+    color: #b45309;
+  }
+
+  &.chip-danger {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+
+  &.chip-info {
+    background: #f0f7ff;
+    color: #1d4ed8;
+  }
+}
+
+// ----- ปุ่มไอคอนในตาราง (ghost เทาๆ ไม่แย่งสายตา) -----
+.row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.15rem;
+}
+
+.icon-btn {
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  color: $muted;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: $accent-soft;
+    color: $accent;
+  }
+
+  &:disabled {
+    cursor: default;
+    background: transparent;
+    color: #cbd5e1;
+  }
+
+  i {
+    font-size: 0.9rem;
+  }
+}
+
+.icon-btn.danger:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    color: $accent;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+// ----- แถบคงเหลือ (เหลือ/รับเข้า) -----
+.stock-bar {
+  width: 100%;
+  max-width: 7rem;
+  height: 4px;
+  border-radius: 999px;
+  background: #eef2f6;
+  overflow: hidden;
+  margin-left: auto;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #5fb8ad;
+  }
+
+  &.low span {
+    background: #f0a35b;
+  }
+
+  &.empty span {
+    background: transparent;
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2.5rem 0;
+  color: $muted;
+
+  i {
+    font-size: 2.5rem;
+    color: #d5dce5;
+  }
+
+  h3 {
+    margin: 0.75rem 0 1rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: $ink-soft;
+  }
+}
+
+// ----- PrimeNG table: ไม่มีลายทาง เส้นบางๆ หัวตารางตัวเล็กสีเทา -----
+:host ::ng-deep .inv-page {
+  .p-datatable-thead > tr > th {
+    background: transparent;
+    color: $muted;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    padding: 0.6rem 0.85rem;
+    border-width: 0 0 1px;
+    border-color: $line;
+    white-space: nowrap;
+  }
+
+  .p-datatable-tbody > tr {
+    background: $surface;
+
+    > td {
+      padding: 0.8rem 0.85rem;
+      border-width: 0 0 1px;
+      border-color: $line;
+      vertical-align: middle;
+      font-size: 0.875rem;
+    }
+
+    &:hover {
+      background: #fafcfc !important;
+    }
+
+    &.row-muted > td {
+      opacity: 0.55;
+    }
+
+    &.row-alert {
+      background: #fffbfa;
+    }
+  }
+
+  .p-paginator {
+    border: none;
+    padding-top: 0.75rem;
+    font-size: 0.82rem;
+    color: $muted;
+  }
+
+  .p-button:not(.p-button-outlined):not(.p-button-text) {
+    background: $accent;
+    border-color: $accent;
+
+    &:hover {
+      background: #115e59;
+      border-color: #115e59;
+    }
+  }
+
+  .p-button.p-button-secondary.p-button-outlined {
+    color: $ink-soft;
+    border-color: #dfe5ec;
+
+    &:hover {
+      background: $surface-soft;
+    }
+  }
+}

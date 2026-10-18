@@ -1,0 +1,267 @@
+<div class="inv-page doc-form">
+  <a routerLink="/documents" class="back-link"><i class="pi pi-arrow-left"></i> เอกสารทั้งหมด</a>
+
+  <div class="list-header">
+    <div class="header-title-group">
+      <h2>สร้างเอกสาร</h2>
+    </div>
+  </div>
+
+  <!-- 1) เลือกประเภท -->
+  <div class="type-picker" role="radiogroup">
+    @for (t of types; track t.value) {
+      <button type="button" class="type-option" [class.active]="docType === t.value" (click)="selectType(t.value)"
+        role="radio" [attr.aria-checked]="docType === t.value">
+        <i [class]="t.icon"></i>
+        <span>{{ t.label }}</span>
+      </button>
+    }
+  </div>
+  <p class="type-hint"><i class="pi pi-info-circle"></i> {{ typeInfo(docType).hint }}</p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <!-- 2) หัวเอกสาร -->
+    <section class="form-section">
+      <div class="field-grid">
+        <label class="field">
+          <span>วันที่เอกสาร <em>*</em></span>
+          <input type="date" formControlName="doc_date" class="text-input" />
+        </label>
+
+        @switch (docType) {
+          @case ('receive') {
+            <label class="field wide">
+              <span>ผู้ขาย / ร้านที่ซื้อ</span>
+              <input pInputText formControlName="supplier" placeholder="เช่น บริษัท ... จำกัด" class="text-input" />
+            </label>
+          }
+          @case ('patient_service') {
+            <div class="field wide">
+              <span>คนไข้ <em>*</em></span>
+              <p-select formControlName="patient_id" [options]="patientOptions" optionLabel="label" optionValue="value"
+                [filter]="true" filterBy="label" placeholder="ค้นหาชื่อ / รหัสคนไข้" appendTo="body" styleClass="w-full"></p-select>
+            </div>
+          }
+          @case ('issue') {
+            <label class="field wide">
+              <span>เบิกไปใช้ทำอะไร <em>*</em></span>
+              <input pInputText formControlName="reason" list="issue-reasons" placeholder="เลือกหรือพิมพ์เอง" class="text-input" />
+              <datalist id="issue-reasons">
+                @for (r of issueReasons; track r) { <option [value]="r"></option> }
+              </datalist>
+            </label>
+          }
+          @case ('adjust') {
+            <label class="field wide">
+              <span>เหตุผลที่ปรับยอด <em>*</em></span>
+              <input pInputText formControlName="reason" list="adjust-reasons" placeholder="เลือกหรือพิมพ์เอง" class="text-input" />
+              <datalist id="adjust-reasons">
+                @for (r of adjustReasons; track r) { <option [value]="r"></option> }
+              </datalist>
+            </label>
+          }
+        }
+
+        <label class="field full">
+          <span>หมายเหตุ</span>
+          <input pInputText formControlName="note" placeholder="ไม่บังคับ" class="text-input" />
+        </label>
+      </div>
+    </section>
+
+    <!-- 3) รายการ -->
+    <section class="form-section">
+      <div class="section-head">
+        <h3 class="section-title">รายการ @if (items.length) { <span class="count">{{ items.length }}</span> }</h3>
+        <div class="add-line">
+          @if (docType === 'patient_service') {
+            <button type="button" class="add-btn" (click)="addLine('service')"><i class="pi pi-plus"></i> ค่าบริการ</button>
+            <button type="button" class="add-btn" (click)="addLine('product')"><i class="pi pi-plus"></i> ยา/เวชภัณฑ์ที่ใช้</button>
+          } @else {
+            <button type="button" class="add-btn" (click)="addLine('product')"><i class="pi pi-plus"></i> เพิ่มรายการ</button>
+            @if (docType === 'receive') {
+              <button type="button" class="add-btn accent" (click)="openNewProduct()"><i class="pi pi-sparkles"></i> สินค้าใหม่ (ยังไม่มีในคลัง)</button>
+            }
+          }
+        </div>
+      </div>
+
+      <div class="line-table-wrap">
+        <!-- รับของเข้า: ความกว้างคอลัมน์คงที่ จอแคบให้เลื่อนแนวนอนแทนการบีบช่อง -->
+        <table class="line-table" [class.receive-table]="docType === 'receive'" formArrayName="items">
+          @if (docType === 'receive') {
+            <colgroup>
+              <col style="width: 2.5rem;" />
+              <col style="width: 17rem;" />
+              <col style="width: 16rem;" />
+              <col style="width: 9.5rem;" />
+              <col style="width: 9rem;" />
+              <col style="width: 11.5rem;" />
+              <col style="width: 7.5rem;" />
+              <col style="width: 7rem;" />
+              <col style="width: 3rem;" />
+            </colgroup>
+          }
+          <thead>
+            <tr>
+              <th style="width: 2rem;">#</th>
+              @if (docType === 'patient_service') { <th style="width: 8.5rem;">ชนิด</th> }
+              <th style="min-width: 13rem;">{{ docType === 'patient_service' ? 'รายการ' : 'สินค้า' }}</th>
+              @switch (docType) {
+                @case ('receive') {
+                  <th>ยี่ห้อ / บรรจุ</th>
+                  <th>เลขล็อต *</th>
+                  <th>วันหมดอายุ</th>
+                }
+                @case ('adjust') {
+                  <th style="width: 7.5rem;">เพิ่ม/ลด</th>
+                  <th style="min-width: 13rem;">ล็อต</th>
+                }
+                @default {
+                  <th style="min-width: 13rem;">{{ docType === 'patient_service' ? 'ล็อต / คำอธิบาย' : 'ล็อต' }}</th>
+                }
+              }
+              <th style="width: 1%;" class="text-right">จำนวน</th>
+              @if (hasMoney()) {
+                <th style="width: 6.5rem;" class="text-right">ราคา/หน่วย</th>
+                <th style="width: 6rem;" class="text-right">รวม</th>
+              }
+              <th style="width: 2.5rem;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of items.controls; track row; let i = $index) {
+              <tr [formGroupName]="i">
+                <td class="line-no">{{ i + 1 }}</td>
+
+                @if (docType === 'patient_service') {
+                  <td>
+                    <p-select formControlName="item_type" [options]="itemTypeOptions" optionLabel="label" optionValue="value"
+                      appendTo="body" styleClass="w-full" (onChange)="onItemTypeChange(i)"></p-select>
+                  </td>
+                }
+
+                @if (line(i).get('item_type')?.value === 'service') {
+                  <!-- ค่าบริการ: ชื่อบริการ + คำอธิบาย (แทนช่องล็อต) + จำนวนครั้ง × ราคา -->
+                  <td>
+                    <p-select formControlName="category" [options]="serviceOptions" optionLabel="label" optionValue="value"
+                      [editable]="true" (onChange)="onServiceChange(i)" placeholder="เลือกหรือพิมพ์บริการ" appendTo="body" styleClass="w-full"></p-select>
+                  </td>
+                  <td>
+                    <input pInputText formControlName="description" placeholder="คำอธิบาย เช่น แผลที่เข่าซ้าย ยาว 3 ซม." class="text-input" />
+                  </td>
+                  <td>
+                    <div class="qty-cell">
+                      <p-inputNumber formControlName="quantity" [min]="1" [maxFractionDigits]="0" inputStyleClass="qty-input"></p-inputNumber>
+                      <span class="qty-unit">ครั้ง</span>
+                    </div>
+                  </td>
+                  <td>
+                    <p-inputNumber formControlName="unit_price" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2"
+                      placeholder="ค่าบริการ" styleClass="w-full" inputStyleClass="price-input"></p-inputNumber>
+                  </td>
+                  <td class="text-right num">{{ lineAmount(i) | number: '1.2-2' }}</td>
+                } @else {
+                  <td>
+                    <!-- สินค้าใหม่: ใช้ปุ่ม "สินค้าใหม่" ด้านบนตาราง (เติมลงแถวว่างสุดท้าย) -->
+                    <p-select formControlName="product_id" [options]="productOptions" optionLabel="label" optionValue="value"
+                      [filter]="true" filterBy="label" placeholder="เลือกสินค้า" appendTo="body" styleClass="w-full"
+                      (onChange)="onProductChange(i)"></p-select>
+                  </td>
+
+                  @switch (docType) {
+                    @case ('receive') {
+                      <td>
+                        <div class="select-with-add">
+                          <p-select formControlName="package_id" [options]="packageOptions(i)" optionLabel="label" optionValue="value"
+                            [showClear]="true" [placeholder]="product(i) ? 'รับเป็น' + (product(i)?.unit || 'หน่วยย่อย') : '-'"
+                            appendTo="body" styleClass="w-full" (onChange)="onPackageChange(i)"></p-select>
+                          <button type="button" class="add-inline" (click)="openNewPackage(i)" [disabled]="!product(i)"
+                            pTooltip="ยี่ห้อ / ขนาดบรรจุใหม่" tooltipPosition="top"><i class="pi pi-plus"></i></button>
+                        </div>
+                      </td>
+                      <td>
+                        <input pInputText formControlName="lot_no" placeholder="เช่น SR2601" class="text-input mono" />
+                      </td>
+                      <td>
+                        <!-- ปุ่มปฏิทิน (date picker ของเบราว์เซอร์) แสดงวันที่ย่อเมื่อเลือกแล้ว -->
+                        <label class="date-pick" [class.has-value]="!!line(i).value.expiry_date">
+                          <i class="pi pi-calendar"></i>
+                          <span>{{ line(i).value.expiry_date ? expiryLabel(i) : 'เลือกวันที่' }}</span>
+                          <input type="date" formControlName="expiry_date" (click)="openPicker($event)" aria-label="วันหมดอายุ" />
+                        </label>
+                      </td>
+                    }
+                    @case ('adjust') {
+                      <td>
+                        <p-select formControlName="direction" [options]="directionOptions" optionLabel="label" optionValue="value"
+                          appendTo="body" styleClass="w-full" (onChange)="onDirectionChange(i)"></p-select>
+                      </td>
+                      <td>
+                        <p-select formControlName="product_lot_id" [options]="lotOptions(i)" optionLabel="label" optionValue="value"
+                          [showClear]="true" [placeholder]="line(i).get('direction')?.value === 'in' ? 'เลือกล็อต *' : 'อัตโนมัติ (หมดอายุก่อน)'"
+                          appendTo="body" styleClass="w-full"></p-select>
+                      </td>
+                    }
+                    @default {
+                      <td>
+                        <p-select formControlName="product_lot_id" [options]="lotOptions(i)" optionLabel="label" optionValue="value"
+                          [showClear]="true" placeholder="อัตโนมัติ (หมดอายุก่อนออกก่อน)" appendTo="body" styleClass="w-full"></p-select>
+                      </td>
+                    }
+                  }
+
+                  <td>
+                    <div class="qty-cell">
+                      <p-inputNumber formControlName="quantity" [min]="0" [maxFractionDigits]="2" inputStyleClass="qty-input"></p-inputNumber>
+                      <span class="qty-unit">{{ qtyUnit(i) }}</span>
+                      @if (receivedUnits(i); as units) { <span class="qty-units">{{ units }}</span> }
+                    </div>
+                  </td>
+
+                  @if (hasMoney()) {
+                    <td>
+                      <p-inputNumber formControlName="unit_price" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2"
+                        placeholder="0" styleClass="w-full" inputStyleClass="price-input"></p-inputNumber>
+                    </td>
+                    <td class="text-right num">{{ lineAmount(i) | number: '1.2-2' }}</td>
+                  }
+                }
+
+                <td>
+                  <button type="button" class="icon-btn" (click)="removeLine(i)" [disabled]="items.length === 1"
+                    pTooltip="ลบบรรทัด" tooltipPosition="left"><i class="pi pi-times"></i></button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- 4) สรุป + บันทึก -->
+    <div class="form-footer">
+      <div class="footer-summary">
+        @if (hasMoney()) {
+          <span class="footer-total">รวม <span class="num">฿{{ total() | number: '1.2-2' }}</span></span>
+          <span class="cell-sub">
+            <i class="pi pi-wallet"></i>
+            จะลงบัญชีการเงินเป็น<strong>{{ typeInfo(docType).ledger === 'income' ? 'รายรับ' : 'รายจ่าย' }}</strong>ให้อัตโนมัติ
+          </span>
+        } @else {
+          <span class="cell-sub"><i class="pi pi-box"></i> ปรับสต็อกอย่างเดียว ไม่ลงบัญชีการเงิน</span>
+        }
+      </div>
+      <div class="footer-actions">
+        <p-button label="ยกเลิก" severity="secondary" [outlined]="true" routerLink="/documents" [disabled]="saving"></p-button>
+        <p-button type="submit" [label]="'บันทึก' + typeInfo(docType).label" icon="pi pi-check" [loading]="saving"></p-button>
+      </div>
+    </div>
+  </form>
+
+  <app-new-product-dialog [(visible)]="showNewDialog" [mode]="newDialogMode" [product]="newDialogProduct"
+    (saved)="onNewSaved($event)"></app-new-product-dialog>
+
+  <p-toast></p-toast>
+</div>

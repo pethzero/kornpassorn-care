@@ -22,4 +22,7 @@ export interface Patient {
   address?: string;
   blood_type?: string;
   national_id?: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }

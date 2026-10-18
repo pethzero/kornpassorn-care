@@ -10,6 +10,7 @@ node_modules/
 dist/
 build/
 **/dist/
+**/dist-prod/
 **/build/
 **/.angular/
 **/out-tsc/
@@ -229,3 +230,6 @@ yarn-error.*
 # Generated native folders
 /ios
 /android
+
+# ✅ Backup ข้อมูลก่อนรีเซ็ต (สร้างโดย npm run db:demo / ตอนล้างข้อมูล) — มีข้อมูลจริง ห้าม commit
+database/backup/

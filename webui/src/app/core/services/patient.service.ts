@@ -19,6 +19,11 @@ export class PatientService {
   }
 
 
+  // รหัสคนไข้ถัดไป (เช่น 000123) — เติมให้ในฟอร์มเพิ่มคนไข้ แก้เองได้
+  nextCode(): Observable<{ code: string }> {
+    return this.http.get<{ code: string }>(`${environment.apiUrl}/patients/next-code`);
+  }
+
   getPatients(): Observable<Patient[]> {
     return this.http.get<Patient[]>(`${environment.apiUrl}/patients`);
   }

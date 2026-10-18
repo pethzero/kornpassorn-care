@@ -1,45 +1,4 @@
-.product-list-container {
-  background: #fff;
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.06);
-  border: 1px solid #e5e7eb;
-  max-width: 72rem;
-  margin: 0 auto;
-  position: relative;
-}
-
-.list-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-  flex-wrap: wrap;
-}
-
-.header-title-group {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.count-badge {
-  background: #f0fbfa;
-  color: #0d9488;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-}
-
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-  flex-wrap: wrap;
-}
+// โครงหน้า/ตาราง/chip อยู่ใน ui/styles/list-page.scss
 
 .search-bar {
   position: relative;
@@ -58,63 +17,12 @@
   .search-input {
     width: 100%;
     padding-left: 2.4rem;
+    background: #fff;
   }
 }
 
 ::ng-deep .category-select {
   min-width: 10rem;
-}
-
-.action-buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-}
-
-.sku-cell {
-  font-family: 'Courier New', monospace;
-  color: #475569;
-  font-size: 0.85rem;
-}
-
-.name-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.unit-line {
-  font-size: 0.78rem;
-  color: #64748b;
-}
-
-.pack-ratio-badge {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #0d9488;
-  background: #f0fbfa;
-  padding: 0.05rem 0.4rem;
-  border-radius: 999px;
-  width: fit-content;
-}
-
-.description-cell {
-  color: #475569;
-  font-size: 0.85rem;
-  max-width: 22rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 2rem 0;
-
-  h3 {
-    margin: 0.5rem 0;
-  }
 }
 
 .dialog-form {
@@ -177,40 +85,236 @@
   .field-row {
     display: flex;
     gap: 0.75rem;
+    flex-wrap: wrap;
 
     .field {
       flex: 1;
-      min-width: 0;
+      min-width: 10rem;
+
+      &.narrow {
+        flex: 0 0 9rem;
+        min-width: 7rem;
+      }
     }
   }
 
-  .pack-preview {
+  .field-hint {
     display: block;
-    color: #0d9488;
-    font-size: 0.8rem;
-    margin: -0.5rem 0 1.1rem;
+    color: #64748b;
+    font-size: 0.78rem;
+  }
+
+  .package-section {
+    border: 1px solid #e2f3f1;
+    background: #f8fdfc;
+    border-radius: 0.75rem;
+    padding: 0.85rem;
+    margin-bottom: 1.1rem;
+
+    label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #115e59;
+    }
+  }
+
+  .package-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .package-table-wrap {
+    overflow-x: auto;
+  }
+
+  .package-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+
+    th {
+      text-align: left;
+      font-weight: 500;
+      color: #475569;
+      padding: 0.25rem 0.3rem;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 0.2rem 0.3rem;
+    }
+
+    .cell-input {
+      width: 100%;
+      min-width: 4rem;
+      padding: 0.35rem 0.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.4rem;
+      font-size: 0.85rem;
+      box-sizing: border-box;
+
+      &.ng-invalid {
+        border-color: #ef4444;
+      }
+    }
+
+    .inactive-row {
+      opacity: 0.5;
+    }
   }
 }
 
-::ng-deep .product-list-container {
-  .p-datatable-thead > tr > th {
-    background: #f0fbfa;
-    color: #115e59;
-    font-weight: 600;
-    border-color: #e2f3f1;
-  }
+// ช่องยี่ห้อในตาราง — แบบประจำบรรทัดเดียว + จำนวนแบบอื่น กดแล้วเปิด modal (ดูเป็นข้อความธรรมดา ไม่เป็นกล่องสี)
+.package-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 14rem;
+  padding: 0.35rem 0.5rem;
+  margin-left: -0.5rem;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: border-color 0.15s, background 0.15s;
 
-  .p-datatable-tbody > tr:hover {
-    background: #f0fbfa !important;
-  }
+  &:hover {
+    border-color: #edf1f5;
+    background: #fafcfc;
 
-  .p-button:not(.p-button-outlined) {
-    background: #0d9488;
-    border-color: #0d9488;
-
-    &:hover {
-      background: #115e59;
-      border-color: #115e59;
+    .package-chevron {
+      color: #0f766e;
     }
   }
+
+  &.empty {
+    gap: 0.35rem;
+    color: #8a96a8;
+    font-size: 0.8rem;
+
+    &:hover {
+      color: #0f766e;
+    }
+  }
+}
+
+.package-summary-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.package-brand {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.package-ratio {
+  font-size: 0.78rem;
+  color: #8a96a8;
+}
+
+.package-more {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #475569;
+  background: #f1f5f9;
+  border-radius: 999px;
+  padding: 0.05rem 0.45rem;
+}
+
+.package-chevron {
+  font-size: 0.65rem;
+  color: #cbd5e1;
+}
+
+.stock-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+  cursor: pointer;
+
+  &:hover .num {
+    color: #0f766e;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+// modal ยี่ห้อ/ขนาดบรรจุ
+.packages-dialog-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+
+  .title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .subtitle {
+    font-size: 0.82rem;
+    color: #8a96a8;
+  }
+}
+
+.packages-dialog-table-wrap {
+  overflow-x: auto;
+}
+
+.packages-dialog-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th {
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.75rem;
+    color: #8a96a8;
+    padding: 0.5rem 0.6rem;
+    border-bottom: 1px solid #edf1f5;
+  }
+
+  td {
+    padding: 0.7rem 0.6rem;
+    border-bottom: 1px solid #f3f5f8;
+    vertical-align: middle;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  .inactive-row {
+    opacity: 0.5;
+  }
+}
+
+.brand-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.packages-dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }

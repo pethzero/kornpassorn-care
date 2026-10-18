@@ -1,0 +1,62 @@
+// Kornpassorn Care บน Cloudflare
+//   หน้าเว็บ (Angular)  → Workers Static Assets (เร็ว ไม่ต้องรอ container)
+//   /api/*             → Worker ส่งต่อให้ Backend container (NestJS)
+//   ฐานข้อมูล            → PostgreSQL ข้างนอก (Neon/Supabase) — ค่าการเชื่อมต่อเป็น secret (ดู README.md)
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kornpassorn-care",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "assets": {
+    "directory": "../../webui/dist/webui-prod/browser",
+    "binding": "ASSETS",
+    // Angular เป็น SPA — path ที่ไม่มีไฟล์ (เช่น /patient/12) ให้ตอบ index.html
+    "not_found_handling": "single-page-application",
+    // เฉพาะ /api ที่ต้องผ่าน Worker → container
+    "run_worker_first": ["/api/*"]
+  },
+
+  "containers": [
+    {
+      "class_name": "Backend",
+      "image": "../../backend/Dockerfile",
+      // 1 ตัวพอสำหรับคลินิก (rate limit/CSRF อยู่ใน memory ของ instance เดียว)
+      "max_instances": 1
+    }
+  ],
+  "durable_objects": {
+    "bindings": [{ "name": "BACKEND", "class_name": "Backend" }]
+  },
+  "exports": {
+    "Backend": { "type": "durable-object", "storage": "sqlite" }
+  },
+
+  // ค่าที่ไม่ใช่ความลับ (ตรงกับ backend/.env.production) — ความลับใช้ `npx wrangler secret put` เท่านั้น
+  "vars": {
+    "NODE_ENV": "production",
+    "PORT": "3100",
+    "DEBUG": "false",
+    "DB_TYPE": "postgres",
+    "DB_PORT": "5432",
+    "DB_SYNC": "false",
+    "DB_LOGGING": "false",
+    "DB_SSL": "true",
+    "JWT_EXPIRES_IN": "24h",
+    "JWT_ACCESS_EXPIRY": "15m",
+    "JWT_REFRESH_EXPIRY": "7d",
+    "CORS_ENABLED": "true",
+    "CORS_ORIGINS": "https://www.kronpatsroncare.com,https://kronpatsroncare.com",
+    "CORS_CREDENTIALS": "true",
+    "BCRYPT_ROUNDS": "10",
+    "RATE_LIMIT_ENABLED": "true",
+    "RATE_LIMIT_TTL": "60",
+    "RATE_LIMIT_LIMIT": "100",
+    "SWAGGER_ENABLED": "false",
+    "ADMIN_NEVER_EXPIRE": "true",
+    "ACCESS_TOKEN_EXPIRES_IN": "24h",
+    "ADMIN_ACCESS_TOKEN_EXPIRES_IN": "0",
+    "API_TOKEN_EXPIRES_IN": "1h"
+  }
+}

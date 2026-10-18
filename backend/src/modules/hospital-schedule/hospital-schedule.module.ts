@@ -9,5 +9,6 @@ import { HospitalScheduleService } from './hospital-schedule.service';
   imports: [DatabaseModule, AuthModule],
   controllers: [HospitalScheduleController],
   providers: [HospitalScheduleService],
+  exports: [HospitalScheduleService], // ให้ public API v1 อ่านเวลาทำการได้
 })
 export class HospitalScheduleModule {}

@@ -276,6 +276,12 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  // อัปเดตข้อมูลที่แสดง (เช่น ชื่อ) หลังแก้โปรไฟล์ — หัวเว็บเปลี่ยนทันทีไม่ต้อง login ใหม่
+  patchCurrentUser(patch: Partial<User>): void {
+    const current = this.currentUserSubject.value;
+    if (current) this.currentUserSubject.next({ ...current, ...patch });
+  }
+
   isAuthenticated(): boolean {
     // 🔥 เช็คจาก state ไม่ใช่เวลา
     return !!this.currentUserSubject.value;

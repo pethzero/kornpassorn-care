@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -9,15 +9,22 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { SelectModule } from 'primeng/select';
 import { DialogModule } from 'primeng/dialog';
-import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 
 import { LoadingSpinnerComponent } from '../../../ui/loading-spinner/loading-spinner';
+import { InventoryTabsComponent } from '../inventory-tabs/inventory-tabs';
 import { afterMinDuration } from '../../../core/utils/min-duration';
 import { InventoryService } from '../../../core/services/inventory.service';
-import { InventoryProduct, InventoryProductLot } from '../../../core/models/inventory.model';
+import {
+  InventoryProduct,
+  InventoryProductLot,
+  InventoryProductPackage,
+  LotMovement,
+  LotMovementsResult,
+} from '../../../core/models/inventory.model';
+import { documentTypeInfo } from '../../../core/models/document.model';
 
 @Component({
   selector: 'app-lot-list',
@@ -32,13 +39,14 @@ import { InventoryProduct, InventoryProductLot } from '../../../core/models/inve
     InputNumberModule,
     SelectModule,
     DialogModule,
-    TagModule,
     ToastModule,
     TooltipModule,
     LoadingSpinnerComponent,
+    InventoryTabsComponent,
+    RouterLink,
   ],
   templateUrl: './lot-list.html',
-  styleUrls: ['./lot-list.scss'],
+  styleUrls: ['../../../ui/styles/list-page.scss', './lot-list.scss'],
   providers: [MessageService],
 })
 export class LotListComponent implements OnInit {
@@ -59,6 +67,7 @@ export class LotListComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
+    private router: Router,
     private inventoryService: InventoryService,
     private messageService: MessageService,
   ) {
@@ -67,6 +76,7 @@ export class LotListComponent implements OnInit {
       lot_no: ['', Validators.required],
       manufacture_date: [''],
       expiry_date: [''],
+      package_id: [null],
       use_pack: [false],
       quantity_in: [null],
       unit_cost: [null],
@@ -79,19 +89,129 @@ export class LotListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const qpProductId = this.route.snapshot.queryParamMap.get('product_id');
-    if (qpProductId) this.selectedProductId = Number(qpProductId);
+    const qp = this.route.snapshot.queryParamMap;
+    if (qp.get('product_id')) this.selectedProductId = Number(qp.get('product_id'));
 
-    this.loadProducts();
+    // มาจากปุ่ม "รับเข้ายี่ห้อนี้" ในหน้าสินค้า → เปิด dialog รับเข้าทันทีหลังโหลดสินค้าเสร็จ
+    const openCreate = qp.get('new') === '1';
+    const packageId = qp.get('package_id') ? Number(qp.get('package_id')) : null;
+
+    this.loadProducts(() => {
+      if (!openCreate) return;
+      this.openCreateDialog();
+      if (packageId) {
+        this.form.patchValue({ package_id: packageId });
+        this.onPackageChange();
+      }
+      // ล้าง new/package_id ออกจาก URL กันเปิด dialog ซ้ำตอนรีเฟรช
+      this.syncUrl();
+    });
     this.load();
   }
 
-  loadProducts(): void {
+  loadProducts(onLoaded?: () => void): void {
     this.inventoryService.getProducts({ limit: 200 }).subscribe({
       next: (res) => {
         this.products = res.data;
+        onLoaded?.();
       },
     });
+  }
+
+  // สินค้าที่กรองอยู่ — ใช้แสดงแถบหัว "ล็อตของ ..." พร้อมปุ่มกลับหน้าสินค้า
+  filteredProduct(): InventoryProduct | undefined {
+    return this.selectedProductId ? this.products.find((p) => p.id === this.selectedProductId) : undefined;
+  }
+
+  // ให้ URL ตรงกับตัวกรองสินค้าเสมอ — กด back/refresh แล้วยังอยู่ที่สินค้าเดิม
+  private syncUrl(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { product_id: this.selectedProductId || null },
+      replaceUrl: true,
+    });
+  }
+
+  filterByProduct(productId: number): void {
+    this.selectedProductId = productId;
+    this.onFilterChange();
+  }
+
+  receiveDocument(): void {
+    this.router.navigate(['/documents/new'], {
+      queryParams: { type: 'receive', ...(this.selectedProductId ? { product_id: this.selectedProductId } : {}) },
+    });
+  }
+
+  // ----- รายละเอียดล็อต (modal: ข้อมูลล็อต + ประวัติการเคลื่อนไหว) -----
+  showHistory = false;
+  historyLoading = false;
+  history: LotMovementsResult | null = null;
+  detailLot: InventoryProductLot | null = null;
+
+  openHistory(lot: InventoryProductLot): void {
+    this.detailLot = lot;
+    this.showHistory = true;
+    this.historyLoading = true;
+    this.history = null;
+    this.inventoryService.getLotMovements(lot.id!).subscribe({
+      next: (res) => {
+        this.history = res.data;
+        this.historyLoading = false;
+      },
+      error: (err) => {
+        this.historyLoading = false;
+        this.showHistory = false;
+        this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: err.error?.message || err.message });
+      },
+    });
+  }
+
+  // เอกสารที่รับล็อตนี้เข้ามา (การเคลื่อนไหวแรก) — null = ตั้งยอดยกมา
+  lotReceiveDoc(): LotMovement['document'] {
+    const first = this.history?.movements[0];
+    return first?.kind === 'document' ? first.document : null;
+  }
+
+  // มูลค่าคงเหลือตามทุน
+  remainingValue(lot: InventoryProductLot): number | null {
+    if (lot.unit_cost == null) return null;
+    return Math.round(this.num(lot.quantity_remaining) * this.num(lot.unit_cost) * 100) / 100;
+  }
+
+  daysLeftLabel(lot: InventoryProductLot): string {
+    if (!lot.expiry_date) return 'ไม่มีวันหมดอายุ';
+    if (this.isExpired(lot)) return 'หมดอายุแล้ว';
+    return `อีก ${this.daysToExpiry(lot)} วัน`;
+  }
+
+  // ป้ายบอกว่าครั้งนี้เกิดอะไรขึ้นกับล็อต
+  movementLabel(m: LotMovement): string {
+    if (m.kind === 'opening') return 'ตั้งยอดยกมา';
+    if (m.kind === 'reversal') return 'คืนสต็อก (ยกเลิกเอกสาร)';
+    return documentTypeInfo(m.document?.doc_type || '').label;
+  }
+
+  movementChipClass(m: LotMovement): string {
+    if (m.kind === 'reversal') return 'chip-plain';
+    switch (m.document?.doc_type) {
+      case 'receive':
+        return 'chip-info';
+      case 'patient_service':
+        return 'chip-accent';
+      case 'adjust':
+        return 'chip-warn';
+      default:
+        return '';
+    }
+  }
+
+  abs(n: number): number {
+    return Math.abs(n);
+  }
+
+  backToProducts(): void {
+    this.router.navigate(['/inventory/products']);
   }
 
   load(): void {
@@ -132,13 +252,19 @@ export class LotListComponent implements OnInit {
   }
 
   onFilterChange(): void {
+    this.syncUrl();
     this.load();
   }
 
   clearFilters(): void {
     this.selectedProductId = null;
     this.showExpiringOnly = false;
+    this.syncUrl();
     this.load();
+  }
+
+  totalRemaining(): number {
+    return this.lots.reduce((sum, lot) => sum + Number(lot.quantity_remaining || 0), 0);
   }
 
   openCreateDialog(): void {
@@ -146,6 +272,7 @@ export class LotListComponent implements OnInit {
     this.editingLotId = null;
     this.form.get('product_id')?.enable();
     this.form.reset({ product_id: this.selectedProductId, use_pack: false });
+    this.onFormProductChange();
     this.showDialog = true;
   }
 
@@ -154,7 +281,7 @@ export class LotListComponent implements OnInit {
       this.messageService.add({
         severity: 'warn',
         summary: 'แก้ไขไม่ได้',
-        detail: 'ล็อตนี้มีรายการการเงินอ้างอิงแล้ว ไม่สามารถแก้ไขได้',
+        detail: 'ล็อตนี้มีเอกสารอ้างอิงแล้ว แก้ไขไม่ได้ — ให้ยกเลิกเอกสารที่เกี่ยวข้องแทน',
       });
       return;
     }
@@ -166,7 +293,8 @@ export class LotListComponent implements OnInit {
       lot_no: lot.lot_no,
       manufacture_date: lot.manufacture_date || '',
       expiry_date: lot.expiry_date || '',
-      use_pack: !!lot.received_pack_qty,
+      package_id: lot.package_id ?? null,
+      use_pack: !!lot.received_pack_qty && !!lot.package_id,
       quantity_in: lot.quantity_in,
       unit_cost: lot.unit_cost,
       received_pack_qty: lot.received_pack_qty,
@@ -184,21 +312,42 @@ export class LotListComponent implements OnInit {
     this.showDialog = false;
   }
 
-  // สินค้าที่เลือกอยู่ใน dialog ตอนนี้ — ใช้เช็คว่ามี pack_unit/pack_size ให้สลับโหมดกรอกเป็นแพ็คได้ไหม
+  // สินค้าที่เลือกอยู่ใน dialog ตอนนี้ (getRawValue เพราะตอนแก้ไข product_id ถูก disable ไว้)
   selectedFormProduct(): InventoryProduct | undefined {
-    const productId = this.form.get('product_id')?.value;
+    const productId = this.form.getRawValue().product_id;
     return this.products.find((p) => p.id === productId);
   }
 
-  productHasPack(): boolean {
-    const product = this.selectedFormProduct();
-    return !!(product?.pack_unit && product?.pack_size);
+  // ยี่ห้อ/ขนาดบรรจุที่เลือกได้ — แบบที่ปิดใช้งานแล้วจะโชว์เฉพาะถ้าล็อตนี้ใช้อยู่เดิม
+  packageOptions(): InventoryProductPackage[] {
+    const currentId = this.form.get('package_id')?.value;
+    return (this.selectedFormProduct()?.packages || []).filter((p) => p.is_active !== false || p.id === currentId);
   }
 
+  packageLabel(pkg: InventoryProductPackage): string {
+    const unit = this.selectedFormProduct()?.unit || 'หน่วย';
+    return `${pkg.brand} — 1 ${pkg.pack_unit} = ${pkg.pack_size} ${unit}`;
+  }
+
+  selectedPackage(): InventoryProductPackage | undefined {
+    const packageId = this.form.get('package_id')?.value;
+    return this.selectedFormProduct()?.packages?.find((p) => p.id === packageId);
+  }
+
+  // เปลี่ยนสินค้า → เลือกยี่ห้อที่ซื้อประจำให้อัตโนมัติ
   onFormProductChange(): void {
-    if (!this.productHasPack()) {
-      this.form.patchValue({ use_pack: false });
-    }
+    const options = this.packageOptions();
+    const pkg = options.find((p) => p.is_default) || (options.length === 1 ? options[0] : undefined);
+    this.form.patchValue({ package_id: pkg?.id ?? null });
+    this.onPackageChange();
+  }
+
+  onPackageChange(): void {
+    const pkg = this.selectedPackage();
+    this.form.patchValue({
+      use_pack: !!pkg,
+      pack_unit_cost: pkg?.last_pack_cost != null ? Number(pkg.last_pack_cost) : null,
+    });
   }
 
   packQty(): number {
@@ -206,8 +355,7 @@ export class LotListComponent implements OnInit {
   }
 
   packTotalUnits(): number {
-    const product = this.selectedFormProduct();
-    return this.packQty() * (product?.pack_size || 0);
+    return this.packQty() * (this.selectedPackage()?.pack_size || 0);
   }
 
   submit(): void {
@@ -228,6 +376,8 @@ export class LotListComponent implements OnInit {
       return;
     }
 
+    // เลือกยี่ห้อแล้ว brand มาจาก package — ไม่ต้องส่ง brand ที่พิมพ์เอง
+    if (rest.package_id) delete rest.brand;
     const payload: Partial<InventoryProductLot> = use_pack
       ? { ...rest, received_pack_qty, pack_unit_cost }
       : { ...rest, quantity_in, unit_cost };
@@ -290,23 +440,27 @@ export class LotListComponent implements OnInit {
     return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(amount);
   }
 
-  receivedDisplay(lot: InventoryProductLot): string {
-    const unit = lot.product?.unit || '';
-    if (lot.received_pack_qty && lot.product?.pack_unit) {
-      return `${lot.received_pack_qty} ${lot.product.pack_unit} (${lot.quantity_in} ${unit})`;
-    }
-    return `${lot.quantity_in} ${unit}`;
+  // numeric จาก Postgres มาเป็น string ("220.00") — แปลงก่อนคำนวณ/เปรียบเทียบ
+  num(value: unknown): number {
+    return Number(value) || 0;
   }
 
-  // แยกบรรทัดบน/ล่างสำหรับแสดงสัดส่วนหน่วยบรรจุ -> หน่วยย่อยแบบตารางย่อในคอลัมน์ "รับเข้า"
+  // % คงเหลือเทียบกับที่รับเข้า ใช้วาดแถบคงเหลือ
+  remainingPercent(lot: InventoryProductLot): number {
+    const total = this.num(lot.quantity_in);
+    if (!total) return 0;
+    return Math.max(0, Math.min(100, Math.round((this.num(lot.quantity_remaining) / total) * 100)));
+  }
+
+  daysToExpiry(lot: InventoryProductLot): number {
+    if (!lot.expiry_date) return 0;
+    return Math.ceil((new Date(lot.expiry_date).getTime() - Date.now()) / 86400000);
+  }
+
+  // รับเข้าเป็นหน่วยบรรจุ เช่น "3 กล่อง × 100" (ใช้ pack_unit/pack_size ที่ snapshot ไว้ที่ล็อต ไม่ใช่ของ package ปัจจุบัน)
   receivedPackLine(lot: InventoryProductLot): string | null {
-    if (!lot.received_pack_qty || !lot.product?.pack_unit) return null;
-    return `${lot.received_pack_qty} ${lot.product.pack_unit}`;
-  }
-
-  receivedUnitLine(lot: InventoryProductLot): string {
-    const unit = lot.product?.unit || '';
-    return `= ${lot.quantity_in} ${unit}`;
+    if (!lot.received_pack_qty || !lot.pack_unit) return null;
+    return `${this.num(lot.received_pack_qty)} ${lot.pack_unit} × ${lot.pack_size}`;
   }
 
   editHistoryTooltip(lot: InventoryProductLot): string {

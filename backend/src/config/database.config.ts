@@ -8,9 +8,11 @@ export const DEFAULT_DB_CONFIG = {
   port: parseIntOr(process.env.DB_PORT, 5432),
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASS || '123456',
-  database: process.env.DB_NAME || 'postgres',
+  database: process.env.DB_NAME || 'kornpassorn_db_dev',
   synchronize: parseBool(process.env.DB_SYNC ?? 'true'),
   logging: parseBool(process.env.DB_LOGGING ?? 'false'),
+  // Postgres บนคลาวด์ (Neon/Supabase ฯลฯ) บังคับ TLS — DB_SSL=true (เครื่อง local ปิดไว้)
+  ssl: parseBool(process.env.DB_SSL ?? 'false') ? { rejectUnauthorized: true } : false,
   entities: getEntitiesForTypeOrm('default'),
 };
 

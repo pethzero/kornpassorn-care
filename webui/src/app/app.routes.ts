@@ -43,14 +43,39 @@ export const routes: Routes = [
         data: { roles: ['user', 'admin'] } // ให้ user และ admin เข้าได้
       },
       {
-        // เอกสารซื้อขาย/รับ-จ่ายเงินแบบ header-detail (คนละระบบกับ /finance ด้านบนซึ่งเป็น ledger แบบ flat ของเดิม)
-        path: 'finance-transactions',
-        loadChildren: () => import('./features/finance-transactions/finance-transaction-routing.module').then(m => m.FinanceTransactionRoutingModule),
+        // เอกสาร (รับของเข้า / บริการคนไข้ / เบิก / ปรับยอด) — ขยับสต็อก และลงบัญชีการเงิน (/finance) ให้อัตโนมัติ
+        path: 'documents',
+        loadChildren: () => import('./features/documents/documents-routing.module').then(m => m.DocumentsRoutingModule),
         canActivate: [AuthGuard],
         data: { roles: ['user', 'admin'] }
       },
       {
-        // คลังสินค้า/ยา แบบมีล็อตและวันหมดอายุ — ใช้ร่วมกับ finance-transactions ตอนขาย/ซื้อสินค้า
+        path: 'appointments',
+        loadComponent: () => import('./features/appointments/appointment-list').then(m => m.AppointmentListComponent),
+        canActivate: [AuthGuard],
+        data: { roles: ['user', 'admin'] },
+        title: 'นัดหมาย'
+      },
+      {
+        // ระบบภายนอกที่เรียก API ได้ (/api/v1/*) — สร้าง/ปิด/สร้าง secret ใหม่
+        path: 'api-clients',
+        loadComponent: () => import('./features/api-clients/api-client-list').then(m => m.ApiClientListComponent),
+        canActivate: [AuthGuard],
+        data: { roles: ['admin'] },
+        title: 'API Clients'
+      },
+      {
+        // บัญชีของฉัน / อุปกรณ์ (ทุกคน) + ผู้ใช้งาน / คลินิก & บริการ (admin — ซ่อน tab เอง, API เช็ก role อีกชั้น)
+        path: 'settings',
+        loadComponent: () => import('./pages/settings/settings').then(m => m.SettingsComponent),
+        canActivate: [AuthGuard],
+        data: { roles: ['user', 'admin'] },
+        title: 'ตั้งค่า'
+      },
+      // ลิงก์เก่าก่อนเปลี่ยนชื่อเป็น "เอกสาร"
+      { path: 'finance-transactions', children: [{ path: '**', redirectTo: '/documents' }] },
+      {
+        // คลังสินค้า/ยา แบบมีล็อตและวันหมดอายุ — ของเข้า/ออกผ่านเอกสาร (/documents)
         path: 'inventory',
         loadChildren: () => import('./features/inventory/inventory-routing.module').then(m => m.InventoryRoutingModule),
         canActivate: [AuthGuard],
@@ -124,6 +149,12 @@ export const routes: Routes = [
     // สาธารณะ — คนทั่วไปดูได้โดยไม่ต้อง login (อยู่นอก FullLayoutComponent/AuthGuard โดยตั้งใจ)
     path: 'hospital-hours',
     loadComponent: () => import('./pages/hospital-hours/hospital-hours').then(m => m.HospitalHoursComponent)
+  },
+  {
+    // เอกสาร API สำหรับผู้เชื่อมต่อภายนอก — เปิดได้โดยไม่ต้อง login (ไม่มีข้อมูลลับ)
+    path: 'developers',
+    loadComponent: () => import('./pages/developers/developers').then(m => m.DevelopersComponent),
+    title: 'Kornpassorn Care API'
   },
   {
     // AuthGuard เด้งมาที่นี่เมื่อ role ไม่ตรงกับ route ที่ขอเข้า -> ต้องอยู่นอก AuthGuard เอง

@@ -1,0 +1,142 @@
+<div class="docs">
+  <header class="docs-hero">
+    <div class="hero-inner">
+      <span class="badge">API v1</span>
+      <h1>Kornpassorn Care API</h1>
+      <p>เชื่อมระบบของคุณเข้ากับคลินิก — อ่านนัดหมายและเวลาทำการแบบปลอดภัย ด้วย OAuth2 Client Credentials</p>
+      <div class="base-url">
+        <span class="label">Base URL</span>
+        <code>{{ base }}</code>
+        <button type="button" (click)="copy(base, 'base')">{{ copied === 'base' ? 'คัดลอกแล้ว' : 'คัดลอก' }}</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="docs-body">
+    <nav class="toc" aria-label="สารบัญ">
+      @for (t of toc; track t.id) {
+        <button type="button" [class.active]="active === t.id" (click)="go(t.id)">{{ t.label }}</button>
+      }
+    </nav>
+
+    <main class="content">
+      <section id="overview">
+        <h2>ภาพรวม</h2>
+        <p>API นี้สำหรับ <strong>ระบบ</strong> (เซิร์ฟเวอร์ แอป หรือสคริปต์) ไม่ใช่บัญชีผู้ใช้ของคน — แต่ละระบบได้ <strong>Client ID</strong> และ <strong>Client Secret</strong> จากผู้ดูแลคลินิก</p>
+        <div class="cards">
+          <div class="card"><span class="k">Client ID</span><span>รหัสประจำระบบ (เปิดเผยได้) เช่น <code>kpc_3f9a…</code></span></div>
+          <div class="card"><span class="k">Client Secret</span><span>เหมือนรหัสผ่าน — เก็บที่เซิร์ฟเวอร์ ใช้ <em>แค่ตอนขอ token</em> ห้ามใส่ในแอปมือถือ/หน้าเว็บ</span></div>
+          <div class="card"><span class="k">Access Token</span><span>บัตรผ่านอายุ 1 ชั่วโมง ส่งไปกับ <em>ทุก request</em> ใน header <code>Authorization: Bearer …</code></span></div>
+        </div>
+      </section>
+
+      <section id="quickstart">
+        <h2>เริ่มใช้ใน 3 ขั้น</h2>
+        <ol class="steps">
+          <li><strong>ขอ Client ID + Secret</strong> จากผู้ดูแลคลินิก (เมนู API Clients) พร้อมบอกว่าต้องการสิทธิ์อะไร</li>
+          <li><strong>แลก Access Token</strong> ที่ <code>POST /oauth/token</code></li>
+          <li><strong>เรียก API</strong> พร้อม header <code>Authorization: Bearer &lt;access_token&gt;</code> — token หมดอายุ (401) ก็ขอใหม่</li>
+        </ol>
+      </section>
+
+      <section id="auth">
+        <h2><span class="method post">POST</span> /oauth/token</h2>
+        <p>แลก Client ID + Secret เป็น Access Token (OAuth2 <code>client_credentials</code>) — รับ JSON, form-urlencoded หรือ HTTP Basic</p>
+        <table class="params">
+          <thead><tr><th>field</th><th>ค่า</th></tr></thead>
+          <tbody>
+            <tr><td><code>grant_type</code></td><td><code>client_credentials</code></td></tr>
+            <tr><td><code>client_id</code></td><td>Client ID ที่ได้รับ</td></tr>
+            <tr><td><code>client_secret</code></td><td>Client Secret ที่ได้รับ</td></tr>
+          </tbody>
+        </table>
+        <div class="tabs">
+          <button type="button" [class.active]="tokenLang === 'curl'" (click)="tokenLang = 'curl'">curl</button>
+          <button type="button" [class.active]="tokenLang === 'js'" (click)="tokenLang = 'js'">JavaScript</button>
+          <button type="button" [class.active]="tokenLang === 'python'" (click)="tokenLang = 'python'">Python</button>
+        </div>
+        <ng-container *ngTemplateOutlet="code; context: { $implicit: tokenSamples[tokenLang], id: 'token-' + tokenLang, title: 'Request' }"></ng-container>
+        <ng-container *ngTemplateOutlet="code; context: { $implicit: tokenResponse, id: 'token-res', title: 'Response 200' }"></ng-container>
+        <div class="tip">
+          <strong>ใช้ token ซ้ำ</strong> — token อายุ 3600 วินาที เก็บไว้ใช้จนใกล้หมดแล้วค่อยขอใหม่ ไม่ต้องขอทุก request
+        </div>
+        <ng-container *ngTemplateOutlet="code; context: { $implicit: reuseToken, id: 'reuse', title: 'ตัวอย่าง: cache token' }"></ng-container>
+      </section>
+
+      <section id="scopes">
+        <h2>สิทธิ์ (Scopes)</h2>
+        <p>แต่ละ client ได้เฉพาะสิทธิ์ที่ผู้ดูแลเลือกให้ — ดูได้จาก field <code>scope</code> ตอนขอ token</p>
+        <table class="params">
+          <thead><tr><th>scope</th><th>ทำอะไรได้</th></tr></thead>
+          <tbody>
+            @for (s of scopes; track s.key) { <tr><td><code>{{ s.key }}</code></td><td>{{ s.desc }}</td></tr> }
+          </tbody>
+        </table>
+      </section>
+
+      <section id="appointments">
+        <h2><span class="method get">GET</span> /appointments <span class="scope-tag">appointments:read</span></h2>
+        <p>รายการนัดหมายในช่วงวันที่ เรียงตามวันและเวลา</p>
+        <table class="params">
+          <thead><tr><th>query</th><th>ค่าเริ่มต้น</th><th>คำอธิบาย</th></tr></thead>
+          <tbody>
+            <tr><td><code>date_from</code></td><td>วันนี้</td><td>YYYY-MM-DD</td></tr>
+            <tr><td><code>date_to</code></td><td>วันนี้ + 30 วัน</td><td>YYYY-MM-DD — ห่างจาก date_from ไม่เกิน 93 วัน</td></tr>
+            <tr><td><code>status</code></td><td>ทั้งหมด</td><td>scheduled | completed | cancelled | no_show</td></tr>
+          </tbody>
+        </table>
+        <ng-container *ngTemplateOutlet="code; context: { $implicit: listRequest, id: 'list-req', title: 'Request' }"></ng-container>
+        <ng-container *ngTemplateOutlet="code; context: { $implicit: listResponse, id: 'list-res', title: 'Response 200' }"></ng-container>
+        <table class="params">
+          <thead><tr><th>status</th><th>ความหมาย</th></tr></thead>
+          <tbody>
+            @for (s of statuses; track s.key) { <tr><td><code>{{ s.key }}</code></td><td>{{ s.desc }}</td></tr> }
+          </tbody>
+        </table>
+      </section>
+
+      <section id="appointment-one">
+        <h2><span class="method get">GET</span> /appointments/{{ '{' }}id{{ '}' }} <span class="scope-tag">appointments:read</span></h2>
+        <p>นัดหมาย 1 รายการ — รูปแบบเดียวกับแต่ละรายการใน <code>data</code> ด้านบน</p>
+        <ng-container *ngTemplateOutlet="code; context: { $implicit: oneRequest, id: 'one-req', title: 'Request' }"></ng-container>
+      </section>
+
+      <section id="clinic-hours">
+        <h2><span class="method get">GET</span> /clinic/hours <span class="scope-tag">clinic:read</span></h2>
+        <p>เวลาทำการรายสัปดาห์ (<code>day_of_week</code>: 0 = อาทิตย์ … 6 = เสาร์) และวันพิเศษที่จะถึง</p>
+        <ng-container *ngTemplateOutlet="code; context: { $implicit: hoursRequest, id: 'hours-req', title: 'Request' }"></ng-container>
+        <ng-container *ngTemplateOutlet="code; context: { $implicit: hoursResponse, id: 'hours-res', title: 'Response 200' }"></ng-container>
+      </section>
+
+      <section id="errors">
+        <h2>Error</h2>
+        <table class="params">
+          <thead><tr><th>HTTP</th><th>error</th><th>เกิดเมื่อ</th></tr></thead>
+          <tbody>
+            @for (e of errors; track $index) { <tr><td><code>{{ e.code }}</code></td><td>{{ e.name }}</td><td>{{ e.when }}</td></tr> }
+          </tbody>
+        </table>
+        <ng-container *ngTemplateOutlet="code; context: { $implicit: errorResponse, id: 'err', title: 'ตัวอย่าง 401 จาก /oauth/token' }"></ng-container>
+      </section>
+
+      <section id="privacy">
+        <h2>ข้อมูลส่วนบุคคล</h2>
+        <ul class="bullets">
+          <li>API ส่งเฉพาะ <strong>รหัสคนไข้ + ชื่อต้น + อักษรแรกของนามสกุล</strong> — ไม่มีเบอร์โทร เลขบัตรประชาชน ที่อยู่ หรือหมายเหตุภายใน</li>
+          <li>เก็บ Client Secret ในเซิร์ฟเวอร์ (environment variable / secret manager) เท่านั้น ถ้าหลุดให้แจ้งคลินิกสร้าง secret ใหม่ทันที</li>
+          <li>คลินิกปิดสิทธิ์ client ได้ทุกเมื่อ — token ที่ออกไปแล้วใช้ไม่ได้ทันที</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+</div>
+
+<ng-template #code let-text let-id="id" let-title="title">
+  <div class="code">
+    <div class="code-head">
+      <span>{{ title }}</span>
+      <button type="button" (click)="copy(text, id)">{{ copied === id ? 'คัดลอกแล้ว ✓' : 'คัดลอก' }}</button>
+    </div>
+    <pre><code>{{ text }}</code></pre>
+  </div>
+</ng-template>

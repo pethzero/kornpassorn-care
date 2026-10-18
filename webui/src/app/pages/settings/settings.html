@@ -1,0 +1,210 @@
+<div class="inv-page settings">
+  <div class="list-header">
+    <div class="header-title-group">
+      <h2>ตั้งค่า</h2>
+    </div>
+  </div>
+
+  <div class="layout">
+    <nav class="side-tabs" aria-label="หมวดการตั้งค่า">
+      @for (t of tabs; track t.key) {
+        <button type="button" [class.active]="tab === t.key" (click)="open(t.key)"><i [class]="t.icon"></i> {{ t.label }}</button>
+      }
+      @if (isAdmin) {
+        <div class="side-sep">อื่นๆ</div>
+        <a routerLink="/hospital-schedule" class="side-link"><i class="pi pi-clock"></i> เวลาทำการ</a>
+        <a routerLink="/api-clients" class="side-link"><i class="pi pi-key"></i> API Clients</a>
+      }
+    </nav>
+
+    <div class="pane">
+      @switch (tab) {
+        <!-- ===== บัญชีของฉัน ===== -->
+        @case ('account') {
+          <section class="card">
+            <div class="profile-head">
+              <span class="big-avatar">{{ initials(account) }}</span>
+              <div>
+                <h3>{{ displayName(account) }}</h3>
+                <span class="cell-sub">{{ account.username }} · {{ account.role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่' }}</span>
+              </div>
+            </div>
+            <div class="grid-2">
+              <label class="field"><span>ชื่อ</span><input pInputText [(ngModel)]="account.first_name" /></label>
+              <label class="field"><span>นามสกุล</span><input pInputText [(ngModel)]="account.last_name" /></label>
+              <label class="field"><span>อีเมล</span><input pInputText type="email" [(ngModel)]="account.email" /></label>
+              <label class="field"><span>เบอร์โทร</span><input pInputText [(ngModel)]="account.phone_number" /></label>
+            </div>
+            <div class="actions"><p-button label="บันทึก" icon="pi pi-check" (onClick)="saveAccount()" [loading]="savingAccount"></p-button></div>
+          </section>
+
+          <section class="card">
+            <h3 class="card-title"><i class="pi pi-lock"></i> เปลี่ยนรหัสผ่าน</h3>
+            <p class="cell-sub">เปลี่ยนแล้วอุปกรณ์อื่นจะออกจากระบบทั้งหมด (เครื่องนี้ยังใช้ต่อได้)</p>
+            <div class="grid-3">
+              <label class="field"><span>รหัสผ่านเดิม</span><input pInputText type="password" [(ngModel)]="pw.current" autocomplete="current-password" /></label>
+              <label class="field"><span>รหัสผ่านใหม่</span><input pInputText type="password" [(ngModel)]="pw.next" autocomplete="new-password" /></label>
+              <label class="field"><span>ยืนยันรหัสผ่านใหม่</span><input pInputText type="password" [(ngModel)]="pw.confirm" autocomplete="new-password" /></label>
+            </div>
+            @if (pwProblem) { <p class="warn-text"><i class="pi pi-exclamation-circle"></i> {{ pwProblem }}</p> }
+            <div class="actions"><p-button label="เปลี่ยนรหัสผ่าน" icon="pi pi-key" severity="secondary" (onClick)="changePassword()" [loading]="savingPw"></p-button></div>
+          </section>
+        }
+
+        <!-- ===== อุปกรณ์ ===== -->
+        @case ('sessions') {
+          <section class="card">
+            <h3 class="card-title"><i class="pi pi-desktop"></i> อุปกรณ์ที่เข้าสู่ระบบอยู่</h3>
+            <p class="cell-sub">ไม่รู้จักอุปกรณ์ไหน ให้กดออกจากระบบ แล้วเปลี่ยนรหัสผ่าน</p>
+            <div class="session-list">
+              @for (s of sessions; track s.id) {
+                <div class="session">
+                  <span class="session-icon"><i [class]="deviceIcon(s)"></i></span>
+                  <div class="session-body">
+                    <span class="cell-title">
+                      {{ deviceLabel(s) }}
+                      @if (s.current) { <span class="chip chip-accent">อุปกรณ์นี้</span> }
+                    </span>
+                    <span class="cell-sub">IP {{ s.deviceIp || s.deviceInfo?.ip || '—' }} · เข้าเมื่อ {{ formatDate(s.created_at) }} · ใช้ล่าสุด {{ formatDate(s.last_used) }}</span>
+                  </div>
+                  @if (!s.current) {
+                    <p-button label="ออกจากระบบ" size="small" severity="secondary" [outlined]="true" (onClick)="revoke(s)"></p-button>
+                  }
+                </div>
+              } @empty {
+                <p class="cell-sub">ไม่มีข้อมูลอุปกรณ์</p>
+              }
+            </div>
+          </section>
+        }
+
+        <!-- ===== ผู้ใช้งาน (admin) ===== -->
+        @case ('users') {
+          <section class="card">
+            <div class="card-head">
+              <h3 class="card-title"><i class="pi pi-users"></i> ผู้ใช้งาน ({{ users.length }})</h3>
+              <p-button label="เพิ่มผู้ใช้" icon="pi pi-plus" size="small" (onClick)="openUser(null)"></p-button>
+            </div>
+            <div class="user-list">
+              @for (u of users; track u.id) {
+                <div class="user-row" [class.row-muted]="!u.isActive">
+                  <span class="avatar" [class.admin]="u.role === 'admin'">{{ initials(u) }}</span>
+                  <div class="user-body">
+                    <span class="cell-title">
+                      {{ displayName(u) }}
+                      @if (u.id === myId) { <span class="chip chip-plain">คุณ</span> }
+                    </span>
+                    <span class="cell-sub mono">{{ u.username }}@if (u.email) { · {{ u.email }} }</span>
+                  </div>
+                  <span class="chip" [ngClass]="u.role === 'admin' ? 'chip-info' : 'chip-plain'">{{ u.role === 'admin' ? 'ผู้ดูแลระบบ' : 'เจ้าหน้าที่' }}</span>
+                  <span class="chip" [ngClass]="u.isActive ? 'chip-accent' : 'chip-warn'">{{ u.isActive ? 'ใช้งาน' : 'ปิดใช้งาน' }}</span>
+                  <div class="row-actions">
+                    <button type="button" class="icon-btn" (click)="openUser(u)" pTooltip="แก้ไข" tooltipPosition="top"><i class="pi pi-pencil"></i></button>
+                    <button type="button" class="icon-btn" (click)="resetTarget = u; resetPw = ''" pTooltip="ตั้งรหัสผ่านใหม่" tooltipPosition="top"><i class="pi pi-key"></i></button>
+                    @if (u.id !== myId) {
+                      <button type="button" class="icon-btn" (click)="toggleActive(u)" [pTooltip]="u.isActive ? 'ปิดใช้งาน' : 'เปิดใช้งาน'" tooltipPosition="top">
+                        <i [class]="u.isActive ? 'pi pi-ban' : 'pi pi-check-circle'"></i>
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </section>
+        }
+
+        <!-- ===== คลินิก & บริการ (admin) ===== -->
+        @case ('clinic') {
+          @if (clinic) {
+            <section class="card">
+              <h3 class="card-title"><i class="pi pi-building"></i> ข้อมูลคลินิก</h3>
+              <div class="grid-2">
+                <label class="field full"><span>ชื่อคลินิก <em>*</em></span><input pInputText [(ngModel)]="clinic.clinic.name" /></label>
+                <label class="field full"><span>ที่อยู่</span><input pInputText [(ngModel)]="clinic.clinic.address" /></label>
+                <label class="field"><span>เบอร์โทร</span><input pInputText [(ngModel)]="clinic.clinic.phone" /></label>
+                <label class="field"><span>อีเมล</span><input pInputText [(ngModel)]="clinic.clinic.email" /></label>
+                <label class="field"><span>เลขประจำตัวผู้เสียภาษี</span><input pInputText [(ngModel)]="clinic.clinic.tax_id" /></label>
+                <label class="field"><span>LINE ID</span><input pInputText [(ngModel)]="clinic.clinic.line_id" /></label>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="card-head">
+                <div>
+                  <h3 class="card-title"><i class="pi pi-list"></i> บริการ & ราคาตั้งต้น</h3>
+                  <p class="cell-sub">ใช้ในเอกสารบริการคนไข้และนัดหมาย — ราคาเติมให้อัตโนมัติ แก้ได้ทุกครั้ง</p>
+                </div>
+                <p-button label="เพิ่มบริการ" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addService()"></p-button>
+              </div>
+              <div class="service-list">
+                @for (s of clinic.services; track $index; let i = $index; let first = $first; let last = $last) {
+                  <div class="service-row" [class.row-muted]="!s.active">
+                    <div class="order-btns">
+                      <button type="button" (click)="moveService(i, -1)" [disabled]="first" aria-label="เลื่อนขึ้น"><i class="pi pi-chevron-up"></i></button>
+                      <button type="button" (click)="moveService(i, 1)" [disabled]="last" aria-label="เลื่อนลง"><i class="pi pi-chevron-down"></i></button>
+                    </div>
+                    <input pInputText class="svc-name" [(ngModel)]="s.name" placeholder="ชื่อบริการ" />
+                    <p-inputNumber [(ngModel)]="s.price" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2" placeholder="ราคา (บาท)" inputStyleClass="svc-price"></p-inputNumber>
+                    <label class="switch"><input type="checkbox" [(ngModel)]="s.active" /> ใช้งาน</label>
+                    <button type="button" class="icon-btn danger" (click)="removeService(i)" pTooltip="ลบ" tooltipPosition="top"><i class="pi pi-trash"></i></button>
+                  </div>
+                }
+              </div>
+            </section>
+
+            <div class="sticky-save">
+              <span class="cell-sub">@if (clinic.updated_at) { แก้ล่าสุด {{ formatDate(clinic.updated_at) }} โดย {{ clinic.updated_by }} } @else { ยังไม่เคยบันทึก (ใช้ค่าเริ่มต้น) }</span>
+              <p-button label="บันทึกการตั้งค่าคลินิก" icon="pi pi-check" (onClick)="saveClinic()" [loading]="savingClinic"></p-button>
+            </div>
+          }
+        }
+      }
+    </div>
+  </div>
+
+  <!-- เพิ่ม/แก้ผู้ใช้ -->
+  <p-dialog [(visible)]="showUserDialog" [modal]="true" [appendTo]="'body'" [header]="editingUser ? 'แก้ไขผู้ใช้ ' + editingUser.username : 'เพิ่มผู้ใช้'"
+    [style]="{ width: '480px' }" [breakpoints]="{ '560px': '94vw' }" [closable]="!savingUser">
+    <div class="dialog-form">
+      @if (!editingUser) {
+        <div class="grid-2">
+          <label class="field"><span>ชื่อผู้ใช้ (ใช้ login) <em>*</em></span><input pInputText [(ngModel)]="userForm.username" placeholder="a-z 0-9 . _ -" autocomplete="off" /></label>
+          <label class="field"><span>รหัสผ่านเริ่มต้น <em>*</em></span><input pInputText type="password" [(ngModel)]="userForm.password" placeholder="อย่างน้อย 6 ตัว" autocomplete="new-password" /></label>
+        </div>
+      }
+      <div class="field">
+        <span>สิทธิ์</span>
+        <div class="segmented">
+          <button type="button" [class.active]="userForm.role === 'user'" (click)="userForm.role = 'user'">เจ้าหน้าที่</button>
+          <button type="button" [class.active]="userForm.role === 'admin'" (click)="userForm.role = 'admin'">ผู้ดูแลระบบ</button>
+        </div>
+        <small class="cell-sub">ผู้ดูแลระบบจัดการผู้ใช้ การตั้งค่าคลินิก และ API ได้</small>
+      </div>
+      <div class="grid-2">
+        <label class="field"><span>ชื่อ</span><input pInputText [(ngModel)]="userForm.first_name" /></label>
+        <label class="field"><span>นามสกุล</span><input pInputText [(ngModel)]="userForm.last_name" /></label>
+        <label class="field"><span>อีเมล</span><input pInputText [(ngModel)]="userForm.email" /></label>
+        <label class="field"><span>เบอร์โทร</span><input pInputText [(ngModel)]="userForm.phone_number" /></label>
+      </div>
+    </div>
+    <ng-template #footer>
+      <p-button label="ยกเลิก" severity="secondary" [outlined]="true" (onClick)="showUserDialog = false" [disabled]="savingUser"></p-button>
+      <p-button label="บันทึก" icon="pi pi-check" (onClick)="saveUser()" [loading]="savingUser"></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- ตั้งรหัสผ่านใหม่ -->
+  <p-dialog [visible]="!!resetTarget" (visibleChange)="!$event && (resetTarget = null)" [modal]="true" [appendTo]="'body'"
+    [header]="'ตั้งรหัสผ่านใหม่ให้ ' + (resetTarget?.username || '')" [style]="{ width: '420px' }" [breakpoints]="{ '480px': '94vw' }">
+    <div class="dialog-form">
+      <p class="cell-sub">ผู้ใช้จะออกจากระบบทุกอุปกรณ์ แล้วใช้รหัสใหม่นี้ login — แจ้งรหัสให้ผู้ใช้ทางช่องทางส่วนตัว</p>
+      <label class="field"><span>รหัสผ่านใหม่</span><input pInputText type="password" [(ngModel)]="resetPw" placeholder="อย่างน้อย 6 ตัว" autocomplete="new-password" /></label>
+    </div>
+    <ng-template #footer>
+      <p-button label="ยกเลิก" severity="secondary" [outlined]="true" (onClick)="resetTarget = null"></p-button>
+      <p-button label="ตั้งรหัสผ่านใหม่" icon="pi pi-key" severity="warn" (onClick)="doReset()"></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <p-toast></p-toast>
+</div>

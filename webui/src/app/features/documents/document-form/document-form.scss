@@ -1,0 +1,399 @@
+// โครงหน้า/chip/ปุ่มไอคอน อยู่ใน ui/styles/list-page.scss — ไฟล์นี้เฉพาะฟอร์มสร้างเอกสาร
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #8a96a8;
+  text-decoration: none;
+  margin-bottom: 0.75rem;
+
+  &:hover {
+    color: #0f766e;
+  }
+
+  i {
+    font-size: 0.75rem;
+  }
+}
+
+// ตัวเลือกประเภทเอกสาร
+.type-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.5rem;
+}
+
+.type-option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #edf1f5;
+  border-radius: 12px;
+  background: #fff;
+  color: #475569;
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover {
+    border-color: #cfe9e5;
+  }
+
+  &.active {
+    border-color: #5fb8ad;
+    background: #effaf8;
+    color: #0f766e;
+    font-weight: 600;
+  }
+}
+
+.type-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.6rem 0 1.25rem;
+  font-size: 0.82rem;
+  color: #8a96a8;
+}
+
+.form-section {
+  padding: 1.1rem 1.25rem;
+  border: 1px solid #edf1f5;
+  border-radius: 14px;
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: 11rem 1fr;
+  gap: 0.85rem 1rem;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+
+  > span {
+    font-size: 0.8rem;
+    color: #64748b;
+
+    em {
+      color: #dc2626;
+      font-style: normal;
+    }
+  }
+
+  &.full {
+    grid-column: 1 / -1;
+  }
+}
+
+.text-input {
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #dfe5ec;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: #1e293b;
+  background: #fff;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: #5fb8ad;
+  }
+}
+
+:host ::ng-deep .w-full {
+  width: 100%;
+}
+
+// ตารางรายการ
+.line-table-wrap {
+  overflow-x: auto;
+  margin: 0 -0.25rem;
+  padding-bottom: 0.35rem;
+  scrollbar-width: thin;
+  scrollbar-color: #d5dce5 transparent;
+}
+
+.line-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0.25rem 0.35rem;
+  font-size: 0.875rem;
+
+  th {
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #8a96a8;
+    padding: 0 0.25rem;
+    white-space: nowrap;
+  }
+
+  td {
+    vertical-align: top;
+  }
+
+  .line-no {
+    color: #cbd5e1;
+    padding-top: 0.6rem;
+    text-align: center;
+  }
+
+  .muted-cell {
+    color: #cbd5e1;
+    padding-top: 0.6rem;
+  }
+
+  .num {
+    padding-top: 0.6rem;
+  }
+}
+
+.qty-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.qty-unit {
+  font-size: 0.78rem;
+  color: #8a96a8;
+  white-space: nowrap;
+}
+
+.qty-sub {
+  display: block;
+  text-align: right;
+  margin-top: 0.2rem;
+}
+
+.add-line {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px dashed #cfd8e2;
+  border-radius: 10px;
+  background: transparent;
+  color: #64748b;
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+
+  &:hover {
+    border-color: #5fb8ad;
+    color: #0f766e;
+  }
+
+  i {
+    font-size: 0.75rem;
+  }
+}
+
+// แถบท้าย: ยอดรวม + ปุ่ม
+.form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+  background: #f8fafb;
+  border-radius: 14px;
+}
+
+.footer-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+
+  strong {
+    margin: 0 0.25rem;
+    color: #1e293b;
+  }
+}
+
+.footer-total {
+  font-size: 1.05rem;
+  color: #475569;
+
+  .num {
+    font-size: 1.25rem;
+    margin-left: 0.35rem;
+  }
+}
+
+.footer-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+// ----- รับของเข้า: ปุ่ม + ข้าง dropdown, ล็อต/หมดอายุซ้อนในช่องเดียว -----
+.select-with-add {
+  display: flex;
+  gap: 0.3rem;
+  align-items: stretch;
+
+  p-select {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.add-inline {
+  width: 2.3rem;
+  flex-shrink: 0;
+  border: 1px dashed #cfd8e2;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f766e;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: #5fb8ad;
+    background: #effaf8;
+  }
+
+  &:disabled {
+    color: #cbd5e1;
+    cursor: default;
+  }
+
+  i {
+    font-size: 0.8rem;
+  }
+}
+
+// หัว section: ชื่อ "รายการ" ซ้าย ปุ่มเพิ่มขวา
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+
+  .section-title {
+    margin: 0;
+  }
+
+  .add-line {
+    margin-top: 0;
+  }
+}
+
+// รับของเข้า: คอลัมน์กว้างคงที่ (colgroup) — รวมกว้างกว่ากรอบเมื่อไหร่ wrapper เลื่อนแนวนอนได้
+.receive-table {
+  table-layout: fixed;
+  min-width: 83rem;
+
+  .text-input {
+    width: 100%;
+  }
+}
+
+.date-pick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 2.45rem;
+  padding: 0 0.7rem;
+  border: 1px solid #dfe5ec;
+  border-radius: 8px;
+  background: #fff;
+  color: #8a96a8;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    border-color: #5fb8ad;
+    color: #0f766e;
+  }
+
+  &.has-value {
+    color: #1e293b;
+    background: #fafcfc;
+
+    i {
+      color: #0f766e;
+    }
+  }
+
+  i {
+    font-size: 0.85rem;
+  }
+
+  // input จริงซ้อนทับเต็มปุ่มแบบมองไม่เห็น — กดตรงไหนก็เปิดปฏิทิน
+  input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+  }
+}
+
+// จำนวน: ช่องแคบ + หน่วย + หน่วยย่อย บรรทัดเดียว
+.qty-cell {
+  white-space: nowrap;
+}
+
+.qty-units {
+  font-size: 0.75rem;
+  color: #8a96a8;
+}
+
+:host ::ng-deep .qty-input {
+  width: 4.25rem;
+  text-align: right;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+:host ::ng-deep .price-input {
+  width: 100%;
+  text-align: right;
+}
+
+.add-btn.accent {
+  border-style: solid;
+  border-color: #cfe9e5;
+  background: #effaf8;
+  color: #0f766e;
+}

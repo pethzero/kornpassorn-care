@@ -1,11 +1,13 @@
-<div class="product-list-container">
+<div class="product-list-container inv-page">
   @if (loading) {
     <app-loading-spinner [overlay]="true" message="กำลังโหลดข้อมูล..."></app-loading-spinner>
   }
 
+  <app-inventory-tabs></app-inventory-tabs>
+
   <div class="list-header">
     <div class="header-title-group">
-      <h2 class="text-xl font-bold text-gray-800">สินค้า</h2>
+      <h2>สินค้า</h2>
       <span class="count-badge">{{ products.length }} รายการ</span>
     </div>
     <p-button label="เพิ่มสินค้า" icon="pi pi-plus" (onClick)="openCreateDialog()"></p-button>
@@ -19,7 +21,7 @@
         pInputText
         [(ngModel)]="searchTerm"
         (keyup.enter)="onSearch()"
-        placeholder="ค้นหาชื่อสินค้า หรือ SKU..."
+        placeholder="ค้นหาชื่อสินค้า ชื่อสามัญ ยี่ห้อ SKU หรือบาร์โค้ด..."
         class="search-input"
       />
     </div>
@@ -38,45 +40,86 @@
 
   <div class="overflow-x-auto rounded-xl">
     <p-table [value]="products" [loading]="loading" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 25, 50]"
-      [paginatorDropdownAppendTo]="'body'" [stripedRows]="true" [rowHover]="true" dataKey="id" class="p-datatable-sm"
+      [paginatorDropdownAppendTo]="'body'" [rowHover]="true" dataKey="id"
       currentPageReportTemplate="แสดง {first} ถึง {last} จาก {totalRecords} รายการ" [showCurrentPageReport]="true">
 
       <ng-template pTemplate="header">
         <tr>
-          <th style="width: 110px;">SKU</th>
-          <th style="width: 220px;">ชื่อสินค้า</th>
-          <th style="width: 120px;">ประเภท</th>
-          <th style="width: 90px;">ใช้งานอยู่</th>
-          <th>คำอธิบาย</th>
-          <th class="text-center" style="width: 150px;">จัดการ</th>
+          <th style="min-width: 240px;">สินค้า</th>
+          <th style="width: 220px;">ยี่ห้อ / ขนาดบรรจุ</th>
+          <th class="text-right" style="width: 150px;">คงเหลือ</th>
+          <th class="text-right" style="width: 100px;">ราคาขาย</th>
+          <th style="width: 110px;">ประเภท</th>
+          <th style="width: 120px;"></th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-product>
-        <tr>
-          <td class="sku-cell">{{ product.sku || '-' }}</td>
+        <tr [class.row-muted]="!product.is_active">
           <td>
-            <div class="name-cell">
-              <span class="font-medium text-gray-900">{{ product.name }}</span>
-              <span class="unit-line">{{ product.unit || '-' }}</span>
-              @if (product.pack_unit && product.pack_size) {
-                <span class="pack-ratio-badge">1 {{ product.pack_unit }} = {{ product.pack_size }} {{ product.unit }}</span>
+            <div class="cell-stack">
+              <span class="cell-title" [pTooltip]="product.description" tooltipPosition="top">
+                {{ product.name }}
+                @if (!product.is_active) { <span class="chip chip-plain">ปิดใช้งาน</span> }
+              </span>
+              <span class="cell-sub">
+                @if (product.sku) { <span class="mono">{{ product.sku }}</span> · }
+                @if (product.generic_name) { {{ product.generic_name }} · }
+                จ่ายเป็น{{ product.unit || 'หน่วย' }}
+              </span>
+            </div>
+          </td>
+          <td>
+            @if (defaultPackage(product); as pkg) {
+              <button type="button" class="package-summary" (click)="openPackagesDialog(product)"
+                pTooltip="ดูยี่ห้อ/ขนาดบรรจุทั้งหมด" tooltipPosition="top">
+                <span class="package-summary-main">
+                  <span class="package-brand">{{ pkg.brand }}</span>
+                  <span class="package-ratio">{{ pkg.pack_unit }}ละ {{ pkg.pack_size }} {{ product.unit }}</span>
+                </span>
+                @if (activePackages(product).length > 1) {
+                  <span class="package-more">+{{ activePackages(product).length - 1 }}</span>
+                }
+                <i class="pi pi-chevron-right package-chevron"></i>
+              </button>
+            } @else {
+              <button type="button" class="package-summary empty" (click)="openEditDialog(product)">
+                <i class="pi pi-plus"></i> เพิ่มยี่ห้อ
+              </button>
+            }
+          </td>
+          <td class="text-right">
+            <div class="stock-cell" (click)="viewLots(product)" pTooltip="ดูล็อตของสินค้านี้" tooltipPosition="left">
+              <span><span class="num">{{ product.stock_remaining ?? 0 | number: '1.0-2' }}</span><span class="unit">{{ product.unit }}</span></span>
+              @if (isOutOfStock(product)) {
+                <span class="chip chip-danger">หมด</span>
+              } @else if (isLowStock(product)) {
+                <span class="chip chip-warn">ใกล้หมด</span>
+              } @else if (stockInPacks(product)) {
+                <span class="cell-sub">{{ stockInPacks(product) }}</span>
               }
             </div>
           </td>
-          <td><p-tag [value]="categoryLabel(product.category)"></p-tag></td>
+          <td class="text-right">
+            @if (product.sell_price != null) {
+              <span class="num">{{ product.sell_price | number: '1.2-2' }}</span>
+            } @else {
+              <span class="cell-sub">-</span>
+            }
+          </td>
+          <td><span class="chip chip-plain" [ngClass]="categoryChipClass(product.category)">{{ categoryLabel(product.category) }}</span></td>
           <td>
-            <p-tag [value]="product.is_active ? 'ใช้งาน' : 'ปิดใช้งาน'" [severity]="product.is_active ? 'success' : 'secondary'"></p-tag>
-          </td>
-          <td class="description-cell" [pTooltip]="product.description" tooltipPosition="top">
-            {{ product.description || '-' }}
-          </td>
-          <td class="text-center">
-            <div class="action-buttons">
-              <button pButton icon="pi pi-pencil" size="small" severity="warn" outlined rounded
-                (click)="openEditDialog(product)" pTooltip="แก้ไข" tooltipPosition="top"></button>
-              <button pButton icon="pi pi-box" size="small" severity="info" outlined rounded
-                (click)="viewLots(product)" pTooltip="ดูล็อตสินค้า" tooltipPosition="top"></button>
+            <div class="row-actions">
+              <button type="button" class="icon-btn" (click)="openEditDialog(product)" pTooltip="แก้ไข" tooltipPosition="top">
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button type="button" class="icon-btn" (click)="viewLots(product)" pTooltip="ดูล็อต" tooltipPosition="top">
+                <i class="pi pi-box"></i>
+              </button>
+              <button type="button" class="icon-btn danger" (click)="confirmDelete(product)"
+                pTooltip="ลบสินค้า" tooltipPosition="top">
+                <i class="pi pi-trash"></i>
+              </button>
             </div>
           </td>
         </tr>
@@ -84,10 +127,10 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="6" class="text-center py-8">
+          <td colspan="6">
             <div class="empty-state">
-              <i class="pi pi-inbox text-6xl text-gray-300 mb-4"></i>
-              <h3 class="text-lg font-medium text-gray-600 mb-2">ไม่พบข้อมูลสินค้า</h3>
+              <i class="pi pi-inbox"></i>
+              <h3>ไม่พบข้อมูลสินค้า</h3>
               <p-button label="เพิ่มสินค้าแรก" icon="pi pi-plus" (onClick)="openCreateDialog()"></p-button>
             </div>
           </td>
@@ -96,55 +139,119 @@
     </p-table>
   </div>
 
-  <p-dialog [(visible)]="showDialog" [modal]="true" [appendTo]="'body'" [style]="{ width: '420px' }"
+  <p-dialog [(visible)]="showDialog" [modal]="true" [appendTo]="'body'" [style]="{ width: '780px' }"
     [breakpoints]="{ '640px': '90vw' }" [header]="isEditMode ? 'แก้ไขสินค้า' : 'เพิ่มสินค้าใหม่'" [closable]="!saving">
     <form [formGroup]="form" class="dialog-form">
-      <div class="field">
-        <label>SKU</label>
-        <input pInputText formControlName="sku" placeholder="ไม่บังคับ" class="full-width" />
+      <div class="field-row">
+        <div class="field">
+          <label>ชื่อสินค้า <span class="required">*</span></label>
+          <input pInputText formControlName="name" placeholder="เช่น Paracetamol 500 mg" class="full-width"
+            [class.ng-invalid]="isFieldInvalid('name')" />
+          @if (isFieldInvalid('name')) {
+            <small class="error-message">กรุณากรอกชื่อสินค้า</small>
+          }
+        </div>
+        <div class="field narrow">
+          <label>SKU</label>
+          <input pInputText formControlName="sku" placeholder="ไม่บังคับ" class="full-width" />
+        </div>
       </div>
 
-      <div class="field">
-        <label>ชื่อสินค้า <span class="required">*</span></label>
-        <input pInputText formControlName="name" placeholder="เช่น พาราเซตามอล 500mg" class="full-width"
-          [class.ng-invalid]="isFieldInvalid('name')" />
-        @if (isFieldInvalid('name')) {
-          <small class="error-message">กรุณากรอกชื่อสินค้า</small>
-        }
+      <div class="field-row">
+        <div class="field">
+          <label>ประเภท <span class="required">*</span></label>
+          <p-select formControlName="category" [options]="formCategoryOptions" optionLabel="label" optionValue="value"
+            appendTo="body" styleClass="full-width"></p-select>
+        </div>
+        <div class="field">
+          <label>หน่วยนับ (ที่จ่ายจริง) <span class="required">*</span></label>
+          <input pInputText formControlName="unit" placeholder="เช่น เม็ด, ขวด, ชิ้น" class="full-width"
+            [class.ng-invalid]="isFieldInvalid('unit')" />
+        </div>
       </div>
 
-      <div class="field">
-        <label>ประเภท <span class="required">*</span></label>
-        <p-select formControlName="category" [options]="formCategoryOptions" optionLabel="label" optionValue="value"
-          styleClass="full-width"></p-select>
-      </div>
-
-      <div class="field">
-        <label>หน่วยนับ (ที่จ่ายจริง)</label>
-        <input pInputText formControlName="unit" placeholder="เช่น เม็ด, ขวด" class="full-width" />
-      </div>
-
-      <div class="field checkbox-field">
-        <label class="checkbox-label">
-          <input type="checkbox" formControlName="has_pack" /> ซื้อเข้าเป็นหน่วยบรรจุ (เช่น กล่อง/แผง)
-        </label>
-      </div>
-
-      @if (form.get('has_pack')?.value) {
-        <div class="field-row">
+      @if (form.get('category')?.value === 'medicine') {
+        <div class="field-row three">
           <div class="field">
-            <label>หน่วยบรรจุ <span class="required">*</span></label>
-            <input pInputText formControlName="pack_unit" placeholder="เช่น กล่อง" class="full-width" />
+            <label>ชื่อสามัญ</label>
+            <input pInputText formControlName="generic_name" placeholder="เช่น Paracetamol" class="full-width" />
           </div>
           <div class="field">
-            <label>จำนวน/แพ็ค <span class="required">*</span></label>
-            <p-inputNumber formControlName="pack_size" placeholder="เช่น 30" styleClass="full-width"></p-inputNumber>
+            <label>ความแรง</label>
+            <input pInputText formControlName="strength" placeholder="เช่น 500 mg" class="full-width" />
+          </div>
+          <div class="field">
+            <label>รูปแบบยา</label>
+            <p-select formControlName="dosage_form" [options]="dosageFormOptions" optionLabel="label" optionValue="value"
+              [showClear]="true" placeholder="เลือก" appendTo="body" styleClass="full-width"></p-select>
           </div>
         </div>
-        <small class="pack-preview">
-          1 {{ form.get('pack_unit')?.value || 'หน่วยบรรจุ' }} = {{ form.get('pack_size')?.value || '?' }} {{ form.get('unit')?.value || 'หน่วย' }}
-        </small>
       }
+
+      <div class="field-row">
+        <div class="field">
+          <label>ราคาขาย / {{ form.get('unit')?.value || 'หน่วย' }}</label>
+          <p-inputNumber formControlName="sell_price" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2"
+            placeholder="ไม่บังคับ" styleClass="full-width"></p-inputNumber>
+        </div>
+        <div class="field">
+          <label>แจ้งเตือนเมื่อเหลือไม่เกิน ({{ form.get('unit')?.value || 'หน่วย' }})</label>
+          <p-inputNumber formControlName="reorder_level" placeholder="ไม่บังคับ" styleClass="full-width"></p-inputNumber>
+        </div>
+      </div>
+
+      <div class="package-section">
+        <div class="package-header">
+          <div>
+            <label>ยี่ห้อ / ขนาดบรรจุที่ซื้อเข้า</label>
+            <small class="field-hint">ยาตัวเดียวกันแต่ละยี่ห้อบรรจุไม่เท่ากันได้ เช่น ยี่ห้อ A กล่องละ 40, ยี่ห้อ B กล่องละ 50</small>
+          </div>
+          <p-button label="เพิ่มยี่ห้อ" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addPackage()"></p-button>
+        </div>
+
+        @if (packages.length) {
+          <div class="package-table-wrap">
+            <table class="package-table" formArrayName="packages">
+              <thead>
+                <tr>
+                  <th style="min-width: 130px;">ชื่อ *</th>
+                  <th style="width: 80px;">หน่วยซื้อ *</th>
+                  <th style="width: 80px;">บรรจุ ({{ form.get('unit')?.value || 'หน่วย' }}) *</th>
+                  <th style="min-width: 140px;">คำอธิบาย</th>
+                  <th style="min-width: 130px;">หมายเหตุ</th>
+                  <th class="text-center" style="width: 56px;">ประจำ</th>
+                  <th class="text-center" style="width: 56px;">ใช้งาน</th>
+                  <th style="width: 40px;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (pkg of packages.controls; track pkg; let i = $index) {
+                  <tr [formGroupName]="i" [class.inactive-row]="!packageGroup(i).get('is_active')?.value">
+                    <td><input pInputText formControlName="brand" placeholder="ยี่ห้อ เช่น Sara" class="cell-input"
+                      [class.ng-invalid]="packageGroup(i).get('brand')?.invalid && packageGroup(i).get('brand')?.touched" /></td>
+                    <td><input pInputText formControlName="pack_unit" placeholder="กล่อง" class="cell-input" /></td>
+                    <td><input pInputText type="number" min="1" formControlName="pack_size" placeholder="40" class="cell-input"
+                      [class.ng-invalid]="packageGroup(i).get('pack_size')?.invalid && packageGroup(i).get('pack_size')?.touched" /></td>
+                    <td><input pInputText formControlName="description" placeholder="เช่น เม็ดขาว เคลือบฟิล์ม" class="cell-input" /></td>
+                    <td><input pInputText formControlName="note" placeholder="เช่น สั่งจากร้าน A" class="cell-input" /></td>
+                    <td class="text-center">
+                      <input type="radio" name="default_pkg" [checked]="packageGroup(i).get('is_default')?.value"
+                        (change)="setDefaultPackage(i)" />
+                    </td>
+                    <td class="text-center"><input type="checkbox" formControlName="is_active" /></td>
+                    <td class="text-center">
+                      <button pButton type="button" icon="pi pi-trash" size="small" severity="danger" text rounded
+                        (click)="removePackage(i)" pTooltip="ลบ (ถ้ามีล็อตใช้อยู่ จะปิดใช้งานแทน)" tooltipPosition="top"></button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <small class="field-hint">ยังไม่มี — รับเข้าได้เฉพาะเป็นหน่วยย่อย ({{ form.get('unit')?.value || 'หน่วย' }})</small>
+        }
+      </div>
 
       <div class="field">
         <label>คำอธิบาย</label>
@@ -166,5 +273,64 @@
     </ng-template>
   </p-dialog>
 
+  <!-- modal ยี่ห้อ/ขนาดบรรจุ -->
+  <p-dialog [(visible)]="showPackagesDialog" [modal]="true" [appendTo]="'body'" [style]="{ width: '560px' }"
+    [breakpoints]="{ '640px': '92vw' }" [dismissableMask]="true">
+    <ng-template pTemplate="header">
+      <div class="packages-dialog-title">
+        <span class="title">ยี่ห้อ / ขนาดบรรจุ</span>
+        <span class="subtitle">{{ packagesProduct?.name }} · หน่วยจ่าย: {{ packagesProduct?.unit || '-' }}</span>
+      </div>
+    </ng-template>
+
+    @if (packagesProduct) {
+      <div class="packages-dialog-table-wrap">
+        <table class="packages-dialog-table">
+          <thead>
+            <tr>
+              <th>ยี่ห้อ</th>
+              <th>ขนาดบรรจุ</th>
+              <th class="text-right">ทุนล่าสุด</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (pkg of packagesProduct.packages || []; track pkg.id) {
+              <tr [class.inactive-row]="pkg.is_active === false">
+                <td>
+                  <div class="brand-cell">
+                    <span class="font-medium">{{ pkg.brand }}</span>
+                    @if (pkg.is_default) { <span class="chip chip-accent">ซื้อประจำ</span> }
+                    @if (pkg.is_active === false) { <span class="chip chip-plain">ปิดใช้งาน</span> }
+                  </div>
+                  @if (pkg.description) { <span class="cell-sub">{{ pkg.description }}</span> }
+                  @if (pkg.note) { <span class="cell-sub"><i class="pi pi-comment"></i> {{ pkg.note }}</span> }
+                </td>
+                <td>1 {{ pkg.pack_unit }} = <span class="num">{{ pkg.pack_size }}</span><span class="unit">{{ packagesProduct.unit }}</span></td>
+                <td class="text-right">{{ pkg.last_pack_cost != null ? (pkg.last_pack_cost | number: '1.2-2') : '-' }}</td>
+                <td class="text-right">
+                  @if (pkg.is_active !== false) {
+                    <button pButton icon="pi pi-download" size="small" severity="success" text rounded
+                      (click)="receive(packagesProduct, pkg.id)" pTooltip="ทำเอกสารรับของเข้า ยี่ห้อนี้" tooltipPosition="left"></button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="4" class="empty-state">ยังไม่มียี่ห้อ/ขนาดบรรจุ</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <ng-template pTemplate="footer">
+      <div class="packages-dialog-footer">
+        <p-button label="แก้ไขยี่ห้อ" icon="pi pi-pencil" severity="secondary" [outlined]="true" (onClick)="editFromPackagesDialog()"></p-button>
+        <p-button label="ดูล็อตสินค้านี้" icon="pi pi-arrow-right" iconPos="right" (onClick)="packagesProduct && viewLots(packagesProduct)"></p-button>
+      </div>
+    </ng-template>
+  </p-dialog>
+
+  <p-confirmdialog [style]="{ width: '440px' }"></p-confirmdialog>
   <p-toast></p-toast>
 </div>
