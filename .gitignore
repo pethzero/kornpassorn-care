@@ -233,3 +233,6 @@ yarn-error.*
 
 # ✅ Backup ข้อมูลก่อนรีเซ็ต (สร้างโดย npm run db:demo / ตอนล้างข้อมูล) — มีข้อมูลจริง ห้าม commit
 database/backup/
+
+# dump ข้อมูลจริงสำหรับย้ายขึ้นคลาวด์ (มีข้อมูลคนไข้) — ห้ามขึ้น git
+database/to-*.sql

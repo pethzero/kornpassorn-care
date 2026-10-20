@@ -15,6 +15,8 @@ WORKDIR /app/backend
 COPY --from=build --chown=node:node /app/package.json ./
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist-prod ./dist-prod
+# ใบรับรอง CA สาธารณะของ Supabase (ไม่ใช่ความลับ) — ใช้กับ DB_SSL_CA=certs/supabase-ca.crt
+COPY --chown=node:node certs ./certs
 USER node
 EXPOSE 3100
 CMD ["node", "dist-prod/main.js"]

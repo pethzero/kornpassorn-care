@@ -2,10 +2,13 @@
   "name": "kornpassorn-care-cloudflare",
   "private": true,
   "scripts": {
+    "dev": "wrangler dev",
     "deploy": "npm run build:web && wrangler deploy",
     "build:web": "npm run build:prod --prefix ../../webui",
     "logs": "wrangler tail",
-    "types": "wrangler types"
+    "types": "wrangler types",
+    "backend:build": "docker build -t kornpassorn-backend ../../backend",
+    "backend:supabase": "docker run --rm -p 3100:3100 --env-file ../../backend/.env.production --env-file ../../backend/.env.supabase -e NODE_ENV=production -e PORT=3100 kornpassorn-backend"
   },
   "dependencies": {
     "@cloudflare/containers": "^0.3.7"
