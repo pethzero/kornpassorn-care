@@ -18,47 +18,57 @@ Cloudflare ไม่มี PostgreSQL ให้ — ฐานข้อมูล�
 
 ## 1) สร้างฐานข้อมูลบนคลาวด์ + ย้ายข้อมูล PRD ขึ้นไป
 
-1. สร้าง project ใหม่ (region Singapore) แล้วจด connection string — host, user, password, database
-2. dump ข้อมูล PRD จากเครื่องนี้ (`--no-owner` กัน error เรื่องสิทธิ์ของ user `postgres` ที่บนคลาวด์ไม่มี
-   และไม่เอาตาราง lottery ของโปรเจกต์อื่นไปด้วย):
-
-   ```powershell
-   & "C:\Program Files\PostgreSQL\17\bin\pg_dump.exe" -h localhost -U postgres -d kornpassorn_db `
-     --no-owner --no-privileges --exclude-table=lottery_draw --exclude-table=lottery_draw_history `
-     -f kornpassorn_db-to-cloud.sql
-   ```
-
-3. นำเข้าฐานข้อมูลบนคลาวด์ (ใช้ connection string ที่ได้จากข้อ 1):
-
-   ```powershell
-   & "C:\Program Files\PostgreSQL\17\bin\psql.exe" "postgresql://USER:PASSWORD@HOST/DBNAME?sslmode=require" -f kornpassorn_db-to-cloud.sql
-   ```
-
-4. ลบไฟล์ `kornpassorn_db-to-cloud.sql` ทิ้งหลังนำเข้าเสร็จ (มีข้อมูลคนไข้)
+ทำตาม [database/SUPABASE_README.md](../../database/SUPABASE_README.md) — สร้าง project (Singapore), ใส่ค่าใน `backend/.env.supabase`
+แล้วกด task **☁️ Supabase: ย้ายข้อมูลจาก PRD ขึ้น (ครั้งแรก)** (สร้างตาราง + ใส่ข้อมูล + เทียบจำนวนแถวให้ครบ)
 
 ## 2) ติดตั้งและ login
 
 ```powershell
 cd deploy/cloudflare
-npm install
-npx wrangler login
+npm.cmd install
+npx.cmd wrangler login
 ```
 
 ## 3) ใส่ความลับ (ทำครั้งเดียว — ค่าเก็บที่ Cloudflare ไม่อยู่ในโค้ด)
 
 ใช้ค่าเดียวกับ `backend/.env.production` สำหรับ JWT/CSRF (ไม่งั้นทุกคนต้อง login ใหม่ และ API client token เดิมใช้ไม่ได้)
-ส่วน DB_* ใช้ของฐานข้อมูลบนคลาวด์:
+ส่วน DB_* ใช้ค่าเดียวกับ `backend/.env.supabase`:
 
 ```powershell
-npx wrangler secret put DB_HOST
-npx wrangler secret put DB_USER
-npx wrangler secret put DB_PASS
-npx wrangler secret put DB_NAME
-npx wrangler secret put JWT_SECRET
-npx wrangler secret put CSRF_SECRET
+npx.cmd wrangler secret put DB_HOST
+npx.cmd wrangler secret put DB_USER
+npx.cmd wrangler secret put DB_PASS
+npx.cmd wrangler secret put DB_NAME
+npx.cmd wrangler secret put JWT_SECRET
+npx.cmd wrangler secret put CSRF_SECRET
 ```
 
-ค่าอื่นที่ไม่ใช่ความลับอยู่ใน `vars` ของ [wrangler.jsonc](wrangler.jsonc) แล้ว (`DB_SSL=true`, `DB_SYNC=false` ฯลฯ)
+ค่าอื่นที่ไม่ใช่ความลับอยู่ใน `vars` ของ [wrangler.jsonc](wrangler.jsonc) แล้ว (`DB_SSL=true`, `DB_SYNC=false`, `DB_SSL_CA` ฯลฯ)
+ใบรับรอง CA ของ Supabase (`backend/certs/supabase-ca.crt`) ถูกใส่ใน image ตอน build — ไม่ต้องตั้งเป็น secret
+**ห้ามใส่ `DB_PASS` ใน `vars`** — จะขึ้น git และทับ secret
+
+## จำลองในเครื่องก่อน deploy (Windows)
+
+`wrangler dev` บน Windows จำลอง Cloudflare Container ไม่ได้ (ต้อง WSL) — จึงแบ่งเป็น 2 ส่วน:
+Worker + หน้าเว็บ จำลองด้วย `wrangler dev` ส่วน `/api` ส่งไป backend ใน Docker ของเครื่องเอง
+
+```powershell
+# 1) build หน้าเว็บ production (ครั้งแรก/เมื่อแก้หน้าเว็บ)
+cd deploy/cloudflare
+npm run build:web
+
+# 2) build + รัน backend ใน Docker (อีก terminal, จากโฟลเดอร์หลักของโปรเจกต์) — ใช้ DB DEV ของเครื่อง
+docker build -t kornpassorn-backend backend
+docker run --rm -p 3100:3100 --env-file backend/.env.dev `
+  -e NODE_ENV=production -e PORT=3100 -e DB_HOST=host.docker.internal -e DB_SYNC=false `
+  kornpassorn-backend
+
+# 3) จำลอง Worker (ใน deploy/cloudflare) — ครั้งแรกคัดลอก .dev.vars.example เป็น .dev.vars
+npm run dev
+```
+
+เปิด http://localhost:8787 — หน้าเว็บมาจาก Workers assets, `/api` วิ่งผ่าน Worker → backend ใน Docker
+(เหมือนของจริงทุกอย่าง ยกเว้น backend ไม่ได้อยู่ใน Cloudflare container)
 
 ## 4) Deploy
 
@@ -80,10 +90,10 @@ npm run deploy
 
 | งาน | ทำยังไง |
 |---|---|
-| อัปเดตโค้ด | `npm run deploy` (ใน `deploy/cloudflare`) |
-| โครงสร้าง DB เปลี่ยน (เพิ่มตาราง/คอลัมน์) | รัน `npm run db:prod:sync` ใน `backend` โดยชี้ `.env.production` ไปที่ DB บนคลาวด์ชั่วคราว (`DB_SSL=true`) — หรือทำ `.env.cloud` แยก |
-| ดู log backend สดๆ | `npm run logs` |
-| Backup | Neon/Supabase มี backup อัตโนมัติ + ดึงสำรองเองด้วย `pg_dump` ได้ |
+| อัปเดตโค้ด | task **🌐 Cloudflare: Deploy ขึ้นจริง** (หรือ `npm.cmd run deploy` ใน `deploy/cloudflare`) |
+| โครงสร้าง DB เปลี่ยน (เพิ่มตาราง/คอลัมน์) | task **☁️ Supabase: อัปเดตโครงสร้าง (ปลอดภัย)** — ทำ**ก่อน** deploy โค้ดใหม่ |
+| ดู log backend สดๆ | `npm.cmd run logs` |
+| Backup | Supabase มี backup อัตโนมัติ + task **💾 DB: Backup Supabase** |
 
 ## ข้อควรรู้
 

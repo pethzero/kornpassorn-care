@@ -1,0 +1,3 @@
+# คัดลอกเป็น .dev.vars (ไฟล์นี้ไม่ขึ้น git) แล้วใช้กับ `npm run dev`
+# backend ที่รันใน Docker ของเครื่อง — ดู README หัวข้อ "จำลองในเครื่อง"
+LOCAL_BACKEND_URL=http://localhost:3100

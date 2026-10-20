@@ -1,5 +1,13 @@
+import * as fs from 'fs';
 import { parseBool, parseIntOr } from './token.config';
 import { getEntitiesForTypeOrm } from './entity-registry';
+
+// DB_SSL_CA: เนื้อหา PEM ตรงๆ (ใช้กับ secret บน Cloudflare — "\n" แบบตัวอักษรก็รับ) หรือ path ไฟล์ .crt
+function readSslCa(value?: string): { ca?: string } {
+  if (!value) return {};
+  if (value.includes('-----BEGIN')) return { ca: value.replace(/\\n/g, '\n') };
+  return { ca: fs.readFileSync(value, 'utf8') };
+}
 
 // Default (unnamed) connection — ใช้งานจริงตอนนี้
 export const DEFAULT_DB_CONFIG = {
@@ -12,7 +20,8 @@ export const DEFAULT_DB_CONFIG = {
   synchronize: parseBool(process.env.DB_SYNC ?? 'true'),
   logging: parseBool(process.env.DB_LOGGING ?? 'false'),
   // Postgres บนคลาวด์ (Neon/Supabase ฯลฯ) บังคับ TLS — DB_SSL=true (เครื่อง local ปิดไว้)
-  ssl: parseBool(process.env.DB_SSL ?? 'false') ? { rejectUnauthorized: true } : false,
+  // Supabase เซ็นใบรับรองด้วย CA ของตัวเอง → ใส่ DB_SSL_CA (path ไฟล์ .crt หรือเนื้อหา PEM) ไม่งั้นต่อไม่ได้
+  ssl: parseBool(process.env.DB_SSL ?? 'false') ? { rejectUnauthorized: true, ...readSslCa(process.env.DB_SSL_CA) } : false,
   entities: getEntitiesForTypeOrm('default'),
 };
 

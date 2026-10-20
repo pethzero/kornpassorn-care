@@ -38,6 +38,12 @@ export default {
     const ip = request.headers.get('cf-connecting-ip');
     if (ip) headers.set('x-forwarded-for', ip);
 
+    // จำลองในเครื่อง (wrangler dev): ส่งไป backend ที่รันใน Docker เอง แทน Cloudflare container
+    if (typeof env.LOCAL_BACKEND_URL === 'string' && env.LOCAL_BACKEND_URL) {
+      const target = new URL(url.pathname + url.search, env.LOCAL_BACKEND_URL);
+      return fetch(new Request(target, { method: request.method, headers, body: request.body, redirect: 'manual' }));
+    }
+
     // instance เดียวชื่อ "main" — ทุก request ไปตัวเดียวกัน
     return env.BACKEND.getByName('main').fetch(new Request(request, { headers }));
   },

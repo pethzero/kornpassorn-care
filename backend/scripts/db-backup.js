@@ -2,6 +2,7 @@
 //
 //   cd backend && npm run db:backup:dev     → database/backup/kornpassorn_db_dev-<วันเวลา>.sql
 //   cd backend && npm run db:backup:prod    → database/backup/kornpassorn_db-<วันเวลา>.sql
+//   cd backend && npm run db:backup:cloud   → database/backup/supabase-<วันเวลา>.sql (เฉพาะตารางของเรา)
 //
 // กู้คืน (ลงฐานข้อมูลว่าง):  psql -U postgres -d <ชื่อฐานข้อมูลใหม่> -f <ไฟล์.sql>
 //
@@ -44,14 +45,23 @@ if (!pgDump) {
 const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 const dir = path.join(__dirname, '..', '..', 'database', 'backup');
 fs.mkdirSync(dir, { recursive: true });
-const file = path.join(dir, `${db}-${stamp}.sql`);
+const file = path.join(dir, `${envName === 'supabase' ? 'supabase' : db}-${stamp}.sql`);
 
 console.log(`backup "${db}" (${envName}) ด้วย ${pgDump}`);
+// ฐานข้อมูลบนคลาวด์ (DB_SSL=true เช่น Supabase): ใช้ TLS ตรวจใบรับรอง และเอาเฉพาะ schema public
+// (ฐานข้อมูล "postgres" ของ Supabase มี schema ระบบของเขาเอง เช่น auth/storage — ไม่ใช่ของเรา)
+const cloud = String(process.env.DB_SSL).toLowerCase() === 'true';
+const sslEnv = cloud
+  ? {
+      PGSSLMODE: process.env.DB_SSL_CA ? 'verify-full' : 'require',
+      ...(process.env.DB_SSL_CA ? { PGSSLROOTCERT: path.resolve(__dirname, '..', process.env.DB_SSL_CA) } : {}),
+    }
+  : {};
 const result = spawnSync(
   pgDump,
   ['-h', process.env.DB_HOST || 'localhost', '-p', String(process.env.DB_PORT || 5432), '-U', process.env.DB_USER || 'postgres',
-    '--no-owner', '--no-privileges', '--encoding=UTF8', '-f', file, db],
-  { env: { ...process.env, PGPASSWORD: process.env.DB_PASS || '' }, stdio: ['ignore', 'inherit', 'inherit'] },
+    '--no-owner', '--no-privileges', '--encoding=UTF8', ...(cloud ? ['--schema=public'] : []), '-f', file, db],
+  { env: { ...process.env, ...sslEnv, PGPASSWORD: process.env.DB_PASS || '' }, stdio: ['ignore', 'inherit', 'inherit'] },
 );
 if (result.status !== 0) {
   console.error('✖ backup ไม่สำเร็จ');

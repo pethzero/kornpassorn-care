@@ -26,6 +26,10 @@
       "max_instances": 1
     }
   ],
+  // `wrangler dev` บน Windows จำลอง container ไม่ได้ → ปิดไว้ แล้วให้ /api วิ่งไป backend ใน Docker ของเครื่องเอง
+  // (ตั้ง LOCAL_BACKEND_URL ใน .dev.vars — ดู .dev.vars.example) · ไม่มีผลกับ `wrangler deploy`
+  "dev": { "enable_containers": false, "port": 8787 },
+
   "durable_objects": {
     "bindings": [{ "name": "BACKEND", "class_name": "Backend" }]
   },
@@ -39,10 +43,13 @@
     "PORT": "3100",
     "DEBUG": "false",
     "DB_TYPE": "postgres",
+    "DB_PASS":"123456",
     "DB_PORT": "5432",
     "DB_SYNC": "false",
     "DB_LOGGING": "false",
     "DB_SSL": "true",
+    // ใบรับรอง CA ของ Supabase อยู่ใน image แล้ว (backend/certs) — ไม่ต้องเป็น secret
+    "DB_SSL_CA": "certs/supabase-ca.crt",
     "JWT_EXPIRES_IN": "24h",
     "JWT_ACCESS_EXPIRY": "15m",
     "JWT_REFRESH_EXPIRY": "7d",
