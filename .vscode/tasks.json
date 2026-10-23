@@ -1,0 +1,319 @@
+{
+	// Ctrl+Shift+P → "Tasks: Run Task"
+	//   🚀 DEV  = ทดสอบ  — เว็บ http://localhost:4200 + API :3000, ฐานข้อมูล kornpassorn_db_dev
+	//   🏭 PRD  = ใช้จริง — http://localhost:3100 (www.kronpatsroncare.com), ฐานข้อมูล kornpassorn_db
+	//   🗃️/💾 DB = งานฐานข้อมูล (backup ไปที่ database/backup/)
+	//   ☁️ Supabase   = ฐานข้อมูลบนคลาวด์ (ย้ายข้อมูล/อัปเดตโครงสร้าง) — database/SUPABASE_README.md
+	//   🌐 Cloudflare = จำลองเว็บแบบบน Cloudflare (:8787) / deploy — deploy/cloudflare/README.md
+	"version": "2.0.0",
+	"tasks": [
+		// ===================== 🚀 DEV =====================
+		{
+			"label": "🚀 DEV: เริ่มทั้งหมด",
+			"detail": "เว็บ :4200 + API :3000 · ฐานข้อมูล kornpassorn_db_dev (ทดสอบ/ล้างได้)",
+			"dependsOrder": "parallel",
+			"dependsOn": ["🚀 DEV: Backend", "🚀 DEV: Frontend"],
+			"group": { "kind": "build", "isDefault": true },
+			"problemMatcher": []
+		},
+		{
+			"label": "🚀 DEV: Backend",
+			"detail": "NestJS watch :3000 — แก้โค้ดแล้วรีสตาร์ทเอง",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "start:dev"],
+			"isBackground": true,
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"problemMatcher": ["$tsc-watch"],
+			"presentation": { "reveal": "always", "panel": "dedicated", "group": "dev" }
+		},
+		{
+			"label": "🚀 DEV: Frontend",
+			"detail": "Angular :4200 — /api ส่งต่อไป :3000 (proxy.conf.json)",
+			"type": "shell",
+			"command": "npm",
+			"args": ["start"],
+			"isBackground": true,
+			"options": { "cwd": "${workspaceFolder}/webui" },
+			"problemMatcher": {
+				"owner": "angular",
+				"pattern": { "regexp": "^\\s*(?:X|✘)\\s+\\[ERROR\\]\\s+(.*)$", "message": 1 },
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "(Building\\.\\.\\.|Changes detected)",
+					"endsPattern": "(Application bundle generation (complete|failed)|Local:\\s+http)"
+				}
+			},
+			"presentation": { "reveal": "always", "panel": "dedicated", "group": "dev" }
+		},
+
+		// ===================== 🏭 PRD =====================
+		{
+			"label": "🏭 PRD: Build + เริ่ม",
+			"detail": "build เว็บ + backend → อัปเดตโครงสร้าง DB (ปลอดภัย) → เปิด :3100 · ฐานข้อมูล kornpassorn_db",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "start:prod"],
+			"isBackground": true,
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"dependsOrder": "sequence",
+			"dependsOn": ["🏭 PRD: Build หน้าเว็บ", "🏭 PRD: Build backend", "🗃️ DB: PRD อัปเดตโครงสร้าง (ปลอดภัย)"],
+			"problemMatcher": {
+				"owner": "nest-prod",
+				"pattern": { "regexp": "^\\[Nest\\].*ERROR.*?\\] (.*)$", "message": 1 },
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "Starting Nest application",
+					"endsPattern": "listening on :"
+				}
+			},
+			"presentation": { "reveal": "always", "panel": "dedicated", "group": "prd" }
+		},
+		{
+			"label": "🏭 PRD: Build หน้าเว็บ",
+			"detail": "→ webui/dist/webui-prod (แยกจาก build ของ DEV)",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "build:prod"],
+			"options": { "cwd": "${workspaceFolder}/webui" },
+			"problemMatcher": [],
+			"presentation": { "group": "prd" }
+		},
+		{
+			"label": "🏭 PRD: Build backend",
+			"detail": "→ backend/dist-prod (แยกจาก dist ที่ DEV ใช้)",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "build:prod"],
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"problemMatcher": ["$tsc"],
+			"presentation": { "group": "prd" }
+		},
+
+		// ===================== 🗃️ / 💾 ฐานข้อมูล =====================
+		{
+			"label": "🗃️ DB: PRD ตรวจโครงสร้าง (ดูอย่างเดียว)",
+			"detail": "บอกว่าโครงสร้าง kornpassorn_db ต่างจากโค้ดตรงไหน — ไม่แก้อะไร",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "db:prod:check"],
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"problemMatcher": [],
+			"presentation": { "group": "db" }
+		},
+		{
+			"label": "🗃️ DB: PRD อัปเดตโครงสร้าง (ปลอดภัย)",
+			"detail": "เพิ่มตาราง/คอลัมน์ใหม่ให้ kornpassorn_db (backup ก่อน) — ถ้าจะลบคอลัมน์/ตาราง จะหยุดถาม",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "db:prod:sync"],
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"problemMatcher": [],
+			"presentation": { "group": "db" }
+		},
+		{
+			"label": "💾 DB: Backup PRD",
+			"detail": "pg_dump kornpassorn_db → database/backup/kornpassorn_db-<วันเวลา>.sql",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "db:backup:prod"],
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"problemMatcher": [],
+			"presentation": { "group": "db" }
+		},
+		{
+			"label": "💾 DB: Backup DEV",
+			"detail": "pg_dump kornpassorn_db_dev → database/backup/kornpassorn_db_dev-<วันเวลา>.sql",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "db:backup:dev"],
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"problemMatcher": [],
+			"presentation": { "group": "db" }
+		},
+		{
+			"label": "🧪 DB: DEV ใส่ข้อมูลตัวอย่าง (⚠ ล้าง DEV)",
+			"detail": "ล้างเอกสาร/บัญชี/คลัง/นัดหมายของ kornpassorn_db_dev แล้วใส่ demo — รันกับ PRD ไม่ได้",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "db:demo"],
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"problemMatcher": [],
+			"presentation": { "group": "db" }
+		},
+		{
+			"label": "📦 DB: สร้างชุดติดตั้งฐานข้อมูล",
+			"detail": "สร้าง database/setup/*.sql ใหม่ (โครงสร้าง + user ตั้งต้น + demo) — ไม่แตะ DEV/PRD",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "db:build-setup"],
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"problemMatcher": [],
+			"presentation": { "group": "db" }
+		},
+
+		// ===================== ☁️ Supabase (ฐานข้อมูลบนคลาวด์) =====================
+		// ค่าเชื่อมต่ออยู่ที่ backend/.env.supabase — คู่มือ: database/SUPABASE_README.md
+		{
+			"label": "☁️ Supabase: ตรวจโครงสร้าง (ดูอย่างเดียว)",
+			"detail": "บอกว่าตารางบน Supabase ต่างจากโค้ดตรงไหน — ไม่แก้อะไร",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "db:cloud:check"],
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"problemMatcher": [],
+			"presentation": { "group": "cloud" }
+		},
+		{
+			"label": "☁️ Supabase: อัปเดตโครงสร้าง (ปลอดภัย)",
+			"detail": "เพิ่มตาราง/คอลัมน์ใหม่บน Supabase หลังแก้ entity — ถ้าจะลบคอลัมน์/ตาราง จะหยุดถาม",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "db:cloud:sync"],
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"problemMatcher": [],
+			"presentation": { "group": "cloud" }
+		},
+		{
+			"label": "☁️ Supabase: ย้ายข้อมูลจาก PRD ขึ้น (ครั้งแรก)",
+			"detail": "kornpassorn_db → Supabase · สร้างตาราง + ใส่ข้อมูล + เทียบจำนวนแถว — Supabase ต้องยังว่าง",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "db:cloud:push"],
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"problemMatcher": [],
+			"presentation": { "group": "cloud", "reveal": "always" }
+		},
+		{
+			"label": "☁️ Supabase: เขียนทับด้วยข้อมูล PRD (⚠ ข้อมูลบนคลาวด์หาย)",
+			"detail": "ล้างข้อมูลบน Supabase แล้วใส่ข้อมูลจาก kornpassorn_db แทน — backup ของบนคลาวด์ให้ก่อน",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "db:cloud:push", "--", "--replace"],
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"problemMatcher": [],
+			"presentation": { "group": "cloud", "reveal": "always" }
+		},
+		{
+			"label": "💾 DB: Backup Supabase",
+			"detail": "pg_dump ตารางของเราบน Supabase → database/backup/supabase-<วันเวลา>.sql",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "db:backup:cloud"],
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"problemMatcher": [],
+			"presentation": { "group": "cloud" }
+		},
+
+		// ===================== 🌐 Cloudflare (จำลองในเครื่อง / deploy) =====================
+		// ต้องเปิด Docker Desktop ก่อน — คู่มือ: deploy/cloudflare/README.md
+		{
+			"label": "🌐 Cloudflare จำลอง: เริ่มทั้งหมด",
+			"detail": "http://127.0.0.1:8787 · Worker + หน้าเว็บ → backend ใน Docker → Supabase (เปิด Docker Desktop ก่อน)",
+			// backend ต้องขึ้นก่อน (รอ "listening on") — ถ้า backend ล้ม จะไม่เปิด Worker ทิ้งไว้ให้ /api ตอบ 500
+			"dependsOrder": "sequence",
+			"dependsOn": ["🌐 Cloudflare จำลอง: Backend (Docker → Supabase)", "🌐 Cloudflare จำลอง: Worker"],
+			"problemMatcher": []
+		},
+		{
+			"label": "🌐 Cloudflare จำลอง: Backend (Docker → Supabase)",
+			"detail": "รัน image kornpassorn-backend ที่ :3100 ต่อฐานข้อมูล Supabase (ใช้ค่าใน backend/.env.supabase)",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "backend:supabase"],
+			"isBackground": true,
+			"options": { "cwd": "${workspaceFolder}/deploy/cloudflare" },
+			"problemMatcher": {
+				"owner": "cf-backend",
+				"pattern": { "regexp": "^\\[Nest\\].*ERROR.*?\\] (.*)$", "message": 1 },
+				"background": { "activeOnStart": true, "beginsPattern": ".", "endsPattern": "listening on :" }
+			},
+			"presentation": { "panel": "dedicated", "group": "cloudflare" }
+		},
+		{
+			"label": "🌐 Cloudflare จำลอง: Worker",
+			"detail": "wrangler dev :8787 — หน้าเว็บจาก dist/webui-prod (build ด้วย task 🌐 Build หน้าเว็บ)",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "dev"],
+			"isBackground": true,
+			"options": { "cwd": "${workspaceFolder}/deploy/cloudflare" },
+			"problemMatcher": {
+				"owner": "wrangler",
+				"pattern": { "regexp": "^✘ \\[ERROR\\] (.*)$", "message": 1 },
+				"background": { "activeOnStart": true, "beginsPattern": "wrangler", "endsPattern": "Ready on" }
+			},
+			"presentation": { "panel": "dedicated", "group": "cloudflare" }
+		},
+		{
+			"label": "🌐 Cloudflare: Build backend image",
+			"detail": "docker build backend → kornpassorn-backend (ทำหลังแก้โค้ด backend)",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "backend:build"],
+			"options": { "cwd": "${workspaceFolder}/deploy/cloudflare" },
+			"problemMatcher": [],
+			"presentation": { "group": "cloudflare" }
+		},
+		{
+			"label": "🌐 Cloudflare: Build หน้าเว็บ",
+			"detail": "ng build production → webui/dist/webui-prod (ใช้ทั้งตอนจำลองและ deploy)",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "build:web"],
+			"options": { "cwd": "${workspaceFolder}/deploy/cloudflare" },
+			"problemMatcher": [],
+			"presentation": { "group": "cloudflare" }
+		},
+		{
+			"label": "🌐 Cloudflare: Deploy ขึ้นจริง",
+			"detail": "build หน้าเว็บ + image backend แล้ว wrangler deploy — ต้อง login (npx wrangler login) และตั้ง secret ก่อน",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "deploy"],
+			"options": { "cwd": "${workspaceFolder}/deploy/cloudflare" },
+			"problemMatcher": [],
+			"presentation": { "group": "cloudflare", "reveal": "always" }
+		},
+
+		// ===================== 🧪 ทดสอบ / ดูแลโค้ด =====================
+		{
+			"label": "🧪 Test: Backend",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "test"],
+			"group": "test",
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"problemMatcher": [],
+			"presentation": { "group": "test" }
+		},
+		{
+			"label": "🧪 Test: Frontend",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "test"],
+			"group": "test",
+			"isBackground": true,
+			"options": { "cwd": "${workspaceFolder}/webui" },
+			"problemMatcher": [],
+			"presentation": { "group": "test" }
+		},
+		{
+			"label": "🔍 Lint: Backend",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "lint"],
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"problemMatcher": ["$eslint-stylish"],
+			"presentation": { "group": "test" }
+		},
+		{
+			"label": "📦 ติดตั้ง dependencies ทั้งหมด",
+			"detail": "npm install ทั้ง backend และ webui (หลัง clone หรือมี package ใหม่)",
+			"type": "shell",
+			"command": "npm install --prefix backend && npm install --prefix webui",
+			"options": { "cwd": "${workspaceFolder}" },
+			"problemMatcher": []
+		}
+	]
+}

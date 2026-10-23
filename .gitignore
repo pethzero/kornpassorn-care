@@ -55,8 +55,8 @@ pids/
 ehthumbs.db
 Thumbs.db
 
-# ✅ Editor / IDE
-.vscode/
+# ✅ Editor / IDE — ต้องเป็น .vscode/* (ไม่ใช่ .vscode/) ข้อยกเว้น ! ด้านล่างถึงจะทำงาน
+.vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
@@ -124,8 +124,7 @@ pnpm-debug.log*
 .env.local
 .env.*.local
 
-# ✅ Editor / IDE settings
-.vscode/
+# ✅ Editor / IDE settings (.vscode ดูกฎด้านบน)
 .idea/
 
 # ✅ OS Junk
