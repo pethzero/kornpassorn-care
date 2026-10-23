@@ -7,17 +7,22 @@
   "name": "kornpassorn-care",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-01",
-  "compatibility_flags": ["nodejs_compat"],
-
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "observability": {
+    "enabled": true
+  },
   "assets": {
     "directory": "../../webui/dist/webui-prod/browser",
     "binding": "ASSETS",
     // Angular เป็น SPA — path ที่ไม่มีไฟล์ (เช่น /patient/12) ให้ตอบ index.html
     "not_found_handling": "single-page-application",
     // เฉพาะ /api ที่ต้องผ่าน Worker → container
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": [
+      "/api/*"
+    ]
   },
-
   "containers": [
     {
       "class_name": "Backend",
@@ -28,15 +33,24 @@
   ],
   // `wrangler dev` บน Windows จำลอง container ไม่ได้ → ปิดไว้ แล้วให้ /api วิ่งไป backend ใน Docker ของเครื่องเอง
   // (ตั้ง LOCAL_BACKEND_URL ใน .dev.vars — ดู .dev.vars.example) · ไม่มีผลกับ `wrangler deploy`
-  "dev": { "enable_containers": false, "port": 8787 },
-
+  "dev": {
+    "enable_containers": false,
+    "port": 8787
+  },
   "durable_objects": {
-    "bindings": [{ "name": "BACKEND", "class_name": "Backend" }]
+    "bindings": [
+      {
+        "name": "BACKEND",
+        "class_name": "Backend"
+      }
+    ]
   },
   "exports": {
-    "Backend": { "type": "durable-object", "storage": "sqlite" }
+    "Backend": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    }
   },
-
   // ค่าที่ไม่ใช่ความลับ (ตรงกับ backend/.env.production) — ความลับใช้ `npx wrangler secret put` เท่านั้น
   "vars": {
     "NODE_ENV": "production",
