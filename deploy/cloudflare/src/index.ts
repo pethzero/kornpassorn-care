@@ -41,7 +41,18 @@ export default {
     // จำลองในเครื่อง (wrangler dev): ส่งไป backend ที่รันใน Docker เอง แทน Cloudflare container
     if (typeof env.LOCAL_BACKEND_URL === 'string' && env.LOCAL_BACKEND_URL) {
       const target = new URL(url.pathname + url.search, env.LOCAL_BACKEND_URL);
-      return fetch(new Request(target, { method: request.method, headers, body: request.body, redirect: 'manual' }));
+      try {
+        return await fetch(new Request(target, { method: request.method, headers, body: request.body, redirect: 'manual' }));
+      } catch {
+        // backend ใน Docker ไม่ได้รัน — บอกให้ชัด แทน 500 "Network connection lost"
+        return Response.json(
+          {
+            statusCode: 502,
+            message: `ต่อ backend ในเครื่องไม่ได้ (${env.LOCAL_BACKEND_URL}) — เปิด Docker Desktop แล้วรัน task "🌐 Cloudflare จำลอง: Backend (Docker → Supabase)"`,
+          },
+          { status: 502 },
+        );
+      }
     }
 
     // instance เดียวชื่อ "main" — ทุก request ไปตัวเดียวกัน
