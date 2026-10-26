@@ -9,8 +9,9 @@ interface Env {
 
 export class Backend extends Container<Env> {
   defaultPort = 3100;
-  // ไม่มีคนใช้ 30 นาที → container หลับ (ไม่เสียค่า CPU) — request แรกหลังหลับจะช้าไม่กี่วินาที
-  sleepAfter = '30m';
+  // ไม่มีคนใช้ 12 ชม. → container หลับ (ประหยัดค่า RAM) — คนแรกหลังหลับรอ NestJS เปิดใหม่หลายวินาที
+  // เดิม 30m: หลับบ่อย ช้าแทบทุกครั้งที่เข้ามาใช้ · อยากประหยัดกว่านี้ใช้ '2h' (หลับตอนกลางคืน)
+  sleepAfter = '12h';
   // ต้องออกเน็ตได้ — ฐานข้อมูลอยู่นอก Cloudflare
   enableInternet = true;
 
