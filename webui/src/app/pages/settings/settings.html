@@ -146,8 +146,9 @@
               @for (l of loginLogs; track l.id) {
                 <div class="log-row" [class.failed]="!l.success">
                   <i [class]="l.success ? 'pi pi-check-circle ok' : 'pi pi-times-circle bad'"></i>
-                  <span class="log-who">{{ l.success ? (l.who || '—') : (l.reason || 'ไม่สำเร็จ') }}</span>
+                  <span class="log-who">{{ l.who || '—' }}</span>
                   @if (l.success && l.role) { <span class="chip role-chip role-{{ l.role }}">{{ roleLabel[l.role] || l.role }}</span> }
+                  @if (!l.success) { <span class="chip chip-danger">{{ failReason(l.reason) }}</span> }
                   <span class="cell-sub log-device"><i [class]="deviceIcon(l.device)"></i> {{ deviceTitle(l.device) }} · IP {{ l.ip || '—' }}</span>
                   <span class="cell-sub log-time">{{ ago(l.at) }}</span>
                 </div>

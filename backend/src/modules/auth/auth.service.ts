@@ -5,7 +5,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Request, Response } from 'express';
 import * as bcrypt from 'bcrypt';
-import * as crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '../../database/entities/user.entity';
 import { Patient } from '../../database/entities/medical.entity';
@@ -47,6 +46,16 @@ export class AuthService implements OnModuleInit {
       .andWhere(`(token_type = 'refresh' OR ("userId" IS NULL AND "patientId" IS NULL))`)
       .execute()
       .catch(() => undefined);
+
+    // บั๊กเดิม: login เก็บข้อมูลฟอร์มทั้งก้อน (รวมรหัสผ่านตัวจริง) ลง device_info — ลบทิ้งทุกครั้งที่เปิด server (ไม่มี = ไม่ทำอะไร)
+    // พร้อมตัด field ที่เลิกเก็บแล้ว (raw/client/locale)
+    await this.userTokenRepo
+      .query(
+        `UPDATE user_tokens
+            SET device_info = device_info - 'password' - 'username' - 'rememberMe' - 'raw' - 'client' - 'locale'
+          WHERE device_info ?| array['password','username','rememberMe','raw','client','locale']`,
+      )
+      .catch(() => undefined);
   }
 
   async validateUser(username: string, password: string): Promise<User | null> {
@@ -58,29 +67,22 @@ export class AuthService implements OnModuleInit {
 
   // ===== ออก token =====
 
-  private hashToken(raw: string) {
-    return crypto.createHash('sha256').update(raw).digest('hex');
-  }
-
   private async saveToken(
     owner: { userId?: string | number; patientId?: string | number } | null,
-    rawToken: string,
     jti: string,
-    opts: { tokenType: 'access' | 'refresh'; sessionId: string; expiredAt: Date | null; isPermanent?: boolean; deviceInfo?: any },
+    opts: { tokenType: 'access' | 'refresh'; sessionId: string; expiredAt: Date; deviceInfo?: any },
   ) {
     const deviceInfo = cleanObject(opts.deviceInfo) ?? null;
     await this.userTokenRepo.save(
       this.userTokenRepo.create({
         ...(owner?.userId ? { user: { id: owner.userId } as any } : {}),
         ...(owner?.patientId ? { patient: { id: owner.patientId } as any } : {}),
-        tokenHash: this.hashToken(rawToken),
         jti,
         tokenType: opts.tokenType,
         sessionId: opts.sessionId,
         deviceInfo,
         deviceIp: deviceInfo?.ip ?? null,
-        expired_at: opts.expiredAt ?? undefined,
-        is_permanent: !!opts.isPermanent,
+        expired_at: opts.expiredAt,
         revoked: false,
       }),
     );
@@ -88,8 +90,7 @@ export class AuthService implements OnModuleInit {
 
   // access + refresh คู่กัน — sessionId ส่งมาตอน refresh (คง session เดิม), ไม่ส่ง = login ใหม่
   async issueTokenPair(identity: Identity, rememberMe: boolean, deviceInfo?: any, actorType: 'user' | 'patient' = 'user', sessionId?: string) {
-    const accessExpiresIn = Config.token.resolveAccessExpiry(identity.role, rememberMe);
-    const isPermanent = accessExpiresIn === undefined; // admin + ADMIN_ACCESS_TOKEN_EXPIRES_IN=0
+    const accessExpiresIn = Config.token.ACCESS_TOKEN_EXPIRES_IN;
     const accessJti = uuidv4();
     const refreshJti = uuidv4();
     const sid = sessionId ?? refreshJti;
@@ -100,10 +101,10 @@ export class AuthService implements OnModuleInit {
 
     const accessToken = this.jwtService.sign(
       { sub: identity.id, username: identity.username, name, role: identity.role, jti: accessJti },
-      accessExpiresIn ? { expiresIn: accessExpiresIn } : undefined,
+      { expiresIn: accessExpiresIn },
     );
     const accessExpiresInSeconds = Config.token.parseExpiresIn(accessExpiresIn);
-    const accessExpiredAt = accessExpiresInSeconds > 0 ? new Date(Date.now() + accessExpiresInSeconds * 1000) : null;
+    const accessExpiredAt = new Date(Date.now() + accessExpiresInSeconds * 1000);
 
     const refreshExpiresIn = rememberMe ? Config.token.REFRESH_TOKEN_REMEMBER_ME_EXPIRES_IN : Config.token.REFRESH_TOKEN_EXPIRES_IN;
     const refreshToken = this.jwtService.sign(
@@ -114,8 +115,8 @@ export class AuthService implements OnModuleInit {
 
     const owner = actorType === 'patient' ? { patientId: identity.id } : { userId: identity.id };
     await Promise.all([
-      this.saveToken(owner, accessToken, accessJti, { tokenType: 'access', sessionId: sid, expiredAt: accessExpiredAt, isPermanent, deviceInfo }),
-      this.saveToken(owner, refreshToken, refreshJti, {
+      this.saveToken(owner, accessJti, { tokenType: 'access', sessionId: sid, expiredAt: accessExpiredAt, deviceInfo }),
+      this.saveToken(owner, refreshJti, {
         tokenType: 'refresh',
         sessionId: sid,
         expiredAt: new Date(Date.now() + refreshExpiresInSeconds * 1000),
@@ -123,7 +124,7 @@ export class AuthService implements OnModuleInit {
       }),
     ]);
 
-    return { accessToken, accessJti, accessExpiresInSeconds, accessExpiredAt, isPermanent, refreshToken, refreshExpiresInSeconds, sessionId: sid };
+    return { accessToken, accessExpiresInSeconds, accessExpiredAt, refreshToken, refreshExpiresInSeconds, sessionId: sid };
   }
 
   // guest = access token อย่างเดียว 15 นาที (ไม่มี refresh) — มี session_id ให้ admin เห็น/เตะได้เหมือนคนอื่น
@@ -131,7 +132,7 @@ export class AuthService implements OnModuleInit {
     const jti = uuidv4();
     const accessToken = this.jwtService.sign({ sub: `guest_${jti}`, role: 'guest', is_guest: true, jti }, { expiresIn: GUEST_TTL_SECONDS });
     const expiredAt = new Date(Date.now() + GUEST_TTL_SECONDS * 1000);
-    await this.saveToken(null, accessToken, jti, {
+    await this.saveToken(null, jti, {
       tokenType: 'access',
       sessionId: jti,
       expiredAt,
@@ -280,16 +281,43 @@ export class AuthService implements OnModuleInit {
 
   // ===== ประวัติการเข้าสู่ระบบ =====
 
+  // attempted = ชื่อผู้ใช้/เบอร์ที่พิมพ์มา (เก็บแม้ login ไม่สำเร็จ — ใช้นับครั้งที่ผิด และให้ admin เห็นว่าบัญชีไหนถูกลองเดารหัส)
   async logLogin(actor: Actor | null, success: boolean, req: Request, failReason?: string, attempted?: string) {
     await this.loginLogRepo.save({
       user: actor?.user ?? undefined,
       patient: actor?.patient ?? undefined,
+      username: (attempted ?? actor?.user?.username ?? actor?.patient?.phone)?.trim().toLowerCase().slice(0, 100),
       ip_address: getClientIp(req) ?? undefined,
       user_agent: req.headers['user-agent'],
       success,
-      // login ไม่สำเร็จ: เก็บชื่อที่พิมพ์มาด้วย ให้ admin เห็นว่ามีคนพยายามเดารหัสบัญชีไหน
-      fail_reason: failReason ? (attempted ? `${failReason} (${attempted.slice(0, 50)})` : failReason) : undefined,
+      fail_reason: failReason,
     } as any);
+  }
+
+  // กันเดารหัสผ่าน: นับครั้งที่ผิดในช่วง LOGIN_LOCK_WINDOW_MINUTES (หลัง login สำเร็จครั้งล่าสุดของชื่อนั้น)
+  //   ชื่อผู้ใช้เดียวกันผิดเกิน LOGIN_MAX_FAILS_PER_USER หรือ IP เดียวกันผิดเกิน LOGIN_MAX_FAILS_PER_IP → พัก
+  // คืนจำนวนนาทีที่ต้องรอ (0 = login ได้) — ครั้งที่ถูกพักไม่นับเพิ่ม (คนจริงจะได้ไม่ถูกต่อเวลาไปเรื่อย ๆ)
+  async loginLockedFor(username: string, req: Request): Promise<number> {
+    const { LOGIN_LOCK_WINDOW_MINUTES: win, LOGIN_MAX_FAILS_PER_USER: perUser, LOGIN_MAX_FAILS_PER_IP: perIp } = Config.token;
+    const [row] = await this.loginLogRepo.query(
+      `WITH since AS (
+         SELECT GREATEST(now()::timestamp - make_interval(mins => $3),
+                         COALESCE((SELECT max(login_time) FROM login_logs WHERE success AND username = $1), '-infinity')) AS t
+       )
+       SELECT
+         count(*) FILTER (WHERE username = $1) AS by_user,
+         count(*) FILTER (WHERE ip_address = $2) AS by_ip,
+         min(login_time) FILTER (WHERE username = $1) AS first_user,
+         min(login_time) FILTER (WHERE ip_address = $2) AS first_ip
+       FROM login_logs, since
+       WHERE NOT success AND fail_reason IS DISTINCT FROM 'Locked out' AND login_time > since.t`,
+      [username.trim().toLowerCase(), getClientIp(req), win],
+    );
+    const waitFrom = (first: Date | null) =>
+      first ? Math.max(1, Math.ceil((new Date(first).getTime() + win * 60_000 - Date.now()) / 60_000)) : 0;
+    if (Number(row.by_user) >= perUser) return waitFrom(row.first_user);
+    if (Number(row.by_ip) >= perIp) return waitFrom(row.first_ip);
+    return 0;
   }
 
   async recentLogins(limit: number) {
@@ -299,7 +327,7 @@ export class AuthService implements OnModuleInit {
       .leftJoin('l.user', 'u')
       .leftJoin('l.patient', 'p')
       .select(['l.id', 'l.login_time', 'l.ip_address', 'l.user_agent', 'l.success', 'l.fail_reason'])
-      .addSelect(['u.username', 'u.role', 'p.phone', 'p.first_name', 'p.last_name'])
+      .addSelect(['l.username', 'u.username', 'u.role', 'p.phone', 'p.first_name', 'p.last_name'])
       .orderBy('l.login_time', 'DESC')
       .take(limit)
       .getMany();
@@ -308,7 +336,7 @@ export class AuthService implements OnModuleInit {
       at: l.login_time,
       success: l.success,
       reason: l.fail_reason ?? null,
-      who: l.user?.username ?? (l.patient ? `${l.patient.first_name} ${l.patient.last_name}`.trim() || l.patient.phone : null),
+      who: l.user?.username ?? (l.patient ? `${l.patient.first_name} ${l.patient.last_name}`.trim() || l.patient.phone : l.username ?? null),
       role: l.user?.role ?? (l.patient ? 'patient' : null),
       ip: l.ip_address,
       device: describeUserAgent(l.user_agent),

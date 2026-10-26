@@ -287,6 +287,17 @@ export class SettingsComponent implements OnInit, OnDestroy {
     return [d.model || kind, d.os].filter(Boolean).join(' · ');
   }
 
+  failReason(reason: string | null): string {
+    const map: Record<string, string> = {
+      'Invalid credentials': 'รหัสผ่านผิด / ไม่มีผู้ใช้นี้',
+      'Locked out': 'ถูกพัก (ผิดหลายครั้ง)',
+      'Invalid OTP': 'OTP ผิด',
+      'OTP invalid or expired': 'OTP หมดอายุ',
+      'Too many OTP attempts': 'OTP ผิดเกินกำหนด',
+    };
+    return (reason && map[reason]) || reason || 'ไม่สำเร็จ';
+  }
+
   ago(d: string): string {
     const min = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
     if (min < 1) return 'เมื่อสักครู่';

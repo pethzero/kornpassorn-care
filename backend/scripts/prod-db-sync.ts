@@ -4,10 +4,12 @@
 //
 // ขั้นตอน:
 //   1) คำนวณ SQL ที่ต้องรัน (ยังไม่แตะฐานข้อมูล)
-//   2) ถ้ามีคำสั่งที่ "ลบ" คอลัมน์/ตาราง → หยุด แสดงรายการ ไม่ทำอะไร (กันข้อมูลหาย)
-//      ยืนยันว่าตั้งใจลบจริง: npm run db:prod:sync -- --allow-drop
+//   2) backup ทุกตารางเป็น JSON ที่ database/backup/prod-<เวลา>/
+//   3) ทำเฉพาะคำสั่งที่ "เพิ่ม" (ตาราง/คอลัมน์/index ใหม่) — คำสั่งที่ "ลบ" คอลัมน์/ตาราง จะข้ามและแจ้งไว้
+//      ลบจริง (หลัง deploy โค้ดใหม่ที่ไม่ใช้คอลัมน์นั้นแล้ว): npm run db:prod:sync -- --allow-drop
 //   ดูอย่างเดียวไม่แก้: npm run db:prod:check (--dry-run)
-//   3) backup ทุกตารางเป็น JSON ที่ database/backup/prod-<เวลา>/ แล้วค่อยรัน SQL
+//
+// ทำไมแยก "เพิ่ม" กับ "ลบ": ระหว่างรอ deploy โค้ดเก่ายังใช้คอลัมน์เดิมอยู่ ถ้าลบก่อนจะพัง — เพิ่มก่อน ลบทีหลังเสมอ
 //
 // PRD ปิด DB_SYNC (แอปไม่แก้โครงสร้างเองตอน start) — โครงสร้างเปลี่ยนผ่านสคริปต์นี้เท่านั้น
 process.env.NODE_ENV = process.env.NODE_ENV || 'production';
@@ -44,33 +46,53 @@ async function main() {
       return;
     }
 
-    if (destructive.length && !allowDrop) {
-      console.error(
-        '\n✖ หยุดไว้ก่อน: มีคำสั่งที่จะลบคอลัมน์/ตาราง (ข้อมูลในนั้นจะหาย)\n' +
-          '  ถ้าตั้งใจจริง (เช่น เปลี่ยนชื่อ field ใน entity) ให้ backup แล้วรัน: npm run db:prod:sync -- --allow-drop',
-      );
-      process.exitCode = 1;
+    if (allowDrop) {
+      await backupAll(ds);
+      await ds.synchronize();
+      console.log('✔ อัปเดตโครงสร้างเรียบร้อย (รวมคำสั่งลบ)');
       return;
     }
 
-    // backup ทุกตารางก่อนเปลี่ยน
-    const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const dir = path.join(__dirname, '..', '..', 'database', 'backup', `prod-${stamp}`);
-    fs.mkdirSync(dir, { recursive: true });
-    const tables: { table_name: string }[] = await ds.query(
-      `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'`,
-    );
-    for (const { table_name } of tables) {
-      const rows = await ds.query(`SELECT * FROM "${table_name}"`);
-      fs.writeFileSync(path.join(dir, `${table_name}.json`), JSON.stringify(rows, null, 2));
+    const safe = queries.filter((q) => !DESTRUCTIVE.test(q));
+    if (safe.length) {
+      await backupAll(ds);
+      const runner = ds.createQueryRunner();
+      await runner.startTransaction();
+      try {
+        for (const q of safe) await runner.query(q);
+        await runner.commitTransaction();
+      } catch (e) {
+        await runner.rollbackTransaction();
+        throw e;
+      } finally {
+        await runner.release();
+      }
+      console.log(`✔ อัปเดตโครงสร้างเรียบร้อย (${safe.length} คำสั่ง)`);
     }
-    console.log(`backup ${tables.length} ตาราง → ${path.relative(process.cwd(), dir)}`);
-
-    await ds.synchronize();
-    console.log('✔ อัปเดตโครงสร้างเรียบร้อย');
+    if (destructive.length) {
+      console.log(
+        `\nℹ ข้ามคำสั่งลบ ${destructive.length} คำสั่ง (⚠ ด้านบน) — ไม่กระทบการใช้งาน\n` +
+          '  ลบจริงหลัง deploy โค้ดใหม่แล้ว: npm run db:prod:sync -- --allow-drop (Supabase: db:cloud:sync -- --allow-drop)',
+      );
+    }
   } finally {
     await ds.destroy();
   }
+}
+
+// backup ทุกตารางเป็น JSON ก่อนเปลี่ยนโครงสร้าง → database/backup/prod-<เวลา>/ (ไม่ขึ้น git)
+async function backupAll(ds: DataSource) {
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const dir = path.join(__dirname, '..', '..', 'database', 'backup', `prod-${stamp}`);
+  fs.mkdirSync(dir, { recursive: true });
+  const tables: { table_name: string }[] = await ds.query(
+    `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'`,
+  );
+  for (const { table_name } of tables) {
+    const rows = await ds.query(`SELECT * FROM "${table_name}"`);
+    fs.writeFileSync(path.join(dir, `${table_name}.json`), JSON.stringify(rows, null, 2));
+  }
+  console.log(`backup ${tables.length} ตาราง → ${path.relative(process.cwd(), dir)}`);
 }
 
 main().catch((err) => {

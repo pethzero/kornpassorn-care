@@ -16,10 +16,7 @@ export class UserToken {
   @Index()
   patient?: Patient;
 
-  @Column({ name: 'token_hash', nullable: true })
-  @Index()
-  tokenHash?: string;
-
+  // หา token ด้วย jti (อยู่ใน JWT ที่ลายเซ็นถูกต้องแล้ว) — ไม่ต้องเก็บ hash ของ token อีก
   // unique กัน jti ชนกัน (จริง ๆ แทบเป็นไปไม่ได้เพราะเป็น uuid v4 แต่กันไว้เผื่อบั๊กใน caller ที่ generate ซ้ำ)
   @Column({ type: 'uuid', nullable: true })
   @Index({ unique: true })
@@ -60,9 +57,6 @@ export class UserToken {
 
   @Column({ name: 'last_used', type: 'timestamp', nullable: true })
   last_used?: Date;
-
-  @Column({ name: 'is_permanent', default: false })
-  is_permanent?: boolean;
 
   @Column({ default: false })
   @Index()

@@ -31,7 +31,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // ไม่มีแถว / ถูก revoke / token รุ่นเก่าที่ไม่มี session_id (หน้าเว็บจะ refresh ได้ token ใหม่ใน session เดิมเอง)
     // เดิมมีข้อยกเว้นให้ admin ผ่านได้ถ้าหาแถวไม่เจอ — ทำให้เตะ admin ออกไม่ได้ (แถวที่ revoke หาไม่เจอ = ผ่าน) จึงเอาออก
     if (!row || row.revoked || !row.sessionId) throw new UnauthorizedException('Session revoked or not found');
-    if (row.expired_at && row.expired_at < new Date() && !row.is_permanent) throw new UnauthorizedException('Token expired');
+    if (row.expired_at && row.expired_at < new Date()) throw new UnauthorizedException('Token expired');
     if (row.user ? !row.user.isActive : row.patient ? !row.patient.is_active : payload.role !== 'guest') {
       throw new UnauthorizedException('Account inactive');
     }

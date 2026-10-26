@@ -89,7 +89,8 @@ Supabase → **Table Editor** → เห็นตาราง `users`, `patients
 
 | เมื่อไหร่ | Task (☁️ / 💾) | คำสั่ง (ใน `backend`) |
 |---|---|---|
-| แก้ entity (เพิ่มตาราง/คอลัมน์) | ☁️ Supabase: ตรวจโครงสร้าง → อัปเดตโครงสร้าง (ปลอดภัย) | `npm.cmd run db:cloud:check` → `db:cloud:sync` |
+| แก้ entity (เพิ่มตาราง/คอลัมน์) — ทำ**ก่อน** deploy | ☁️ Supabase: ตรวจโครงสร้าง → อัปเดตโครงสร้าง (ปลอดภัย) | `npm.cmd run db:cloud:check` → `db:cloud:sync` |
+| โค้ดใหม่เลิกใช้คอลัมน์ — ทำ**หลัง** deploy เสร็จ | ☁️ Supabase: ลบคอลัมน์ที่เลิกใช้ (⚠ หลัง deploy) | `npm.cmd run db:cloud:sync -- --allow-drop` |
 | สำรองข้อมูลบนคลาวด์ | 💾 DB: Backup Supabase | `npm.cmd run db:backup:cloud` |
 | อยากให้คลาวด์ = ข้อมูลในเครื่องอีกรอบ | ☁️ Supabase: เขียนทับด้วยข้อมูล PRD (⚠) | `npm.cmd run db:cloud:push -- --replace` |
 | ใช้ DB DEV เป็นต้นทางแทน PRD | — | `npm.cmd run db:cloud:push -- --from-dev` |

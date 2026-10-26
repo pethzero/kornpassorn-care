@@ -103,13 +103,23 @@
 		},
 		{
 			"label": "🗃️ DB: PRD อัปเดตโครงสร้าง (ปลอดภัย)",
-			"detail": "เพิ่มตาราง/คอลัมน์ใหม่ให้ kornpassorn_db (backup ก่อน) — ถ้าจะลบคอลัมน์/ตาราง จะหยุดถาม",
+			"detail": "เพิ่มตาราง/คอลัมน์ใหม่ให้ kornpassorn_db (backup ก่อน) — การลบคอลัมน์/ตารางจะข้าม (ใช้ task ลบคอลัมน์ที่เลิกใช้)",
 			"type": "shell",
 			"command": "npm",
 			"args": ["run", "db:prod:sync"],
 			"options": { "cwd": "${workspaceFolder}/backend" },
 			"problemMatcher": [],
 			"presentation": { "group": "db" }
+		},
+		{
+			"label": "🗃️ DB: PRD ลบคอลัมน์ที่เลิกใช้ (⚠ หลังอัปเดตโค้ด)",
+			"detail": "ลบคอลัมน์/ตารางที่โค้ดไม่ใช้แล้วใน kornpassorn_db (backup ก่อน) — ทำหลัง PRD รันโค้ดใหม่แล้วเท่านั้น",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "db:prod:sync", "--", "--allow-drop"],
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"problemMatcher": [],
+			"presentation": { "group": "db", "reveal": "always" }
 		},
 		{
 			"label": "💾 DB: Backup PRD",
@@ -166,13 +176,23 @@
 		},
 		{
 			"label": "☁️ Supabase: อัปเดตโครงสร้าง (ปลอดภัย)",
-			"detail": "เพิ่มตาราง/คอลัมน์ใหม่บน Supabase หลังแก้ entity — ถ้าจะลบคอลัมน์/ตาราง จะหยุดถาม",
+			"detail": "เพิ่มตาราง/คอลัมน์ใหม่บน Supabase — ทำ \"ก่อน\" deploy โค้ดใหม่ · การลบคอลัมน์จะข้าม",
 			"type": "shell",
 			"command": "npm",
 			"args": ["run", "db:cloud:sync"],
 			"options": { "cwd": "${workspaceFolder}/backend" },
 			"problemMatcher": [],
 			"presentation": { "group": "cloud" }
+		},
+		{
+			"label": "☁️ Supabase: ลบคอลัมน์ที่เลิกใช้ (⚠ หลัง deploy)",
+			"detail": "ลบคอลัมน์/ตารางที่โค้ดไม่ใช้แล้วบน Supabase (backup ก่อน) — ทำหลัง Cloudflare deploy โค้ดใหม่เสร็จเท่านั้น",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "db:cloud:sync", "--", "--allow-drop"],
+			"options": { "cwd": "${workspaceFolder}/backend" },
+			"problemMatcher": [],
+			"presentation": { "group": "cloud", "reveal": "always" }
 		},
 		{
 			"label": "☁️ Supabase: ย้ายข้อมูลจาก PRD ขึ้น (ครั้งแรก)",
