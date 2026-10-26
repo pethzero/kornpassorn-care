@@ -97,6 +97,10 @@ npm run deploy
 
 ## ข้อควรรู้
 
-- container **หลับ** หลังไม่มีคนใช้ 30 นาที (`sleepAfter` ใน [src/index.ts](src/index.ts)) — คนแรกที่เข้ามาหลังจากนั้นรอไม่กี่วินาที
-- รัน backend แค่ 1 instance (`max_instances: 1`) — พอสำหรับคลินิก
+- container **หลับ** หลังไม่มีคนใช้ 12 ชม. (`sleepAfter` ใน [src/index.ts](src/index.ts)) — คนแรกที่เข้ามาหลังจากนั้นรอ NestJS เปิดใหม่หลายวินาที
+- รัน backend แค่ 1 instance (`max_instances: 1`) ขนาด **basic** (CPU 1/4 core, RAM 1 GB — `instance_type` ใน [wrangler.jsonc](wrangler.jsonc)) — พอสำหรับคลินิก
+- ค่าใช้จ่าย: CPU คิดเฉพาะตอนใช้งาน แต่ RAM คิดตลอดเวลาที่ container เปิด — `basic` เปิดเกือบทั้งวันเพิ่มราว $5–7/เดือน (ประมาณ ดูยอดจริงที่ Billing)
+  อยากประหยัด: `sleepAfter = '2h'` (หลับตอนกลางคืน) หรือกลับไปใช้ `lite`
+- เช็กความเร็ว: `1..3 | % { curl.exe -s -o NUL -w "%{time_total} s`n" https://www.kronpatsroncare.com/api/auth/csrf-token }`
+  ครั้งแรกช้าแต่ครั้งต่อไปเร็ว = ตื่นจากหลับ (cold start) · ช้าทุกครั้ง = เครื่องเล็กไป
 - ห้ามใส่ `.env*` ใน image — `backend/.dockerignore` กันไว้แล้ว

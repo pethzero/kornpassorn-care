@@ -28,7 +28,9 @@
       "class_name": "Backend",
       "image": "../../backend/Dockerfile",
       // 1 ตัวพอสำหรับคลินิก (rate limit/CSRF อยู่ใน memory ของ instance เดียว)
-      "max_instances": 1
+      "max_instances": 1,
+      // basic = CPU 1/4 core, RAM 1 GB — ค่าเริ่มต้น (lite 1/16 core, 256 MB) เล็กไป NestJS เปิดช้าและ bcrypt ช้า
+      "instance_type": "basic"
     }
   ],
   // `wrangler dev` บน Windows จำลอง container ไม่ได้ → ปิดไว้ แล้วให้ /api วิ่งไป backend ใน Docker ของเครื่องเอง
