@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { User } from './user.entity';
 import { Patient } from './medical.entity';
 
@@ -15,6 +15,11 @@ export class LoginLog {
   @ManyToOne(() => Patient, { nullable: true })
   @JoinColumn({ name: 'patient_id' })
   patient?: Patient;
+
+  // ชื่อผู้ใช้/เบอร์ที่พิมพ์มา (ตัวเล็ก) — มีแม้ login ไม่สำเร็จ ใช้นับครั้งที่ผิดเพื่อพักการ login และให้ admin ดู
+  @Column({ length: 100, nullable: true })
+  @Index()
+  username?: string;
 
   @CreateDateColumn()
   login_time: Date;

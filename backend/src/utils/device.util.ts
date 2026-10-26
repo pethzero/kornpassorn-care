@@ -35,14 +35,19 @@ export function deviceType(ua: { device?: { type?: string }; os?: { name?: strin
   return /android|ios/i.test(ua.os?.name || '') ? 'mobile' : 'desktop';
 }
 
+// กันพลาด: เดิมเคยส่ง req.body ของหน้า login เข้ามาเป็น extra → รหัสผ่านถูกเก็บเป็นข้อความธรรมดาใน user_tokens.device_info
+const SECRET_KEY = /pass|otp|token|secret|username/i;
+function withoutSecrets(extra?: Record<string, any>) {
+  return Object.fromEntries(Object.entries(extra ?? {}).filter(([k]) => !SECRET_KEY.test(k)));
+}
+
 export function buildDeviceInfo(req: Request, extra?: Record<string, any>) {
   const uaResult = new UAParser.UAParser(req.headers['user-agent'] || '').getResult();
 
+  // เก็บเฉพาะที่หน้า "อุปกรณ์ที่เข้าสู่ระบบ" ใช้ (ข้อความ user-agent ดิบยังอยู่ใน login_logs ถ้าต้องตรวจย้อนหลัง)
   const deviceInfo = {
-    raw: String(req.headers['user-agent'] || ''),
     ip: getClientIp(req),
     type: deviceType(uaResult),
-    client: uaResult.browser?.name ? 'browser' : (uaResult.device?.type || 'unknown'),
     ua: {
       family: uaResult.browser?.name || null,
       version: uaResult.browser?.version || null,
@@ -53,8 +58,7 @@ export function buildDeviceInfo(req: Request, extra?: Record<string, any>) {
         model: uaResult.device?.model || null,
       },
     },
-    locale: req.headers['accept-language'] || null,
-    ...extra,
+    ...withoutSecrets(extra),
   };
 
   return cleanObject(deviceInfo) ?? null;

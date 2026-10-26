@@ -38,7 +38,7 @@ export class TokenCleanupService {
       .delete()
       .where(
         `(revoked = true AND COALESCE(revoked_at, created_at) < :cutoff)
-         OR (is_permanent = false AND expired_at IS NOT NULL AND expired_at < :cutoff)`,
+         OR (expired_at IS NOT NULL AND expired_at < :cutoff)`,
         { cutoff },
       )
       .execute();

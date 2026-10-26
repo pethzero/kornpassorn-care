@@ -120,7 +120,8 @@ export class AuthService {
   }
 
   // ================== LOGIN ==================
-  loginWithCredentials(username: string, password: string, rememberMe = false): Observable<boolean> {
+  // true = สำเร็จ / ข้อความ = เหตุผลที่ไม่สำเร็จ (เช่น ถูกพักเพราะใส่รหัสผิดหลายครั้ง)
+  loginWithCredentials(username: string, password: string, rememberMe = false): Observable<true | string> {
     return this.http.post<{ access_token?: string }>(
       `${environment.apiUrl}/auth/login`,
       { username, password, rememberMe },
@@ -133,8 +134,10 @@ export class AuthService {
           this.setAccessToken(res.access_token);
         }
       }),
-      map(() => true),
-      catchError(() => of(false))
+      map(() => true as const),
+      catchError((err: HttpErrorResponse) =>
+        of(err.status === 429 && err.error?.message ? String(err.error.message) : 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'),
+      )
     );
   }
 

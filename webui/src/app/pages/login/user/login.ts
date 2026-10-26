@@ -27,12 +27,12 @@ export class LoginComponent {
     // จนได้ token 2 ชุด (access+refresh x2) ใน user_tokens จากการ login ครั้งเดียว
     if (this.isSubmitting) return;
     this.isSubmitting = true;
-    this.auth.loginWithCredentials(this.username, this.password, this.rememberMe).subscribe(success => {
+    this.auth.loginWithCredentials(this.username, this.password, this.rememberMe).subscribe(result => {
       this.isSubmitting = false;
-      if (success) {
+      if (result === true) {
         this.router.navigate(['/dashboard']);
       } else {
-        this.errorMessage = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+        this.errorMessage = result;
       }
     });
   }

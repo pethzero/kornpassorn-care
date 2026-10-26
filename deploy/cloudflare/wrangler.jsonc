@@ -76,9 +76,7 @@
     "RATE_LIMIT_TTL": "60",
     "RATE_LIMIT_LIMIT": "100",
     "SWAGGER_ENABLED": "false",
-    "ADMIN_NEVER_EXPIRE": "true",
     "ACCESS_TOKEN_EXPIRES_IN": "24h",
-    "ADMIN_ACCESS_TOKEN_EXPIRES_IN": "0",
     "API_TOKEN_EXPIRES_IN": "1h"
   }
 }

@@ -18,6 +18,14 @@ export class AuthController {
   @Post('login')
   @HttpCode(201)
   async login(@Body() body: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    // ผิดบ่อยเกิน → พักก่อน (ไม่เช็กรหัสเลย กันเดาต่อ)
+    const waitMinutes = await this.authService.loginLockedFor(body.username, req);
+    if (waitMinutes) {
+      await this.authService.logLogin(null, false, req, 'Locked out', body.username);
+      res.status(429);
+      return { message: `ใส่รหัสผ่านผิดหลายครั้ง — ลองใหม่อีก ${waitMinutes} นาที` };
+    }
+
     const user = await this.authService.validateUser(body.username, body.password);
     if (!user) {
       await this.authService.logLogin(null, false, req, 'Invalid credentials', body.username);
@@ -36,7 +44,6 @@ export class AuthController {
       access_token: tokens.accessToken,
       expires_in: tokens.accessExpiresInSeconds,
       expired_at: tokens.accessExpiredAt ? tokens.accessExpiredAt.toISOString() : null,
-      is_permanent: tokens.isPermanent,
       remember_me: rememberMe,
     };
   }
