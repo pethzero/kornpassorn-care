@@ -41,15 +41,36 @@ export interface StaffUser {
   createdAt?: string;
 }
 
-// 1 session = 1 การ login (refresh token) — current = เครื่องที่ใช้อยู่
+export interface DeviceSummary {
+  type: 'mobile' | 'tablet' | 'desktop';
+  browser: string | null; // เช่น "Chrome 130"
+  os: string | null; // เช่น "Android 14"
+  model: string | null; // เช่น "Samsung SM-S918B"
+}
+
+// 1 session = อุปกรณ์ 1 เครื่องที่ login อยู่ (คงเดิมแม้ token ถูกต่ออายุ)
 export interface Session {
   id: string;
-  created_at: string;
-  last_used?: string | null;
-  expired_at?: string | null;
-  current: boolean;
-  deviceInfo?: { ua?: { browser?: { name?: string }; os?: { name?: string; version?: string }; device?: { type?: string } }; ip?: string } | null;
-  deviceIp?: string | null;
+  role: 'admin' | 'user' | 'patient' | 'guest';
+  name: string;
+  username: string | null;
+  device: DeviceSummary;
+  ip: string | null;
+  login_at: string;
+  last_active: string;
+  online: boolean; // ใช้งานภายใน 5 นาที
+  current: boolean; // เครื่องที่กำลังใช้อยู่
+}
+
+export interface LoginLogRow {
+  id: number;
+  at: string;
+  success: boolean;
+  reason: string | null;
+  who: string | null;
+  role: string | null;
+  ip: string | null;
+  device: DeviceSummary;
 }
 
 // การตั้งค่าคลินิก + บัญชีของฉัน + จัดการผู้ใช้ (admin)
@@ -98,6 +119,24 @@ export class SettingsService {
 
   revokeSession(id: string): Observable<{ success: boolean; message: string }> {
     return this.http.delete<{ success: boolean; message: string }>(`${this.api}/account/sessions/${id}`);
+  }
+
+  // ออกจากระบบทุกเครื่องยกเว้นเครื่องนี้
+  revokeOtherSessions(): Observable<{ success: boolean; message: string }> {
+    return this.http.post<{ success: boolean; message: string }>(`${this.api}/account/sessions/revoke-others`, {});
+  }
+
+  // ----- ผู้ใช้ออนไลน์ (admin) -----
+  allSessions(): Observable<Res<Session[]>> {
+    return this.http.get<Res<Session[]>>(`${this.api}/admin/sessions`);
+  }
+
+  kickSession(id: string): Observable<{ success: boolean; message: string }> {
+    return this.http.delete<{ success: boolean; message: string }>(`${this.api}/admin/sessions/${id}`);
+  }
+
+  loginLogs(limit = 50): Observable<Res<LoginLogRow[]>> {
+    return this.http.get<Res<LoginLogRow[]>>(`${this.api}/admin/login-logs`, { params: { limit } });
   }
 
   // ----- ผู้ใช้ (admin) -----

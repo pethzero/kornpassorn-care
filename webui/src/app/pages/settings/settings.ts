@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -9,23 +9,27 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
-import { MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService, MessageService } from 'primeng/api';
 
 import { AuthService } from '../../core/services/auth.service';
-import { ClinicSettings, Session, SettingsService, StaffUser } from '../../core/services/settings.service';
+import { ClinicSettings, DeviceSummary, LoginLogRow, Session, SettingsService, StaffUser } from '../../core/services/settings.service';
 
-type Tab = 'account' | 'sessions' | 'users' | 'clinic';
+type Tab = 'account' | 'sessions' | 'online' | 'users' | 'clinic';
 
-// ตั้งค่า: บัญชีของฉัน / อุปกรณ์ที่ login (ทุกคน) + ผู้ใช้งาน / คลินิก & บริการ (admin)
+const ROLE_LABEL: Record<string, string> = { admin: 'ผู้ดูแลระบบ', user: 'เจ้าหน้าที่', patient: 'คนไข้', guest: 'ผู้เยี่ยมชม' };
+const MONITOR_REFRESH_MS = 30_000;
+
+// ตั้งค่า: บัญชีของฉัน / อุปกรณ์ที่ login (ทุกคน) + ผู้ใช้ออนไลน์ / ผู้ใช้งาน / คลินิก & บริการ (admin)
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ButtonModule, DialogModule, InputTextModule, InputNumberModule, ToastModule, TooltipModule],
+  imports: [CommonModule, FormsModule, RouterLink, ButtonModule, DialogModule, InputTextModule, InputNumberModule, ToastModule, TooltipModule, ConfirmDialogModule],
   templateUrl: './settings.html',
   styleUrls: ['../../ui/styles/list-page.scss', './settings.scss'],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService],
 })
-export class SettingsComponent implements OnInit {
+export class SettingsComponent implements OnInit, OnDestroy {
   tab: Tab = 'account';
   isAdmin = false;
 
@@ -35,8 +39,17 @@ export class SettingsComponent implements OnInit {
   pw = { current: '', next: '', confirm: '' };
   savingPw = false;
 
-  // อุปกรณ์
+  // อุปกรณ์ของฉัน
   sessions: Session[] = [];
+  sessionsLoaded = false;
+
+  // ผู้ใช้ออนไลน์ (admin) — รีเฟรชเองทุก 30 วินาทีขณะเปิดแท็บนี้
+  monitor: Session[] = [];
+  monitorFilter: 'online' | 'all' = 'online';
+  loginLogs: LoginLogRow[] = [];
+  monitorUpdatedAt: Date | null = null;
+  private monitorTimer: ReturnType<typeof setInterval> | null = null;
+  readonly roleLabel = ROLE_LABEL;
 
   // ผู้ใช้ (admin)
   users: StaffUser[] = [];
@@ -58,6 +71,7 @@ export class SettingsComponent implements OnInit {
     private messages: MessageService,
     private route: ActivatedRoute,
     private router: Router,
+    private confirm: ConfirmationService,
   ) {}
 
   get tabs(): { key: Tab; label: string; icon: string }[] {
@@ -66,6 +80,7 @@ export class SettingsComponent implements OnInit {
       { key: 'sessions', label: 'อุปกรณ์ที่เข้าสู่ระบบ', icon: 'pi pi-desktop' },
       ...(this.isAdmin
         ? [
+            { key: 'online' as Tab, label: 'ผู้ใช้ออนไลน์', icon: 'pi pi-eye' },
             { key: 'users' as Tab, label: 'ผู้ใช้งาน', icon: 'pi pi-users' },
             { key: 'clinic' as Tab, label: 'คลินิก & บริการ', icon: 'pi pi-building' },
           ]
@@ -79,8 +94,14 @@ export class SettingsComponent implements OnInit {
     this.open(t && this.tabs.some((x) => x.key === t) ? t : 'account');
   }
 
+  ngOnDestroy(): void {
+    this.stopMonitor();
+  }
+
   open(tab: Tab): void {
     this.tab = tab;
+    this.stopMonitor();
+    if (tab === 'online') this.startMonitor();
     this.router.navigate([], { relativeTo: this.route, queryParams: { tab }, replaceUrl: true });
     if (tab === 'account') this.loadAccount();
     if (tab === 'sessions') this.loadSessions();
@@ -144,32 +165,135 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  // ===== อุปกรณ์ =====
+  // ===== อุปกรณ์ของฉัน =====
 
   loadSessions(): void {
-    this.settings.sessions().subscribe({ next: (r) => (this.sessions = r.data), error: (e) => this.err(e) });
-  }
-
-  revoke(s: Session): void {
-    this.settings.revokeSession(s.id).subscribe({
+    this.settings.sessions().subscribe({
       next: (r) => {
-        this.ok(r.message);
-        this.loadSessions();
+        this.sessions = r.data;
+        this.sessionsLoaded = true;
       },
       error: (e) => this.err(e),
     });
   }
 
-  deviceLabel(s: Session): string {
-    const ua = s.deviceInfo?.ua;
-    const browser = ua?.browser?.name || 'เบราว์เซอร์';
-    const os = [ua?.os?.name, ua?.os?.version].filter(Boolean).join(' ');
-    return os ? `${browser} · ${os}` : browser;
+  get otherSessions(): Session[] {
+    return this.sessions.filter((s) => !s.current);
   }
 
-  deviceIcon(s: Session): string {
-    const type = s.deviceInfo?.ua?.device?.type;
-    return type === 'mobile' ? 'pi pi-mobile' : type === 'tablet' ? 'pi pi-tablet' : 'pi pi-desktop';
+  revoke(s: Session): void {
+    this.confirm.confirm({
+      header: 'ออกจากระบบอุปกรณ์นี้',
+      message: `${this.deviceTitle(s.device)} จะต้องเข้าสู่ระบบใหม่ทันทีที่ใช้งานครั้งถัดไป`,
+      icon: 'pi pi-sign-out',
+      rejectButtonProps: { label: 'ยกเลิก', severity: 'secondary', outlined: true },
+      acceptButtonProps: { label: 'ออกจากระบบ', severity: 'danger' },
+      accept: () =>
+        this.settings.revokeSession(s.id).subscribe({
+          next: (r) => {
+            this.ok(r.message);
+            this.loadSessions();
+          },
+          error: (e) => this.err(e),
+        }),
+    });
+  }
+
+  revokeOthers(): void {
+    this.confirm.confirm({
+      header: 'ออกจากระบบอุปกรณ์อื่นทั้งหมด',
+      message: `อุปกรณ์อื่น ${this.otherSessions.length} เครื่องจะต้องเข้าสู่ระบบใหม่ — เครื่องนี้ยังใช้ต่อได้ ถ้าไม่รู้จักอุปกรณ์ไหน ควรเปลี่ยนรหัสผ่านด้วย`,
+      icon: 'pi pi-shield',
+      rejectButtonProps: { label: 'ยกเลิก', severity: 'secondary', outlined: true },
+      acceptButtonProps: { label: 'ออกจากระบบทั้งหมด', severity: 'danger' },
+      accept: () =>
+        this.settings.revokeOtherSessions().subscribe({
+          next: (r) => {
+            this.ok(r.message);
+            this.loadSessions();
+          },
+          error: (e) => this.err(e),
+        }),
+    });
+  }
+
+  // ===== ผู้ใช้ออนไลน์ (admin) =====
+
+  private startMonitor(): void {
+    this.loadMonitor();
+    this.monitorTimer = setInterval(() => this.loadMonitor(true), MONITOR_REFRESH_MS);
+  }
+
+  private stopMonitor(): void {
+    if (this.monitorTimer) clearInterval(this.monitorTimer);
+    this.monitorTimer = null;
+  }
+
+  loadMonitor(silent = false): void {
+    this.settings.allSessions().subscribe({
+      next: (r) => {
+        this.monitor = r.data;
+        this.monitorUpdatedAt = new Date();
+      },
+      error: (e) => !silent && this.err(e),
+    });
+    this.settings.loginLogs(30).subscribe({ next: (r) => (this.loginLogs = r.data), error: (e) => !silent && this.err(e) });
+  }
+
+  get monitorRows(): Session[] {
+    return this.monitorFilter === 'online' ? this.monitor.filter((s) => s.online) : this.monitor;
+  }
+
+  get onlineCount(): number {
+    return this.monitor.filter((s) => s.online).length;
+  }
+
+  countByRole(role: string): number {
+    return this.monitor.filter((s) => s.online && s.role === role).length;
+  }
+
+  get failedLogins24h(): number {
+    const since = Date.now() - 24 * 3600 * 1000;
+    return this.loginLogs.filter((l) => !l.success && new Date(l.at).getTime() > since).length;
+  }
+
+  kick(s: Session): void {
+    this.confirm.confirm({
+      header: 'เตะออกจากระบบ',
+      message: `${s.name} (${ROLE_LABEL[s.role]}) บน ${this.deviceTitle(s.device)} จะหลุดทันทีที่ใช้งานครั้งถัดไป และต่ออายุไม่ได้ — ถ้าเป็นบัญชีเจ้าหน้าที่ที่ไม่ควรเข้ามา ให้ปิดใช้งาน/ตั้งรหัสใหม่ในแท็บ "ผู้ใช้งาน" ด้วย`,
+      icon: 'pi pi-ban',
+      rejectButtonProps: { label: 'ยกเลิก', severity: 'secondary', outlined: true },
+      acceptButtonProps: { label: 'เตะออก', severity: 'danger' },
+      accept: () =>
+        this.settings.kickSession(s.id).subscribe({
+          next: (r) => {
+            this.ok(r.message);
+            this.loadMonitor(true);
+          },
+          error: (e) => this.err(e),
+        }),
+    });
+  }
+
+  // ===== แสดงผลอุปกรณ์ (ใช้ทั้ง 2 แท็บ) =====
+
+  deviceIcon(d: DeviceSummary): string {
+    return d.type === 'mobile' ? 'pi pi-mobile' : d.type === 'tablet' ? 'pi pi-tablet' : 'pi pi-desktop';
+  }
+
+  // "Samsung SM-S918B · Android 14" / "คอมพิวเตอร์ · Windows 10" — ใช้แยกโน้ตบุ๊กกับโทรศัพท์ (WiFi เดียวกัน IP จะเหมือนกัน)
+  deviceTitle(d: DeviceSummary): string {
+    const kind = d.type === 'mobile' ? 'โทรศัพท์' : d.type === 'tablet' ? 'แท็บเล็ต' : 'คอมพิวเตอร์';
+    return [d.model || kind, d.os].filter(Boolean).join(' · ');
+  }
+
+  ago(d: string): string {
+    const min = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
+    if (min < 1) return 'เมื่อสักครู่';
+    if (min < 60) return `${min} นาทีที่แล้ว`;
+    const h = Math.floor(min / 60);
+    if (h < 24) return `${h} ชม. ที่แล้ว`;
+    return this.formatDate(d);
   }
 
   // ===== ผู้ใช้ =====

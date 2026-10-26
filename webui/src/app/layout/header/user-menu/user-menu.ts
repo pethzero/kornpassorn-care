@@ -59,7 +59,7 @@ export class UserMenu implements OnInit {
     // ต้องจำ role ไว้ก่อน เพราะ auth.logout() จะเคลียร์ currentUser เป็น null ก่อน callback ทำงาน
     const role = this.user?.role;
     this.auth.logout(() => {
-      this.router.navigate([role === 'admin' ? '/admin-login' : role === 'patient' ? '/patient-login' : '/login']);
+      this.router.navigate([role === 'patient' ? '/patient-login' : '/login']);
     });
   }
 }

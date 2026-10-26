@@ -135,11 +135,8 @@ export const routes: Routes = [
     canActivate: [LoginRedirectGuard],
     loadComponent: () => import('./pages/login/user/login').then(m => m.LoginComponent)
   },
-  {
-    path: 'admin-login', // เปลี่ยนเป็น admin/login
-    canActivate: [LoginRedirectGuard],
-    loadComponent: () => import('./pages/login/admin/admin-login').then(m => m.AdminLoginComponent)
-  },
+  // หน้า login ของ admin เดิมเหมือนหน้า /login ทุกอย่าง (API เดียวกัน) — รวมเป็นหน้าเดียว ลิงก์เก่ายังใช้ได้
+  { path: 'admin-login', redirectTo: 'login' },
   {
     path: 'patient-login',
     canActivate: [LoginRedirectGuard],
