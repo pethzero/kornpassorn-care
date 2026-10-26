@@ -5,7 +5,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { Config } from '../../config';
+import { AuthService } from '../auth/auth.service';
 import { buildDeviceInfo } from '../../utils/device.util';
 
 import { PatientAuthService } from './patient-auth.service';
@@ -16,7 +16,10 @@ import { UpdatePatientProfileDto } from './dto/update-profile.dto';
 @ApiTags('patient-auth')
 @Controller('patient-auth')
 export class PatientAuthController {
-  constructor(private readonly patientAuthService: PatientAuthService) {}
+  constructor(
+    private readonly patientAuthService: PatientAuthService,
+    private readonly authService: AuthService,
+  ) {}
 
   @Post('otp/request')
   async requestOtp(@Body() dto: RequestOtpDto) {
@@ -28,11 +31,7 @@ export class PatientAuthController {
     const deviceInfo = buildDeviceInfo(req);
     const { patient, tokens } = await this.patientAuthService.verifyOtp(dto.phone, dto.otp, req, deviceInfo);
 
-    res.cookie(
-      'refresh_token',
-      tokens.refreshToken,
-      Config.token.refreshCookieOptions(tokens.refreshExpiresInSeconds * 1000),
-    );
+    this.authService.setRefreshCookie(res, tokens);
 
     return res.json({
       success: true,

@@ -18,15 +18,30 @@ export function cleanObject(obj: any): any {
   return obj;
 }
 
-export function buildDeviceInfo(req: Request, extra?: Record<string, any>) {
-  const uaParser = new UAParser.UAParser(req.headers['user-agent'] || '');
-  const uaResult = uaParser.getResult();
-  const ip = ((req.headers['x-forwarded-for'] as string) || req.ip || '').split(',')[0]?.trim() || null;
+// IP จริงของผู้ใช้ — ผ่าน Cloudflare (Tunnel/Worker) req.ip จะเป็น IP ของ proxy ไม่ใช่ของผู้ใช้
+// ใช้ฟังก์ชันนี้ที่เดียวทุกจุด (เดิมแต่ละที่อ่านเอง บางที่ใช้ req.ip ตรง ๆ)
+export function getClientIp(req: Request): string | null {
+  const header = (name: string) => {
+    const v = req.headers[name];
+    return (Array.isArray(v) ? v[0] : v) || '';
+  };
+  return header('cf-connecting-ip').trim() || header('x-forwarded-for').split(',')[0].trim() || req.ip || null;
+}
 
-  const raw = String(req.headers['user-agent'] || null);
+// mobile / tablet / desktop — ใช้แยก "โทรศัพท์" กับ "โน้ตบุ๊ก" ที่ต่อ WiFi เดียวกัน (IP เหมือนกัน)
+export function deviceType(ua: { device?: { type?: string }; os?: { name?: string } }): 'mobile' | 'tablet' | 'desktop' {
+  const t = ua.device?.type;
+  if (t === 'mobile' || t === 'tablet') return t;
+  return /android|ios/i.test(ua.os?.name || '') ? 'mobile' : 'desktop';
+}
+
+export function buildDeviceInfo(req: Request, extra?: Record<string, any>) {
+  const uaResult = new UAParser.UAParser(req.headers['user-agent'] || '').getResult();
+
   const deviceInfo = {
-    raw,
-    ip,
+    raw: String(req.headers['user-agent'] || ''),
+    ip: getClientIp(req),
+    type: deviceType(uaResult),
     client: uaResult.browser?.name ? 'browser' : (uaResult.device?.type || 'unknown'),
     ua: {
       family: uaResult.browser?.name || null,
@@ -35,14 +50,33 @@ export function buildDeviceInfo(req: Request, extra?: Record<string, any>) {
       os_version: uaResult.os?.version || null,
       device: {
         vendor: uaResult.device?.vendor || null,
-        brand: uaResult.device?.vendor || null,
         model: uaResult.device?.model || null,
       },
     },
     locale: req.headers['accept-language'] || null,
-    fingerprint: (req.headers['x-client-fingerprint'] as string) || (extra && extra.fingerprint) || null,
     ...extra,
   };
 
   return cleanObject(deviceInfo) ?? null;
+}
+
+// user-agent ดิบ (เช่นใน login_logs) → สรุปอุปกรณ์แบบเดียวกับ describeDevice
+export function describeUserAgent(raw?: string | null) {
+  const r = new UAParser.UAParser(raw || '').getResult();
+  return describeDevice({
+    type: deviceType(r),
+    ua: { family: r.browser?.name, version: r.browser?.version, os: r.os?.name, os_version: r.os?.version, device: r.device },
+  });
+}
+
+// สรุปอุปกรณ์ให้หน้าเว็บแสดง (หน้า "อุปกรณ์ที่เข้าสู่ระบบ" + หน้า admin) — รองรับ deviceInfo รุ่นเก่าที่ไม่มี type
+export function describeDevice(info: any) {
+  const ua = info?.ua ?? {};
+  const type = info?.type ?? deviceType({ os: { name: ua.os } });
+  return {
+    type,
+    browser: [ua.family, ua.version?.split('.')[0]].filter(Boolean).join(' ') || null,
+    os: [ua.os, ua.os_version].filter(Boolean).join(' ') || null,
+    model: [ua.device?.vendor, ua.device?.model].filter(Boolean).join(' ') || null,
+  };
 }

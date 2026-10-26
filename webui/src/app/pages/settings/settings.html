@@ -51,28 +51,108 @@
           </section>
         }
 
-        <!-- ===== อุปกรณ์ ===== -->
+        <!-- ===== อุปกรณ์ของฉัน (แบบ Google) ===== -->
         @case ('sessions') {
           <section class="card">
-            <h3 class="card-title"><i class="pi pi-desktop"></i> อุปกรณ์ที่เข้าสู่ระบบอยู่</h3>
-            <p class="cell-sub">ไม่รู้จักอุปกรณ์ไหน ให้กดออกจากระบบ แล้วเปลี่ยนรหัสผ่าน</p>
+            <div class="card-head">
+              <div>
+                <h3 class="card-title"><i class="pi pi-shield"></i> อุปกรณ์ที่เข้าสู่ระบบอยู่ ({{ sessions.length }})</h3>
+                <p class="cell-sub">ไม่รู้จักอุปกรณ์ไหน ให้กดออกจากระบบ แล้วเปลี่ยนรหัสผ่านในแท็บ "บัญชีของฉัน"</p>
+              </div>
+              @if (otherSessions.length) {
+                <p-button label="ออกจากระบบอุปกรณ์อื่นทั้งหมด" icon="pi pi-sign-out" size="small" severity="danger" [outlined]="true" (onClick)="revokeOthers()"></p-button>
+              }
+            </div>
             <div class="session-list">
               @for (s of sessions; track s.id) {
-                <div class="session">
-                  <span class="session-icon"><i [class]="deviceIcon(s)"></i></span>
+                <div class="session" [class.this-device]="s.current">
+                  <span class="session-icon" [class.mobile]="s.device.type !== 'desktop'"><i [class]="deviceIcon(s.device)"></i></span>
                   <div class="session-body">
                     <span class="cell-title">
-                      {{ deviceLabel(s) }}
+                      {{ deviceTitle(s.device) }}
                       @if (s.current) { <span class="chip chip-accent">อุปกรณ์นี้</span> }
                     </span>
-                    <span class="cell-sub">IP {{ s.deviceIp || s.deviceInfo?.ip || '—' }} · เข้าเมื่อ {{ formatDate(s.created_at) }} · ใช้ล่าสุด {{ formatDate(s.last_used) }}</span>
+                    <span class="cell-sub">{{ s.device.browser || 'เบราว์เซอร์' }} · IP {{ s.ip || '—' }}</span>
+                    <span class="cell-sub">
+                      @if (s.current || s.online) { <span class="dot on"></span> ใช้งานอยู่ตอนนี้ } @else { <span class="dot"></span> ใช้งานล่าสุด {{ ago(s.last_active) }} }
+                      · เข้าสู่ระบบ {{ formatDate(s.login_at) }}
+                    </span>
                   </div>
                   @if (!s.current) {
                     <p-button label="ออกจากระบบ" size="small" severity="secondary" [outlined]="true" (onClick)="revoke(s)"></p-button>
                   }
                 </div>
               } @empty {
-                <p class="cell-sub">ไม่มีข้อมูลอุปกรณ์</p>
+                @if (sessionsLoaded) { <p class="cell-sub">ไม่มีข้อมูลอุปกรณ์</p> }
+              }
+            </div>
+          </section>
+        }
+
+        <!-- ===== ผู้ใช้ออนไลน์ (admin) ===== -->
+        @case ('online') {
+          <section class="stats">
+            <div class="stat"><span class="stat-value">{{ onlineCount }}</span><span class="stat-label">ออนไลน์ตอนนี้</span></div>
+            <div class="stat"><span class="stat-value">{{ countByRole('admin') + countByRole('user') }}</span><span class="stat-label">ผู้ดูแลระบบ/เจ้าหน้าที่</span></div>
+            <div class="stat"><span class="stat-value">{{ countByRole('patient') }}</span><span class="stat-label">คนไข้</span></div>
+            <div class="stat"><span class="stat-value">{{ countByRole('guest') }}</span><span class="stat-label">ผู้เยี่ยมชม</span></div>
+            <div class="stat" [class.stat-warn]="failedLogins24h > 0"><span class="stat-value">{{ failedLogins24h }}</span><span class="stat-label">login ไม่สำเร็จ (24 ชม.)</span></div>
+          </section>
+
+          <section class="card">
+            <div class="card-head">
+              <div>
+                <h3 class="card-title"><i class="pi pi-eye"></i> ใครเข้าสู่ระบบอยู่</h3>
+                <p class="cell-sub">ออนไลน์ = ใช้งานภายใน 5 นาที · อัปเดตเองทุก 30 วินาที @if (monitorUpdatedAt) { (ล่าสุด {{ monitorUpdatedAt | date: 'HH:mm:ss' }}) }</p>
+              </div>
+              <div class="head-actions">
+                <div class="segmented">
+                  <button type="button" [class.active]="monitorFilter === 'online'" (click)="monitorFilter = 'online'">ออนไลน์ ({{ onlineCount }})</button>
+                  <button type="button" [class.active]="monitorFilter === 'all'" (click)="monitorFilter = 'all'">ทั้งหมด ({{ monitor.length }})</button>
+                </div>
+                <button type="button" class="icon-btn" (click)="loadMonitor()" pTooltip="รีเฟรช" tooltipPosition="top"><i class="pi pi-refresh"></i></button>
+              </div>
+            </div>
+            <div class="session-list">
+              @for (s of monitorRows; track s.id) {
+                <div class="session" [class.this-device]="s.current">
+                  <span class="avatar role-{{ s.role }}">{{ (s.name || '?').slice(0, 1).toUpperCase() }}</span>
+                  <div class="session-body">
+                    <span class="cell-title">
+                      {{ s.name }}
+                      <span class="chip role-chip role-{{ s.role }}">{{ roleLabel[s.role] }}</span>
+                      @if (s.current) { <span class="chip chip-accent">คุณ (เครื่องนี้)</span> }
+                    </span>
+                    <span class="cell-sub"><i [class]="deviceIcon(s.device)"></i> {{ deviceTitle(s.device) }} · {{ s.device.browser || 'เบราว์เซอร์' }} · IP {{ s.ip || '—' }}</span>
+                    <span class="cell-sub">
+                      @if (s.online) { <span class="dot on"></span> ออนไลน์ } @else { <span class="dot"></span> ใช้งานล่าสุด {{ ago(s.last_active) }} }
+                      · เข้าสู่ระบบ {{ formatDate(s.login_at) }} @if (s.username) { · <span class="mono">{{ s.username }}</span> }
+                    </span>
+                  </div>
+                  @if (!s.current) {
+                    <p-button label="เตะออก" icon="pi pi-ban" size="small" severity="danger" [outlined]="true" (onClick)="kick(s)"></p-button>
+                  }
+                </div>
+              } @empty {
+                <p class="cell-sub">{{ monitorFilter === 'online' ? 'ตอนนี้ไม่มีใครออนไลน์ (นอกจากคุณ)' : 'ไม่มี session ที่ใช้งานได้' }}</p>
+              }
+            </div>
+          </section>
+
+          <section class="card">
+            <h3 class="card-title"><i class="pi pi-history"></i> การเข้าสู่ระบบล่าสุด</h3>
+            <p class="cell-sub">รวมครั้งที่รหัสผิด — เห็นชื่อผู้ใช้ที่ถูกลองเดารหัส</p>
+            <div class="log-list">
+              @for (l of loginLogs; track l.id) {
+                <div class="log-row" [class.failed]="!l.success">
+                  <i [class]="l.success ? 'pi pi-check-circle ok' : 'pi pi-times-circle bad'"></i>
+                  <span class="log-who">{{ l.success ? (l.who || '—') : (l.reason || 'ไม่สำเร็จ') }}</span>
+                  @if (l.success && l.role) { <span class="chip role-chip role-{{ l.role }}">{{ roleLabel[l.role] || l.role }}</span> }
+                  <span class="cell-sub log-device"><i [class]="deviceIcon(l.device)"></i> {{ deviceTitle(l.device) }} · IP {{ l.ip || '—' }}</span>
+                  <span class="cell-sub log-time">{{ ago(l.at) }}</span>
+                </div>
+              } @empty {
+                <p class="cell-sub">ยังไม่มีประวัติ</p>
               }
             </div>
           </section>
@@ -206,5 +286,6 @@
     </ng-template>
   </p-dialog>
 
+  <p-confirmdialog [style]="{ width: '440px' }" [breakpoints]="{ '520px': '94vw' }"></p-confirmdialog>
   <p-toast></p-toast>
 </div>

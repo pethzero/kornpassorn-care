@@ -50,9 +50,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           // backend ยืนยันว่า refresh token ใช้ไม่ได้จริง (401) → session ตายจริง ต้อง logout
           // ไม่งั้น token ที่ตายแล้วจะค้างใน localStorage แล้วทุก request ถัดไปก็จะวน 401 ซ้ำไปเรื่อยๆ
           // ส่วน error อื่น (server ไม่ตอบ/network ล่มชั่วคราว) ไม่ควรเคลียร์ session ที่ยัง valid อยู่
+          // (เช่น ถูกเตะออกจากเครื่องอื่น / admin เตะออก / ปิดบัญชี) → ไปหน้า login พร้อมบอกเหตุผล
           if (err instanceof HttpErrorResponse && err.status === 401) {
+            const role = authService.getCurrentUser()?.role;
             authService.logout(() => {
-              router.navigate(['/login']);
+              router.navigate([role === 'patient' ? '/patient-login' : '/login'], { queryParams: { signedOut: 1 } });
             });
           }
           return throwError(() => err);

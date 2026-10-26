@@ -255,6 +255,147 @@ $accent-soft: #effaf8;
   flex-shrink: 0;
 }
 
+.session.this-device {
+  background: $accent-soft;
+  border-radius: 12px;
+  padding-left: 0.6rem;
+  padding-right: 0.6rem;
+  border-bottom-color: transparent;
+}
+
+.session-icon.mobile {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.session-body .cell-sub i {
+  font-size: 0.75rem;
+}
+
+// จุดสถานะ — เขียว = ใช้งานอยู่ตอนนี้
+.dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #cbd5e1;
+  margin-right: 0.15rem;
+  vertical-align: middle;
+
+  &.on {
+    background: #16a34a;
+    box-shadow: 0 0 0 3px #dcfce7;
+  }
+}
+
+// สี role (ใช้ทั้ง avatar และ chip)
+.avatar.role-admin { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.avatar.role-user { background: linear-gradient(135deg, #14b8a6, #0f766e); }
+.avatar.role-patient { background: linear-gradient(135deg, #f472b6, #db2777); }
+.avatar.role-guest { background: linear-gradient(135deg, #94a3b8, #64748b); }
+
+.chip.role-chip {
+  &.role-admin { background: #eff6ff; color: #1d4ed8; }
+  &.role-user { background: $accent-soft; color: $accent; }
+  &.role-patient { background: #fdf2f8; color: #be185d; }
+  &.role-guest { background: #f1f5f9; color: #475569; }
+}
+
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  background: #f8fafb;
+
+  &.stat-warn {
+    background: #fff7ed;
+
+    .stat-value {
+      color: #c2410c;
+    }
+  }
+}
+
+.stat-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: $ink;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: $muted;
+}
+
+.log-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.log-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.25rem;
+  border-bottom: 1px solid #f3f5f8;
+  font-size: 0.88rem;
+  flex-wrap: wrap;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &.failed {
+    background: #fff7f7;
+    border-radius: 8px;
+  }
+
+  .ok {
+    color: #16a34a;
+  }
+
+  .bad {
+    color: #dc2626;
+  }
+}
+
+.log-who {
+  font-weight: 600;
+  color: $ink;
+}
+
+.log-device {
+  flex: 1;
+  min-width: 12rem;
+
+  i {
+    font-size: 0.75rem;
+  }
+}
+
+.log-time {
+  white-space: nowrap;
+}
+
 .session-body,
 .user-body {
   display: flex;

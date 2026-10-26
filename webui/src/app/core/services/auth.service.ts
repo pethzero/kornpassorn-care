@@ -33,6 +33,19 @@ export class AuthService {
     // จะไป trigger authInterceptor ที่ inject(AuthService) ซ้ำ ขณะที่ instance นี้ยังสร้างไม่เสร็จ
     // -> Angular throw NG0200 circular dependency (error ถูกกลืนเงียบๆ ใน loadUser() ทำให้ /auth/me ไม่เคยยิงจริง)
     queueMicrotask(() => this.initUserFromServer());
+    this.startSessionWatch();
+  }
+
+  // ถูกเตะออก (จากเครื่องอื่น/admin) → เครื่องนี้ต้องรู้ตัวเองแม้ไม่ได้กดอะไร: เช็กทุก 1 นาทีขณะเปิดหน้าอยู่
+  // และทันทีที่กลับมาที่แท็บ/ปลดล็อกโทรศัพท์ — 401 → auth interceptor ลอง refresh → ไม่ได้ → logout + ไปหน้า login
+  private startSessionWatch() {
+    const check = () => {
+      if (this.currentUserSubject.value && document.visibilityState === 'visible') {
+        this.http.get(`${environment.apiUrl}/auth/me`).subscribe({ error: () => undefined });
+      }
+    };
+    setInterval(check, 60_000);
+    document.addEventListener('visibilitychange', check);
   }
 
   private hydrateFromStorage() {

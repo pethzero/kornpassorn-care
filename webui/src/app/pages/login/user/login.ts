@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { FormsModule } from '@angular/forms';
 
@@ -17,6 +17,8 @@ export class LoginComponent {
   rememberMe = false;
   errorMessage = '';
   isSubmitting = false;
+  // มาจากการถูกเตะออก/เซสชันหมดอายุ (auth interceptor ส่ง ?signedOut=1 มา)
+  readonly signedOut = inject(ActivatedRoute).snapshot.queryParamMap.has('signedOut');
 
   constructor(private auth: AuthService, private router: Router) {}
 

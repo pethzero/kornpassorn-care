@@ -17,6 +17,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { UserModule } from '../user/user.module';
 import { User } from '../../database/entities/user.entity';
 import { AccountController, StaffUsersController } from './account.controller';
+import { SessionsAdminController } from './sessions-admin.controller';
 import { UserToken } from '../../database/entities/user-token.entity';
 import { LoginLog } from '../../database/entities/login-log.entity';
 
@@ -39,7 +40,7 @@ import { LoginLog } from '../../database/entities/login-log.entity';
     // register repositories used by AuthService
     TypeOrmModule.forFeature([UserToken, LoginLog, User]),
   ],
-  controllers: [AuthController, AccountController, StaffUsersController],
+  controllers: [AuthController, AccountController, StaffUsersController, SessionsAdminController],
   providers: [
     AuthService,
     JwtStrategy,

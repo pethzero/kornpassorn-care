@@ -7,6 +7,7 @@ import {
   Get,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Request,
@@ -64,12 +65,11 @@ export class AccountController {
     }
     if (dto.current_password === dto.new_password) throw new BadRequestException('รหัสผ่านใหม่ต้องไม่ซ้ำรหัสเดิม');
     await this.users.update(user.id, { password_hash: await bcrypt.hash(dto.new_password, BCRYPT_ROUNDS()) });
-    // เว้นทั้ง access + refresh ของเครื่องนี้ (เว้นแค่ access → เครื่องนี้หลุดตอน refresh ครั้งถัดไป)
-    const currentRefresh = await this.auth.findRefreshJtiOfAccess(user.id, req.user.jti);
+    // เครื่องนี้ (session ปัจจุบัน) ใช้ต่อได้ เครื่องอื่นออกหมด
     const signedOut = await this.auth.revokeAllTokensOfUser(user.id, {
       revokedBy: user.id,
       reason: 'password changed',
-      exceptJtis: [req.user.jti, currentRefresh ?? ''],
+      exceptSessionId: req.user.sessionId,
     });
     return {
       success: true,
@@ -77,15 +77,28 @@ export class AccountController {
     };
   }
 
-  // อุปกรณ์ที่ login อยู่ (1 แถว = 1 การ login) — current = เครื่องที่ใช้อยู่
+  // อุปกรณ์ที่ login อยู่ (1 รายการ = 1 เครื่อง) — current = เครื่องที่ใช้อยู่ อยู่บนสุด
   @Get('sessions')
   async sessions(@Request() req: any) {
-    return { success: true, data: await this.auth.listSessions(req.user.userId, req.user.jti) };
+    return { success: true, data: await this.auth.listActiveSessions({ userId: req.user.userId, currentSessionId: req.user.sessionId }) };
+  }
+
+  // ออกจากระบบทุกเครื่อง ยกเว้นเครื่องนี้ (เหมือน Google "ออกจากระบบอุปกรณ์อื่นทั้งหมด")
+  @Post('sessions/revoke-others')
+  async revokeOthers(@Request() req: any) {
+    const n = await this.auth.revokeAllTokensOfUser(req.user.userId, {
+      revokedBy: req.user.userId,
+      reason: 'signed out by owner (all other devices)',
+      exceptSessionId: req.user.sessionId,
+    });
+    return { success: true, message: n ? `ออกจากระบบอุปกรณ์อื่น ${n} เครื่องแล้ว` : 'ไม่มีอุปกรณ์อื่นที่เข้าสู่ระบบอยู่' };
   }
 
   @Delete('sessions/:id')
-  async revokeSession(@Request() req: any, @Param('id') id: string) {
-    await this.auth.revokeSession(req.user.userId, id);
+  async revokeSession(@Request() req: any, @Param('id', ParseUUIDPipe) id: string) {
+    if (id === req.user.sessionId) throw new BadRequestException('นี่คืออุปกรณ์ที่ใช้อยู่ — ใช้เมนู "ออกจากระบบ" แทน');
+    const ok = await this.auth.revokeSession(id, { revokedBy: req.user.userId, reason: 'signed out by owner' }, req.user.userId);
+    if (!ok) throw new NotFoundException('ไม่พบอุปกรณ์นี้');
     return { success: true, message: 'ออกจากระบบอุปกรณ์นั้นแล้ว' };
   }
 }

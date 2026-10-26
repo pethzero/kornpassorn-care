@@ -55,19 +55,19 @@ export class PatientAuthService {
     const record = await this.otpRepo.findOne({ where: { phone }, order: { created_at: 'DESC' } });
 
     if (!record || record.consumed_at || record.expires_at < new Date()) {
-      await this.authService.logPatientLogin(null, false, req, 'OTP invalid or expired');
+      await this.authService.logLogin(null, false, req, 'OTP invalid or expired', phone);
       throw new UnauthorizedException('รหัส OTP ไม่ถูกต้องหรือหมดอายุ');
     }
 
     if (record.attempts >= MAX_ATTEMPTS) {
-      await this.authService.logPatientLogin(null, false, req, 'Too many OTP attempts');
+      await this.authService.logLogin(null, false, req, 'Too many OTP attempts', phone);
       throw new UnauthorizedException('กรอกรหัสผิดเกินจำนวนครั้งที่กำหนด กรุณาขอรหัสใหม่');
     }
 
     if (record.otp_hash !== this.hashOtp(otp)) {
       record.attempts += 1;
       await this.otpRepo.save(record);
-      await this.authService.logPatientLogin(null, false, req, 'Invalid OTP');
+      await this.authService.logLogin(null, false, req, 'Invalid OTP', phone);
       throw new UnauthorizedException('รหัส OTP ไม่ถูกต้อง');
     }
 
@@ -87,13 +87,13 @@ export class PatientAuthService {
     }
 
     const tokens = await this.authService.issueTokenPair(
-      { id: String(patient.id), username: patient.phone, role: 'patient' },
+      { id: String(patient.id), username: patient.phone, role: 'patient', first_name: patient.first_name, last_name: patient.last_name },
       true,
       deviceInfo,
       'patient',
     );
 
-    await this.authService.logPatientLogin(patient, true, req);
+    await this.authService.logLogin({ patient }, true, req);
 
     return { patient, tokens };
   }
