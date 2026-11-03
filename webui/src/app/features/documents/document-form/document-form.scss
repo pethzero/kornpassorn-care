@@ -1,23 +1,5 @@
 // โครงหน้า/chip/ปุ่มไอคอน อยู่ใน ui/styles/list-page.scss — ไฟล์นี้เฉพาะฟอร์มสร้างเอกสาร
 
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
-  color: #8a96a8;
-  text-decoration: none;
-  margin-bottom: 0.75rem;
-
-  &:hover {
-    color: #0f766e;
-  }
-
-  i {
-    font-size: 0.75rem;
-  }
-}
-
 // ตัวเลือกประเภทเอกสาร
 .type-picker {
   display: grid;

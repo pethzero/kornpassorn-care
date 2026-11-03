@@ -10,11 +10,12 @@ import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { BackButtonComponent } from '../../../ui/back-button/back-button';
 
 @Component({
   selector: 'app-questionnaire-list',
   standalone: true,
-  imports: [CommonModule, TableModule, TagModule, ButtonModule, ToastModule],
+  imports: [BackButtonComponent, CommonModule, TableModule, TagModule, ButtonModule, ToastModule],
   templateUrl: './questionnaire-list.html',
   styleUrls: ['./questionnaire-list.scss'],
   providers: [MessageService],

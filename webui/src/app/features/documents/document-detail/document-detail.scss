@@ -4,24 +4,6 @@
   max-width: 60rem;
 }
 
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
-  color: #8a96a8;
-  text-decoration: none;
-  margin-bottom: 1rem;
-
-  &:hover {
-    color: #0f766e;
-  }
-
-  i {
-    font-size: 0.75rem;
-  }
-}
-
 .doc-head {
   display: flex;
   justify-content: space-between;

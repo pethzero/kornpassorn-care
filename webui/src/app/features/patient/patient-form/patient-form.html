@@ -3,12 +3,9 @@
     <app-loading-spinner [overlay]="true" [message]="loadingMessage"></app-loading-spinner>
   }
 
-  <a [routerLink]="patientId ? ['/patient', patientId] : '/patient/list'" class="back">
-    <i class="pi pi-arrow-left"></i> {{ patientId ? 'กลับหน้าข้อมูลคนไข้' : 'คนไข้ทั้งหมด' }}
-  </a>
-
   <div class="list-header">
     <div class="header-title-group">
+      <app-back-button />
       <h2>{{ isEditMode ? 'แก้ไขข้อมูลคนไข้' : 'เพิ่มคนไข้ใหม่' }}</h2>
     </div>
   </div>

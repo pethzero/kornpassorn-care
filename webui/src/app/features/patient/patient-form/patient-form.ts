@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { PatientService } from '../../../core/services/patient.service';
 import { Patient } from '../../../models/users/user.model';
 import { AuthService } from '../../../core/services/auth.service';
@@ -12,13 +12,14 @@ import { MessageService } from 'primeng/api';
 import { LoadingSpinnerComponent } from '../../../ui/loading-spinner/loading-spinner';
 import { afterMinDuration } from '../../../core/utils/min-duration';
 import { formatThaiId, isValidThaiId, onlyDigits, patientAge } from '../patient-utils';
+import { BackButtonComponent } from '../../../ui/back-button/back-button';
 
 @Component({
   selector: 'app-patient-form',
   standalone: true,
   templateUrl: './patient-form.html',
   styleUrls: ['../../../ui/styles/list-page.scss', './patient-form.scss'],
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, ButtonModule, InputTextModule, ToastModule, LoadingSpinnerComponent],
+  imports: [BackButtonComponent, CommonModule, ReactiveFormsModule, ButtonModule, InputTextModule, ToastModule, LoadingSpinnerComponent],
   providers: [MessageService]
 })
 export class PatientFormComponent implements OnInit {

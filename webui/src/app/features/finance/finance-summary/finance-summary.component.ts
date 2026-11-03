@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import { ChartModule } from 'primeng/chart';
@@ -9,6 +8,7 @@ import { ChartModule } from 'primeng/chart';
 import { FinanceService } from '../../../core/services/finance.service';
 import { FinanceSummary, TrendPoint } from '../../../core/models/finance.model';
 import { documentTypeInfo } from '../../../core/models/document.model';
+import { BackButtonComponent } from '../../../ui/back-button/back-button';
 
 // สีชุดข้อมูล: categorical slot 1–2 ของ dataviz reference palette (ผ่าน validator: CVD ΔE 24.7, contrast ≥ 3:1)
 // ไม่ใช้เขียว/แดง เพราะเป็นสีสถานะ — ตัวเลขทุกตัวใช้สีตัวอักษรปกติ สีอยู่ที่แท่งกราฟเท่านั้น
@@ -37,7 +37,7 @@ interface BreakdownRow {
 @Component({
   selector: 'app-finance-summary',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ChartModule],
+  imports: [BackButtonComponent, CommonModule, FormsModule, ChartModule],
   templateUrl: './finance-summary.component.html',
   styleUrls: ['../../../ui/styles/list-page.scss', './finance-summary.component.scss'],
 })

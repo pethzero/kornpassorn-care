@@ -17,3 +17,11 @@ p-card.theme-white {
 .p-toast {
   z-index: 2000 !important;
 }
+
+/* ปุ่มย้อนกลับ + หัวข้อ เรียงแถวเดียว (หน้าที่ไม่ได้ใช้ .header-title-group ของ list-page.scss) */
+.title-with-back {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}

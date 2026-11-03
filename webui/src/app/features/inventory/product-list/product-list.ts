@@ -24,11 +24,12 @@ import {
   InventoryProductPackage,
   productLabel,
 } from '../../../core/models/inventory.model';
+import { BackButtonComponent } from '../../../ui/back-button/back-button';
 
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [
+  imports: [BackButtonComponent, 
     CommonModule,
     FormsModule,
     ReactiveFormsModule,

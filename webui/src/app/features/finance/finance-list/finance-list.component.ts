@@ -16,13 +16,14 @@ import { FinanceService } from '../../../core/services/finance.service';
 import { FinanceRecord, FinanceSummary } from '../../../core/models/finance.model';
 import { documentTypeInfo } from '../../../core/models/document.model';
 import { FinanceRecordDialogComponent } from '../finance-record-dialog/finance-record-dialog';
+import { BackButtonComponent } from '../../../ui/back-button/back-button';
 
 type Period = 'this_month' | 'last_month' | 'last_3_months' | 'this_year' | 'all' | 'custom';
 
 @Component({
   selector: 'app-finance-list',
   standalone: true,
-  imports: [
+  imports: [BackButtonComponent, 
     CommonModule,
     FormsModule,
     RouterLink,

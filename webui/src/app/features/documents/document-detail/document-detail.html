@@ -3,15 +3,17 @@
     <app-loading-spinner [overlay]="true" message="กำลังโหลดเอกสาร..."></app-loading-spinner>
   }
 
-  <a routerLink="/documents" class="back-link"><i class="pi pi-arrow-left"></i> เอกสารทั้งหมด</a>
 
   @if (doc) {
     <!-- หัวเอกสาร -->
     <div class="doc-head">
+      <div class="title-with-back">
+      <app-back-button />
       <div class="doc-head-main">
         <span class="doc-type-label"><i [class]="typeInfo(doc.doc_type).icon"></i> {{ typeInfo(doc.doc_type).label }}</span>
         <h2 class="mono">{{ doc.doc_no }}</h2>
         <span class="cell-sub">{{ formatDate(doc.doc_date) }} · บันทึกโดย {{ doc.create_by }}</span>
+      </div>
       </div>
       <div class="doc-head-side">
         @if (doc.status === 'void') {

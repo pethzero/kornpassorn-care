@@ -15,13 +15,14 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 import { LoadingSpinnerComponent } from '../../../ui/loading-spinner/loading-spinner';
 import { afterMinDuration } from '../../../core/utils/min-duration';
 import { patientAge, patientGender, patientInitials, patientName } from '../patient-utils';
+import { BackButtonComponent } from '../../../ui/back-button/back-button';
 
 type GenderFilter = '' | 'male' | 'female';
 
 @Component({
   selector: 'app-patient-list',
   standalone: true,
-  imports: [
+  imports: [BackButtonComponent, 
     CommonModule,
     FormsModule,
     TableModule,

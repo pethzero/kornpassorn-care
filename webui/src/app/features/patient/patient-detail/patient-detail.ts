@@ -14,12 +14,13 @@ import { Patient } from '../../../models/users/user.model';
 import { Appointment, APPOINTMENT_STATUS_INFO } from '../../../core/models/appointment.model';
 import { ClinicDocument } from '../../../core/models/document.model';
 import { formatPhone, formatThaiId, maskThaiId, patientAge, patientGender, patientInitials, patientName } from '../patient-utils';
+import { BackButtonComponent } from '../../../ui/back-button/back-button';
 
 // ข้อมูลคนไข้รายคน: ข้อมูลติดต่อ + นัดหมาย + ประวัติบริการ (เอกสารบริการคนไข้)
 @Component({
   selector: 'app-patient-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, ButtonModule, ToastModule, TooltipModule],
+  imports: [BackButtonComponent, CommonModule, RouterLink, ButtonModule, ToastModule, TooltipModule],
   templateUrl: './patient-detail.html',
   styleUrls: ['../../../ui/styles/list-page.scss', './patient-detail.scss'],
   providers: [MessageService],
