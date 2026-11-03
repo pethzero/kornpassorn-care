@@ -8,17 +8,17 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 
 import { InventoryService } from '../../../core/services/inventory.service';
-import { InventoryProduct, InventoryProductCategory } from '../../../core/models/inventory.model';
+import { InventoryProduct, InventoryProductCategory, productLabel } from '../../../core/models/inventory.model';
 
 export interface NewProductResult {
   product: InventoryProduct;
-  // ยี่ห้อที่เพิ่งสร้าง (null = รับเป็นหน่วยย่อย)
+  // แบบบรรจุที่เพิ่งสร้าง (null = รับเป็นหน่วยย่อย)
   packageId: number | null;
 }
 
-// สร้างสินค้าใหม่ / เพิ่มยี่ห้อ-ขนาดบรรจุให้สินค้าเดิม จากหน้ารับของเข้า — บันทึกลงคลังทันที แล้วส่งผลกลับไปเติมในแถวของตาราง
-//   mode 'product' : สินค้าใหม่ (+ ยี่ห้อ/ขนาดบรรจุแรก ถ้าซื้อเป็นกล่อง/แผง)
-//   mode 'package' : ยี่ห้อ/ขนาดบรรจุใหม่ ของ product ที่ส่งมา
+// สร้างสินค้าใหม่ / เพิ่มแบบบรรจุให้สินค้าเดิม จากหน้ารับของเข้า — บันทึกลงคลังทันที แล้วส่งผลกลับไปเติมในแถวของตาราง
+//   mode 'product' : สินค้าใหม่ (มียี่ห้อ — ยาเดียวกันคนละยี่ห้อ = คนละสินค้า) + แบบบรรจุแรก ถ้าซื้อเป็นกล่อง/แผง
+//   mode 'package' : แบบบรรจุใหม่ ของ product ที่ส่งมา
 @Component({
   selector: 'app-new-product-dialog',
   standalone: true,
@@ -45,13 +45,14 @@ export class NewProductDialogComponent implements OnChanges {
   error = '';
 
   name = '';
+  brand = '';
   category: InventoryProductCategory = 'medicine';
   unit = 'เม็ด';
   sellPrice: number | null = null;
 
-  // ยี่ห้อ/ขนาดบรรจุ — mode product: ไม่บังคับ (hasPack), mode package: บังคับ
+  // แบบบรรจุ — mode product: ไม่บังคับ (hasPack), mode package: บังคับ · ชื่อว่างได้ (ตั้งให้จากหน่วยซื้อ + จำนวน)
   hasPack = true;
-  brand = '';
+  packName = '';
   packUnit = 'กล่อง';
   packSize: number | null = null;
   isDefault = true;
@@ -62,18 +63,19 @@ export class NewProductDialogComponent implements OnChanges {
     if (!changes['visible'] || !this.visible) return;
     this.error = '';
     this.name = '';
+    this.brand = '';
     this.category = 'medicine';
     this.unit = 'เม็ด';
     this.sellPrice = null;
     this.hasPack = true;
-    this.brand = '';
+    this.packName = '';
     this.packUnit = 'กล่อง';
     this.packSize = null;
     this.isDefault = this.mode === 'product' || !(this.product?.packages || []).some((p) => p.is_active !== false);
   }
 
   get title(): string {
-    return this.mode === 'product' ? 'สินค้าใหม่' : `ยี่ห้อ / ขนาดใหม่ — ${this.product?.name ?? ''}`;
+    return this.mode === 'product' ? 'สินค้าใหม่' : `แบบบรรจุใหม่ — ${productLabel(this.product)}`;
   }
 
   get baseUnit(): string {
@@ -81,7 +83,12 @@ export class NewProductDialogComponent implements OnChanges {
   }
 
   get packValid(): boolean {
-    return !!this.brand.trim() && !!this.packUnit.trim() && Number(this.packSize) > 0;
+    return !!this.packUnit.trim() && Number(this.packSize) > 0;
+  }
+
+  // ชื่อแบบบรรจุที่จะได้ ถ้าไม่ได้ตั้งเอง เช่น "กล่อง 100 เม็ด"
+  get autoPackName(): string {
+    return `${this.packUnit.trim() || 'กล่อง'} ${this.packSize || ''} ${this.baseUnit}`.replace(/\s+/g, ' ').trim();
   }
 
   close(): void {
@@ -96,13 +103,13 @@ export class NewProductDialogComponent implements OnChanges {
         return;
       }
       if (this.hasPack && !this.packValid) {
-        this.error = 'กรอกยี่ห้อ หน่วยซื้อ และจำนวนต่อหน่วยซื้อ — หรือปิด "ซื้อเป็นกล่อง/แผง"';
+        this.error = 'กรอกหน่วยซื้อ และจำนวนต่อหน่วยซื้อ — หรือปิด "ซื้อเป็นกล่อง/แผง"';
         return;
       }
       this.saveProduct();
     } else {
       if (!this.packValid) {
-        this.error = 'กรอกยี่ห้อ หน่วยซื้อ และจำนวนต่อหน่วยซื้อ';
+        this.error = 'กรอกหน่วยซื้อ และจำนวนต่อหน่วยซื้อ';
         return;
       }
       this.savePackage();
@@ -111,7 +118,7 @@ export class NewProductDialogComponent implements OnChanges {
 
   private newPackagePayload() {
     return {
-      brand: this.brand.trim(),
+      name: this.packName.trim() || this.autoPackName,
       pack_unit: this.packUnit.trim(),
       pack_size: Number(this.packSize),
       is_default: this.isDefault,
@@ -124,6 +131,7 @@ export class NewProductDialogComponent implements OnChanges {
     this.inventoryService
       .createProduct({
         name: this.name.trim(),
+        ...(this.brand.trim() ? { brand: this.brand.trim() } : {}),
         category: this.category,
         unit: this.unit.trim(),
         ...(this.sellPrice != null ? { sell_price: this.sellPrice } : {}),
@@ -141,7 +149,7 @@ export class NewProductDialogComponent implements OnChanges {
     const pkg = this.newPackagePayload();
     const existing = (product.packages || []).map((p) => ({
       id: p.id,
-      brand: p.brand,
+      name: p.name,
       pack_unit: p.pack_unit,
       pack_size: p.pack_size,
       ...(p.barcode ? { barcode: p.barcode } : {}),
@@ -158,11 +166,9 @@ export class NewProductDialogComponent implements OnChanges {
     });
   }
 
-  private finish(product: InventoryProduct, pkg: { brand: string; pack_unit: string; pack_size: number } | null): void {
+  private finish(product: InventoryProduct, pkg: { name: string } | null): void {
     this.saving = false;
-    const created = pkg
-      ? product.packages?.find((p) => p.brand === pkg.brand && p.pack_unit === pkg.pack_unit && p.pack_size === pkg.pack_size)
-      : undefined;
+    const created = pkg ? product.packages?.find((p) => p.name === pkg.name) : undefined;
     this.saved.emit({ product, packageId: created?.id ?? null });
     this.close();
   }

@@ -14,7 +14,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-// ยี่ห้อ + ขนาดบรรจุ 1 แบบ — ส่งมาพร้อมสินค้าตอนสร้าง/แก้ไข
+// แบบบรรจุ 1 แบบ — ส่งมาพร้อมสินค้าตอนสร้าง/แก้ไข
 // มี id = แก้ของเดิม, ไม่มี id = เพิ่มใหม่, ของเดิมที่ไม่ได้ส่งมา = ลบ (หรือปิดใช้งานถ้ามีล็อตอ้างอิงแล้ว)
 export class InventoryProductPackageInputDto {
   @IsOptional()
@@ -22,10 +22,11 @@ export class InventoryProductPackageInputDto {
   @Type(() => Number)
   id?: number;
 
+  // ชื่อแบบบรรจุ เช่น "กล่อง 40 เม็ด", "แท่งเล็ก"
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
-  brand: string;
+  name: string;
 
   // หน่วยที่ซื้อเข้า เช่น "กล่อง", "แผง"
   @IsString()
@@ -79,6 +80,12 @@ export class CreateInventoryProductDto {
   @IsNotEmpty()
   @MaxLength(255)
   name: string;
+
+  // ยี่ห้อ/ผู้ผลิต — ยาตัวเดียวกันต่างยี่ห้อให้สร้างเป็นสินค้าแยก
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  brand?: string;
 
   @IsOptional()
   @IsString()

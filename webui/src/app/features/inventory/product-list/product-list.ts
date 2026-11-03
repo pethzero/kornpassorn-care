@@ -22,6 +22,7 @@ import {
   InventoryProduct,
   InventoryProductCategory,
   InventoryProductPackage,
+  productLabel,
 } from '../../../core/models/inventory.model';
 
 @Component({
@@ -48,6 +49,7 @@ import {
   providers: [MessageService, ConfirmationService],
 })
 export class ProductListComponent implements OnInit {
+  readonly productLabel = productLabel;
   products: InventoryProduct[] = [];
   loading = false;
   saving = false;
@@ -94,6 +96,7 @@ export class ProductListComponent implements OnInit {
     this.form = this.fb.group({
       sku: [''],
       name: ['', Validators.required],
+      brand: [''],
       generic_name: [''],
       strength: [''],
       dosage_form: [null],
@@ -118,7 +121,8 @@ export class ProductListComponent implements OnInit {
   private buildPackageGroup(pkg?: InventoryProductPackage): FormGroup {
     return this.fb.group({
       id: [pkg?.id ?? null],
-      brand: [pkg?.brand ?? '', Validators.required],
+      // ว่างได้ — ตอนบันทึกเติมให้เป็น "กล่อง 40 เม็ด" จากหน่วยซื้อ + จำนวนบรรจุ
+      name: [pkg?.name ?? ''],
       pack_unit: [pkg?.pack_unit ?? 'กล่อง', Validators.required],
       pack_size: [pkg?.pack_size ?? null, [Validators.required, Validators.min(1)]],
       // บาร์โค้ดไม่แสดงในตารางแล้ว แต่เก็บค่าเดิมไว้ส่งกลับ ไม่ให้หายตอนบันทึก
@@ -213,6 +217,7 @@ export class ProductListComponent implements OnInit {
     this.form.reset({
       sku: product.sku || '',
       name: product.name,
+      brand: product.brand || '',
       generic_name: product.generic_name || '',
       strength: product.strength || '',
       dosage_form: product.dosage_form || null,
@@ -246,9 +251,11 @@ export class ProductListComponent implements OnInit {
       ...rest,
       // SKU ว่าง = ไม่มี SKU (null) — ส่ง '' แล้วจะชน unique constraint กับสินค้าอื่นที่ SKU ว่างเหมือนกัน
       sku: rest.sku?.trim() || null,
+      brand: rest.brand?.trim() || null,
       dosage_form: rest.dosage_form || null,
       packages: (packages as InventoryProductPackage[]).map(({ id, barcode, last_pack_cost, ...p }) => ({
         ...p,
+        name: p.name?.trim() || `${p.pack_unit} ${p.pack_size} ${rest.unit || ''}`.trim(),
         ...(id ? { id } : {}),
         ...(barcode ? { barcode } : {}),
         ...(last_pack_cost != null ? { last_pack_cost } : {}),
@@ -314,7 +321,7 @@ export class ProductListComponent implements OnInit {
     this.router.navigate(['/inventory/lots'], { queryParams: { product_id: product.id } });
   }
 
-  // รับของเข้า = ทำเอกสาร RCV (มีเลขที่เอกสาร + ลงบัญชีรายจ่าย) โดยเติมสินค้า/ยี่ห้อให้ในบรรทัดแรก
+  // รับของเข้า = ทำเอกสาร RCV (มีเลขที่เอกสาร + ลงบัญชีรายจ่าย) โดยเติมสินค้า/แบบบรรจุให้ในบรรทัดแรก
   receive(product: InventoryProduct, packageId?: number): void {
     this.showPackagesDialog = false;
     this.router.navigate(['/documents/new'], {

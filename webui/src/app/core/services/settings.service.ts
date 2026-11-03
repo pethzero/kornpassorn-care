@@ -62,16 +62,32 @@ export interface Session {
   current: boolean; // เครื่องที่กำลังใช้อยู่
 }
 
-export interface LoginLogRow {
-  id: number;
-  at: string;
-  success: boolean;
-  reason: string | null;
-  who: string | null;
-  role: string | null;
-  ip: string | null;
-  device: DeviceSummary;
-}
+// ประวัติเข้า-ออกระบบ (admin): 1 ครั้งที่เข้าใช้ หรือ 1 ครั้งที่ login ไม่สำเร็จ
+export type HistoryItem =
+  | {
+      type: 'session';
+      id: string;
+      at: string; // เข้าสู่ระบบเมื่อ
+      role: Session['role'];
+      name: string;
+      username: string | null;
+      device: DeviceSummary;
+      ip: string | null;
+      active: boolean;
+      ended_at: string | null; // ออกเมื่อ (null = ยังใช้งานอยู่)
+      end_reason: string | null; // logout / kicked by admin / expired / password changed ...
+      ended_by: string | null; // admin ที่เตะออก
+      last_active: string;
+    }
+  | {
+      type: 'failed';
+      id: string;
+      at: string;
+      username: string | null; // ชื่อที่พิมพ์มา
+      reason: string | null;
+      device: DeviceSummary;
+      ip: string | null;
+    };
 
 // การตั้งค่าคลินิก + บัญชีของฉัน + จัดการผู้ใช้ (admin)
 @Injectable({ providedIn: 'root' })
@@ -135,8 +151,8 @@ export class SettingsService {
     return this.http.delete<{ success: boolean; message: string }>(`${this.api}/admin/sessions/${id}`);
   }
 
-  loginLogs(limit = 50): Observable<Res<LoginLogRow[]>> {
-    return this.http.get<Res<LoginLogRow[]>>(`${this.api}/admin/login-logs`, { params: { limit } });
+  history(limit = 50): Observable<Res<HistoryItem[]>> {
+    return this.http.get<Res<HistoryItem[]>>(`${this.api}/admin/history`, { params: { limit } });
   }
 
   // ----- ผู้ใช้ (admin) -----

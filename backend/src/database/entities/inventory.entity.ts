@@ -8,8 +8,8 @@ import {
   Index,
 } from 'typeorm';
 
-// สินค้า/ยา (master) — ตัวสินค้ากลางๆ ไม่ผูกยี่ห้อ/ล็อต เช่น "Paracetamol 500 mg"
-// ยี่ห้อและขนาดบรรจุ (กล่องละ 40 / 50 เม็ด ฯลฯ) แยกไปอยู่ที่ InventoryProductPackage เพราะแต่ละเจ้าบรรจุไม่เท่ากัน
+// สินค้า/ยา — 1 สินค้า = 1 ยี่ห้อ เช่น "Paracetamol 500 mg" ยี่ห้อ Sara กับยี่ห้อ Tylenol เป็นคนละสินค้า (สต็อกแยกกัน)
+// แบบบรรจุที่ซื้อเข้า (กล่อง 40 เม็ด / แผง 10 เม็ด / แท่งเล็ก ฯลฯ) อยู่ที่ InventoryProductPackage
 @Entity({ name: 'inventory_products' })
 export class InventoryProduct {
   @PrimaryGeneratedColumn()
@@ -21,6 +21,10 @@ export class InventoryProduct {
 
   @Column({ length: 255 })
   name: string;
+
+  // ยี่ห้อ/ผู้ผลิต เช่น "Sara (Thai Nakorn Patana)" — ยาตัวเดียวกันต่างยี่ห้อ = สร้างเป็นสินค้าแยก
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  brand?: string | null;
 
   // 'medicine' | 'supply' | 'other'
   @Column({ length: 30, default: 'other' })
@@ -75,10 +79,10 @@ export class InventoryProduct {
   packages: InventoryProductPackage[];
 }
 
-// ยี่ห้อ + ขนาดบรรจุที่ซื้อเข้า ของสินค้า 1 ตัว (1 สินค้า มีได้หลายแบบ)
-// เช่น Paracetamol 500 mg → [ยี่ห้อ A: กล่อง = 40 เม็ด], [ยี่ห้อ B: กล่อง = 50 เม็ด], [ยี่ห้อ B: แผง = 10 เม็ด]
+// แบบบรรจุที่ซื้อเข้า ของสินค้า 1 ตัว (มีได้หลายแบบ) — ตั้งชื่อให้จำง่าย
+// เช่น Paracetamol 500 mg (Sara) → ["กล่อง 40 เม็ด": กล่อง = 40 เม็ด], ["แผง": แผง = 10 เม็ด], ["แท่งเล็ก": แท่ง = 5 ชิ้น]
 @Entity({ name: 'inventory_product_packages' })
-@Index(['product_id', 'brand', 'pack_unit', 'pack_size'], { unique: true })
+@Index(['product_id', 'name'], { unique: true })
 export class InventoryProductPackage {
   @PrimaryGeneratedColumn()
   id: number;
@@ -92,9 +96,9 @@ export class InventoryProductPackage {
   @JoinColumn({ name: 'product_id' })
   product: InventoryProduct;
 
-  // ยี่ห้อ/ผู้ผลิต เช่น "Sara (Thai Nakorn Patana)"
+  // ชื่อแบบบรรจุ เช่น "กล่อง 40 เม็ด", "แท่งเล็ก" — ไม่ซ้ำกันในสินค้าเดียวกัน
   @Column({ length: 100 })
-  brand: string;
+  name: string;
 
   // หน่วยที่ซื้อเข้า เช่น "กล่อง", "แผง", "ขวด"
   @Column({ length: 30 })
@@ -107,7 +111,7 @@ export class InventoryProductPackage {
   @Column({ length: 50, nullable: true })
   barcode?: string;
 
-  // ลักษณะของแบบนี้ เช่น "เม็ดสีขาว เคลือบฟิล์ม", "แผงฟอยล์สีเงิน" — ช่วยแยกยี่ห้อตอนรับของ
+  // ลักษณะของแบบนี้ เช่น "เม็ดสีขาว เคลือบฟิล์ม", "แผงฟอยล์สีเงิน" — ช่วยแยกแบบตอนรับของ
   @Column({ type: 'varchar', length: 255, nullable: true })
   description?: string | null;
 
@@ -167,7 +171,7 @@ export class InventoryProductLot {
   @Index()
   expiry_date?: string;
 
-  // แบบบรรจุ/ยี่ห้อที่รับเข้าล็อตนี้ (ไม่บังคับ — ล็อตที่รับเป็นหน่วยย่อยตรงๆ ไม่ต้องมี)
+  // แบบบรรจุที่รับเข้าล็อตนี้ (ไม่บังคับ — ล็อตที่รับเป็นหน่วยย่อยตรงๆ ไม่ต้องมี)
   @Column({ type: 'int', nullable: true })
   package_id?: number | null;
 
@@ -201,8 +205,7 @@ export class InventoryProductLot {
   @Column({ length: 100, nullable: true })
   supplier?: string;
 
-  // เจ้าของยี่ห้อ/ผู้ผลิต (ต่างจาก supplier ซึ่งเป็นร้าน/คนที่ซื้อมาด้วย) เช่น "Berlin Pharmaceutical"
-  // ถ้าเลือก package จะ copy มาจาก package.brand อัตโนมัติ
+  // ยี่ห้อตอนรับเข้า (snapshot ของ product.brand — ต่างจาก supplier ซึ่งเป็นร้านที่ซื้อมา)
   @Column({ type: 'varchar', length: 100, nullable: true })
   brand?: string | null;
 

@@ -18,8 +18,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { DataSource } from 'typeorm';
 import { DEFAULT_DB_CONFIG } from '../src/config/database.config';
+import { brandMigrationPending, migrateBrandToProduct } from './migrate-brand-to-product';
 
-const DESTRUCTIVE = /\b(DROP\s+TABLE|DROP\s+COLUMN)\b/i;
+// RENAME COLUMN นับเป็นอันตรายด้วย: TypeORM เดาเองว่าคอลัมน์ถูกเปลี่ยนชื่อ (ลบ 1 + เพิ่ม 1 ชนิดเดียวกัน) ซึ่งอาจผิด
+const DESTRUCTIVE = /\b(DROP\s+TABLE|DROP\s+COLUMN|RENAME\s+COLUMN)\b/i;
 
 async function main() {
   const allowDrop = process.argv.includes('--allow-drop');
@@ -30,6 +32,15 @@ async function main() {
   console.log(`database: "${dbName}" (${process.env.NODE_ENV})`);
 
   try {
+    // ย้ายข้อมูลที่ต้องทำ "ก่อน" เทียบโครงสร้าง (ไม่งั้น TypeORM อาจเดาว่าคอลัมน์ถูกเปลี่ยนชื่อ แล้วข้อมูลผิดที่)
+    if (await brandMigrationPending(ds)) {
+      console.log('\n▶ ต้องย้ายยี่ห้อจากแบบบรรจุไปที่สินค้าก่อน');
+      await migrateBrandToProduct(ds, { dryRun });
+      if (dryRun) {
+        console.log('\n(ดูอย่างเดียว) รายการโครงสร้างด้านล่างนับจากก่อนย้ายยี่ห้อ — ตอนรันจริงจะย้ายก่อนแล้วค่อยเทียบ\n');
+      }
+    }
+
     const pending = await ds.driver.createSchemaBuilder().log();
     const queries = pending.upQueries.map((q) => q.query);
     if (queries.length === 0) {

@@ -9,6 +9,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
+import { productLabel } from '../../../core/models/inventory.model';
 import { LoadingSpinnerComponent } from '../../../ui/loading-spinner/loading-spinner';
 import { DocumentService } from '../../../core/services/document.service';
 import { ClinicDocument, DocumentItem, documentTypeInfo } from '../../../core/models/document.model';
@@ -85,13 +86,13 @@ export class DocumentDetailComponent implements OnInit {
   itemName(item: DocumentItem): string {
     if (item.item_type === 'service') return item.category || item.description || 'ค่าบริการ';
     // สินค้าที่ถูกลบไปแล้ว: ชื่อถูกเก็บไว้ใน description ตอนลบ
-    return item.product?.name || item.description || `สินค้า #${item.product_id}`;
+    return productLabel(item.product) || item.description || `สินค้า #${item.product_id}`;
   }
 
   // บรรทัดรองใต้ชื่อ: ยี่ห้อ/ล็อต/หมายเหตุ
   itemSub(item: DocumentItem): string {
     const parts: string[] = [];
-    if (item.package) parts.push(item.package.brand);
+    if (item.package) parts.push(item.package.name);
     if (item.product_lot) parts.push(`ล็อต ${item.product_lot.lot_no}`);
     // บริการ: คำอธิบายที่กรอก / สินค้า: หมายเหตุบรรทัด (สินค้าที่ถูกลบแล้ว ชื่ออยู่ใน description จึงไม่ซ้ำแสดง)
     if (item.description && (item.product || item.item_type === 'service')) parts.push(item.description);

@@ -234,3 +234,7 @@ database/backup/
 
 # dump ข้อมูลจริงสำหรับย้ายขึ้นคลาวด์ (มีข้อมูลคนไข้) — ห้ามขึ้น git
 database/to-*.sql
+
+# เครื่องมือ offline (ตั้งรหัสผ่านผู้ใช้ตรงที่ฐานข้อมูล) — เก็บในเครื่องเท่านั้น ไม่ขึ้น git
+/set-password.bat
+backend/scripts/set-password.js

@@ -46,7 +46,7 @@
       <ng-template pTemplate="header">
         <tr>
           <th style="min-width: 240px;">สินค้า</th>
-          <th style="width: 220px;">ยี่ห้อ / ขนาดบรรจุ</th>
+          <th style="width: 220px;">แบบบรรจุ</th>
           <th class="text-right" style="width: 150px;">คงเหลือ</th>
           <th class="text-right" style="width: 100px;">ราคาขาย</th>
           <th style="width: 110px;">ประเภท</th>
@@ -62,6 +62,7 @@
                 {{ product.name }}
                 @if (!product.is_active) { <span class="chip chip-plain">ปิดใช้งาน</span> }
               </span>
+              @if (product.brand) { <span class="product-brand"><i class="pi pi-tag"></i> {{ product.brand }}</span> }
               <span class="cell-sub">
                 @if (product.sku) { <span class="mono">{{ product.sku }}</span> · }
                 @if (product.generic_name) { {{ product.generic_name }} · }
@@ -72,9 +73,9 @@
           <td>
             @if (defaultPackage(product); as pkg) {
               <button type="button" class="package-summary" (click)="openPackagesDialog(product)"
-                pTooltip="ดูยี่ห้อ/ขนาดบรรจุทั้งหมด" tooltipPosition="top">
+                pTooltip="ดูแบบบรรจุทั้งหมด" tooltipPosition="top">
                 <span class="package-summary-main">
-                  <span class="package-brand">{{ pkg.brand }}</span>
+                  <span class="package-brand">{{ pkg.name }}</span>
                   <span class="package-ratio">{{ pkg.pack_unit }}ละ {{ pkg.pack_size }} {{ product.unit }}</span>
                 </span>
                 @if (activePackages(product).length > 1) {
@@ -84,7 +85,7 @@
               </button>
             } @else {
               <button type="button" class="package-summary empty" (click)="openEditDialog(product)">
-                <i class="pi pi-plus"></i> เพิ่มยี่ห้อ
+                <i class="pi pi-plus"></i> เพิ่มแบบบรรจุ
               </button>
             }
           </td>
@@ -151,11 +152,16 @@
             <small class="error-message">กรุณากรอกชื่อสินค้า</small>
           }
         </div>
+        <div class="field">
+          <label>ยี่ห้อ / ผู้ผลิต</label>
+          <input pInputText formControlName="brand" placeholder="เช่น Sara, GPO, Nipro" class="full-width" />
+        </div>
         <div class="field narrow">
           <label>SKU</label>
           <input pInputText formControlName="sku" placeholder="ไม่บังคับ" class="full-width" />
         </div>
       </div>
+      <small class="field-hint brand-hint">ยาตัวเดียวกันคนละยี่ห้อ ให้เพิ่มเป็นสินค้าแยก — สต็อกจะแยกตามยี่ห้อ</small>
 
       <div class="field-row">
         <div class="field">
@@ -203,10 +209,10 @@
       <div class="package-section">
         <div class="package-header">
           <div>
-            <label>ยี่ห้อ / ขนาดบรรจุที่ซื้อเข้า</label>
-            <small class="field-hint">ยาตัวเดียวกันแต่ละยี่ห้อบรรจุไม่เท่ากันได้ เช่น ยี่ห้อ A กล่องละ 40, ยี่ห้อ B กล่องละ 50</small>
+            <label>แบบบรรจุที่ซื้อเข้า</label>
+            <small class="field-hint">ตั้งชื่อให้จำง่าย เช่น กล่อง 40 เม็ด, แผง 10 เม็ด, แท่งเล็ก — เว้นชื่อว่างได้ ระบบตั้งให้จากหน่วยซื้อ + จำนวนบรรจุ</small>
           </div>
-          <p-button label="เพิ่มยี่ห้อ" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addPackage()"></p-button>
+          <p-button label="เพิ่มแบบบรรจุ" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addPackage()"></p-button>
         </div>
 
         @if (packages.length) {
@@ -214,7 +220,7 @@
             <table class="package-table" formArrayName="packages">
               <thead>
                 <tr>
-                  <th style="min-width: 130px;">ชื่อ *</th>
+                  <th style="min-width: 130px;">ชื่อแบบบรรจุ</th>
                   <th style="width: 80px;">หน่วยซื้อ *</th>
                   <th style="width: 80px;">บรรจุ ({{ form.get('unit')?.value || 'หน่วย' }}) *</th>
                   <th style="min-width: 140px;">คำอธิบาย</th>
@@ -227,8 +233,8 @@
               <tbody>
                 @for (pkg of packages.controls; track pkg; let i = $index) {
                   <tr [formGroupName]="i" [class.inactive-row]="!packageGroup(i).get('is_active')?.value">
-                    <td><input pInputText formControlName="brand" placeholder="ยี่ห้อ เช่น Sara" class="cell-input"
-                      [class.ng-invalid]="packageGroup(i).get('brand')?.invalid && packageGroup(i).get('brand')?.touched" /></td>
+                    <td><input pInputText formControlName="name" class="cell-input"
+                      [placeholder]="(packageGroup(i).get('pack_unit')?.value || 'กล่อง') + ' ' + (packageGroup(i).get('pack_size')?.value || '') + ' ' + (form.get('unit')?.value || '')" /></td>
                     <td><input pInputText formControlName="pack_unit" placeholder="กล่อง" class="cell-input" /></td>
                     <td><input pInputText type="number" min="1" formControlName="pack_size" placeholder="40" class="cell-input"
                       [class.ng-invalid]="packageGroup(i).get('pack_size')?.invalid && packageGroup(i).get('pack_size')?.touched" /></td>
@@ -273,13 +279,13 @@
     </ng-template>
   </p-dialog>
 
-  <!-- modal ยี่ห้อ/ขนาดบรรจุ -->
+  <!-- modal แบบบรรจุ -->
   <p-dialog [(visible)]="showPackagesDialog" [modal]="true" [appendTo]="'body'" [style]="{ width: '560px' }"
     [breakpoints]="{ '640px': '92vw' }" [dismissableMask]="true">
     <ng-template pTemplate="header">
       <div class="packages-dialog-title">
-        <span class="title">ยี่ห้อ / ขนาดบรรจุ</span>
-        <span class="subtitle">{{ packagesProduct?.name }} · หน่วยจ่าย: {{ packagesProduct?.unit || '-' }}</span>
+        <span class="title">แบบบรรจุ</span>
+        <span class="subtitle">{{ productLabel(packagesProduct) }} · หน่วยจ่าย: {{ packagesProduct?.unit || '-' }}</span>
       </div>
     </ng-template>
 
@@ -288,7 +294,7 @@
         <table class="packages-dialog-table">
           <thead>
             <tr>
-              <th>ยี่ห้อ</th>
+              <th>ชื่อ</th>
               <th>ขนาดบรรจุ</th>
               <th class="text-right">ทุนล่าสุด</th>
               <th></th>
@@ -299,7 +305,7 @@
               <tr [class.inactive-row]="pkg.is_active === false">
                 <td>
                   <div class="brand-cell">
-                    <span class="font-medium">{{ pkg.brand }}</span>
+                    <span class="font-medium">{{ pkg.name }}</span>
                     @if (pkg.is_default) { <span class="chip chip-accent">ซื้อประจำ</span> }
                     @if (pkg.is_active === false) { <span class="chip chip-plain">ปิดใช้งาน</span> }
                   </div>
@@ -311,12 +317,12 @@
                 <td class="text-right">
                   @if (pkg.is_active !== false) {
                     <button pButton icon="pi pi-download" size="small" severity="success" text rounded
-                      (click)="receive(packagesProduct, pkg.id)" pTooltip="ทำเอกสารรับของเข้า ยี่ห้อนี้" tooltipPosition="left"></button>
+                      (click)="receive(packagesProduct, pkg.id)" pTooltip="ทำเอกสารรับของเข้า แบบนี้" tooltipPosition="left"></button>
                   }
                 </td>
               </tr>
             } @empty {
-              <tr><td colspan="4" class="empty-state">ยังไม่มียี่ห้อ/ขนาดบรรจุ</td></tr>
+              <tr><td colspan="4" class="empty-state">ยังไม่มีแบบบรรจุ</td></tr>
             }
           </tbody>
         </table>
@@ -325,7 +331,7 @@
 
     <ng-template pTemplate="footer">
       <div class="packages-dialog-footer">
-        <p-button label="แก้ไขยี่ห้อ" icon="pi pi-pencil" severity="secondary" [outlined]="true" (onClick)="editFromPackagesDialog()"></p-button>
+        <p-button label="แก้ไขแบบบรรจุ" icon="pi pi-pencil" severity="secondary" [outlined]="true" (onClick)="editFromPackagesDialog()"></p-button>
         <p-button label="ดูล็อตสินค้านี้" icon="pi pi-arrow-right" iconPos="right" (onClick)="packagesProduct && viewLots(packagesProduct)"></p-button>
       </div>
     </ng-template>

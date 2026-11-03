@@ -351,14 +351,13 @@ $accent-soft: #effaf8;
   flex-direction: column;
 }
 
-.log-row {
+// ----- ประวัติเข้า-ออกระบบ -----
+.hist-row {
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 0.25rem;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.7rem 0.25rem;
   border-bottom: 1px solid #f3f5f8;
-  font-size: 0.88rem;
-  flex-wrap: wrap;
 
   &:last-child {
     border-bottom: none;
@@ -366,34 +365,84 @@ $accent-soft: #effaf8;
 
   &.failed {
     background: #fff7f7;
-    border-radius: 8px;
-  }
-
-  .ok {
-    color: #16a34a;
-  }
-
-  .bad {
-    color: #dc2626;
+    border-radius: 10px;
+    padding-left: 0.5rem;
   }
 }
 
-.log-who {
-  font-weight: 600;
-  color: $ink;
+.avatar.sm {
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.8rem;
 }
 
-.log-device {
-  flex: 1;
-  min-width: 12rem;
+.fail-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: #fee2e2;
+  color: #dc2626;
 
   i {
+    font-size: 0.8rem;
+  }
+}
+
+.hist-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+
+  .cell-sub i {
     font-size: 0.75rem;
   }
 }
 
-.log-time {
-  white-space: nowrap;
+.hist-time {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  margin-top: 0.15rem;
+
+  i {
+    font-size: 0.75rem;
+  }
+
+  .arrow {
+    color: #cbd5e1;
+  }
+
+  .t-in {
+    color: $accent;
+  }
+
+  .t-on {
+    color: #16a34a;
+    font-weight: 600;
+  }
+
+  .t-out {
+    color: #475569;
+
+    &.kicked {
+      color: #dc2626;
+      font-weight: 600;
+    }
+  }
+}
+
+.more-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.5rem;
 }
 
 .session-body,

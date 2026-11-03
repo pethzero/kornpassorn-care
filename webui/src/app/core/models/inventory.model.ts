@@ -1,11 +1,12 @@
 // src/app/core/models/inventory.model.ts
 export type InventoryProductCategory = 'medicine' | 'supply' | 'other';
 
-// ยี่ห้อ + ขนาดบรรจุที่ซื้อเข้า — สินค้า 1 ตัวมีได้หลายแบบ (ยี่ห้อ A กล่องละ 40, ยี่ห้อ B กล่องละ 50)
+// แบบบรรจุที่ซื้อเข้า — สินค้า 1 ตัวมีได้หลายแบบ เช่น "กล่อง 40 เม็ด", "แผง 10 เม็ด", "แท่งเล็ก"
 export interface InventoryProductPackage {
   id?: number;
   product_id?: number;
-  brand: string;
+  // ชื่อแบบบรรจุ (ไม่ซ้ำในสินค้าเดียวกัน)
+  name: string;
   // หน่วยที่ซื้อเข้า เช่น "กล่อง", "แผง"
   pack_unit: string;
   // จำนวน product.unit ต่อ 1 pack_unit
@@ -24,6 +25,8 @@ export interface InventoryProduct {
   id?: number;
   sku?: string;
   name: string;
+  // ยี่ห้อ/ผู้ผลิต — 1 สินค้า = 1 ยี่ห้อ (ยาตัวเดียวกันต่างยี่ห้อ = คนละสินค้า)
+  brand?: string | null;
   generic_name?: string;
   strength?: string;
   dosage_form?: string;
@@ -48,7 +51,7 @@ export interface InventoryProductLot {
   lot_no: string;
   manufacture_date?: string;
   expiry_date?: string;
-  // ยี่ห้อ/ขนาดบรรจุที่รับเข้า + snapshot ของ pack_unit/pack_size ตอนรับ
+  // แบบบรรจุที่รับเข้า + snapshot ของ pack_unit/pack_size ตอนรับ
   package_id?: number | null;
   package?: InventoryProductPackage | null;
   pack_unit?: string | null;
@@ -60,8 +63,8 @@ export interface InventoryProductLot {
   unit_cost?: number;
   pack_unit_cost?: number;
   supplier?: string;
-  // เจ้าของยี่ห้อ/ผู้ผลิต (ต่างจาก supplier ซึ่งเป็นร้าน/คนที่ซื้อมาด้วย)
-  brand?: string;
+  // ยี่ห้อตอนรับเข้า (สำเนาจากสินค้า — ต่างจาก supplier ซึ่งเป็นร้านที่ซื้อมา)
+  brand?: string | null;
   received_date?: string;
   note?: string;
   modify_by?: string;
@@ -121,4 +124,16 @@ export interface InventoryItemResponse<T> {
   success: boolean;
   message?: string;
   data: T;
+}
+
+// ชื่อสินค้าที่แสดง: "Paracetamol 500 mg · Sara" — ชื่อเดียวกันคนละยี่ห้อต้องแยกออกได้ทุกที่ที่เลือก/แสดงสินค้า
+export function productLabel(p?: { name?: string; brand?: string | null } | null): string {
+  if (!p?.name) return '';
+  return p.brand ? `${p.name} · ${p.brand}` : p.name;
+}
+
+// แบบบรรจุที่แสดง: "กล่อง 40 เม็ด (1 กล่อง = 40 เม็ด)"
+export function packageLabel(pkg: { name: string; pack_unit: string; pack_size: number }, unit?: string | null): string {
+  const size = `1 ${pkg.pack_unit} = ${pkg.pack_size} ${unit || ''}`.trim();
+  return pkg.name.includes(String(pkg.pack_size)) ? pkg.name : `${pkg.name} (${size})`;
 }

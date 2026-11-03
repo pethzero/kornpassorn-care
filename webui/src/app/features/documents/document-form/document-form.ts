@@ -16,7 +16,7 @@ import { InventoryService } from '../../../core/services/inventory.service';
 import { PatientService } from '../../../core/services/patient.service';
 import { SettingsService } from '../../../core/services/settings.service';
 import { Patient } from '../../../models/users/user.model';
-import { InventoryProduct, InventoryProductLot } from '../../../core/models/inventory.model';
+import { InventoryProduct, InventoryProductLot, productLabel } from '../../../core/models/inventory.model';
 import { NewProductDialogComponent, NewProductResult } from '../new-product-dialog/new-product-dialog';
 import {
   CreateDocumentItemPayload,
@@ -170,7 +170,7 @@ export class DocumentFormComponent implements OnInit {
   private setProducts(products: InventoryProduct[]): void {
     this.products = products;
     this.productOptions = products.map((p) => ({
-      label: `${p.name} — เหลือ ${Number(p.stock_remaining ?? 0).toLocaleString('th-TH')} ${p.unit || ''}`,
+      label: `${productLabel(p)} — เหลือ ${Number(p.stock_remaining ?? 0).toLocaleString('th-TH')} ${p.unit || ''}`,
       value: p.id!,
     }));
     this.packageOptionsCache = {};
@@ -307,7 +307,7 @@ export class DocumentFormComponent implements OnInit {
     if (!product?.id) return [];
     return (this.packageOptionsCache[product.id] ??= (product.packages || [])
       .filter((p) => p.is_active !== false)
-      .map((p) => ({ label: `${p.brand} — ${p.pack_unit}ละ ${p.pack_size} ${product.unit || ''}`, value: p.id! })));
+      .map((p) => ({ label: `${p.name} — ${p.pack_unit}ละ ${p.pack_size} ${product.unit || ''}`, value: p.id! })));
   }
 
   onPackageChange(i: number): void {

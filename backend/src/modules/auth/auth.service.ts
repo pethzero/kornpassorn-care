@@ -320,26 +320,85 @@ export class AuthService implements OnModuleInit {
     return 0;
   }
 
-  async recentLogins(limit: number) {
+  // ===== ประวัติเข้า-ออกระบบ (หน้า admin) =====
+  // 1 รายการ = 1 ครั้งที่เข้าใช้ (session) : เข้าเมื่อ → ออกเมื่อ + ออกเพราะอะไร — สร้างจาก user_tokens (ไม่ต้องมีตารางเพิ่ม)
+  // รวมกับครั้งที่ login ไม่สำเร็จ (login_logs) เรียงตามเวลา — ย้อนหลังได้ตามที่ cleanup เก็บไว้ (TOKEN_CLEANUP_RETENTION_DAYS)
+  async history(limit: number) {
     if (!Number.isInteger(limit) || limit < 1 || limit > 500) throw new BadRequestException('limit 1–500');
-    const rows = await this.loginLogRepo
+
+    const sessions: any[] = await this.userTokenRepo.query(
+      `SELECT s.*, u.username, u.first_name AS u_first, u.last_name AS u_last, u.role,
+              p.first_name AS p_first, p.last_name AS p_last, p.phone, k.username AS ended_by_name
+         FROM (
+           SELECT session_id,
+                  min(created_at) AS first_seen,
+                  max(COALESCE(last_used, created_at)) AS last_active,
+                  bool_or(NOT revoked AND (expired_at IS NULL OR expired_at > now())) AS active,
+                  max(expired_at) AS expires_at,
+                  -- "rotated" = แค่ต่ออายุ token ไม่ใช่การออกจากระบบ
+                  max(revoked_at) FILTER (WHERE revoked AND revoked_reason IS DISTINCT FROM 'rotated') AS ended_at,
+                  (array_agg(revoked_reason ORDER BY revoked_at DESC) FILTER (WHERE revoked AND revoked_reason IS DISTINCT FROM 'rotated'))[1] AS end_reason,
+                  (array_agg(revoked_by ORDER BY revoked_at DESC) FILTER (WHERE revoked AND revoked_reason IS DISTINCT FROM 'rotated'))[1] AS ended_by,
+                  (array_agg(device_info ORDER BY created_at DESC))[1] AS device_info,
+                  (array_agg(device_ip ORDER BY created_at DESC))[1] AS ip,
+                  (array_agg("userId") FILTER (WHERE "userId" IS NOT NULL))[1] AS user_id,
+                  (array_agg("patientId") FILTER (WHERE "patientId" IS NOT NULL))[1] AS patient_id
+             FROM user_tokens
+            WHERE session_id IS NOT NULL
+            GROUP BY session_id
+            ORDER BY min(created_at) DESC
+            LIMIT $1
+         ) s
+         LEFT JOIN users u ON u.id = s.user_id
+         LEFT JOIN patients p ON p.id = s.patient_id
+         LEFT JOIN users k ON k.id = s.ended_by`,
+      [limit],
+    );
+
+    const failures = await this.loginLogRepo
       .createQueryBuilder('l')
-      .leftJoin('l.user', 'u')
-      .leftJoin('l.patient', 'p')
-      .select(['l.id', 'l.login_time', 'l.ip_address', 'l.user_agent', 'l.success', 'l.fail_reason'])
-      .addSelect(['l.username', 'u.username', 'u.role', 'p.phone', 'p.first_name', 'p.last_name'])
+      .select(['l.id', 'l.login_time', 'l.ip_address', 'l.user_agent', 'l.fail_reason', 'l.username'])
+      .where('l.success = false')
       .orderBy('l.login_time', 'DESC')
       .take(limit)
       .getMany();
-    return rows.map((l) => ({
-      id: l.id,
-      at: l.login_time,
-      success: l.success,
-      reason: l.fail_reason ?? null,
-      who: l.user?.username ?? (l.patient ? `${l.patient.first_name} ${l.patient.last_name}`.trim() || l.patient.phone : l.username ?? null),
-      role: l.user?.role ?? (l.patient ? 'patient' : null),
-      ip: l.ip_address,
-      device: describeUserAgent(l.user_agent),
-    }));
+
+    const items = [
+      ...sessions.map((s) => {
+        const role = s.user_id ? s.role : s.patient_id ? 'patient' : 'guest';
+        const login = s.device_info?.login_at ?? s.first_seen;
+        // ไม่ได้ถูกออกจากระบบ และไม่มี token ที่ยังใช้ได้ = หมดอายุเอง (ไม่ได้ใช้งานจนเลยเวลา)
+        const ended = s.active ? null : (s.ended_at ?? s.expires_at ?? s.last_active);
+        return {
+          type: 'session' as const,
+          id: s.session_id,
+          at: new Date(login),
+          role,
+          name: s.user_id
+            ? [s.u_first, s.u_last].filter(Boolean).join(' ') || s.username
+            : s.patient_id
+              ? `${s.p_first ?? ''} ${s.p_last ?? ''}`.trim() || s.phone
+              : 'ผู้เยี่ยมชม',
+          username: s.username ?? s.phone ?? null,
+          device: describeDevice(s.device_info),
+          ip: s.ip ?? s.device_info?.ip ?? null,
+          active: !!s.active,
+          ended_at: ended ? new Date(ended) : null,
+          end_reason: s.active ? null : (s.end_reason ?? 'expired'),
+          ended_by: s.ended_by_name ?? null,
+          last_active: new Date(s.last_active),
+        };
+      }),
+      ...failures.map((l) => ({
+        type: 'failed' as const,
+        id: `f${l.id}`,
+        at: l.login_time,
+        username: l.username ?? null,
+        reason: l.fail_reason ?? null,
+        device: describeUserAgent(l.user_agent),
+        ip: l.ip_address ?? null,
+      })),
+    ];
+    return items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()).slice(0, limit);
   }
 }

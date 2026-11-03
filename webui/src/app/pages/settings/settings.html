@@ -140,22 +140,59 @@
           </section>
 
           <section class="card">
-            <h3 class="card-title"><i class="pi pi-history"></i> การเข้าสู่ระบบล่าสุด</h3>
-            <p class="cell-sub">รวมครั้งที่รหัสผิด — เห็นชื่อผู้ใช้ที่ถูกลองเดารหัส</p>
+            <div class="card-head">
+              <div>
+                <h3 class="card-title"><i class="pi pi-history"></i> ประวัติเข้า-ออกระบบ</h3>
+                <p class="cell-sub">1 แถว = 1 ครั้งที่เข้าใช้ (เข้าเมื่อ → ออกเมื่อ และออกเพราะอะไร) · รวมครั้งที่ login ไม่สำเร็จ</p>
+              </div>
+              <div class="segmented">
+                <button type="button" [class.active]="historyFilter === 'all'" (click)="historyFilter = 'all'">ทั้งหมด</button>
+                <button type="button" [class.active]="historyFilter === 'sessions'" (click)="historyFilter = 'sessions'">เข้า-ออก</button>
+                <button type="button" [class.active]="historyFilter === 'failed'" (click)="historyFilter = 'failed'">ไม่สำเร็จ</button>
+              </div>
+            </div>
             <div class="log-list">
-              @for (l of loginLogs; track l.id) {
-                <div class="log-row" [class.failed]="!l.success">
-                  <i [class]="l.success ? 'pi pi-check-circle ok' : 'pi pi-times-circle bad'"></i>
-                  <span class="log-who">{{ l.who || '—' }}</span>
-                  @if (l.success && l.role) { <span class="chip role-chip role-{{ l.role }}">{{ roleLabel[l.role] || l.role }}</span> }
-                  @if (!l.success) { <span class="chip chip-danger">{{ failReason(l.reason) }}</span> }
-                  <span class="cell-sub log-device"><i [class]="deviceIcon(l.device)"></i> {{ deviceTitle(l.device) }} · IP {{ l.ip || '—' }}</span>
-                  <span class="cell-sub log-time">{{ ago(l.at) }}</span>
-                </div>
+              @for (h of historyRows; track h.id) {
+                @if (h.type === 'session') {
+                  <div class="hist-row">
+                    <span class="avatar sm role-{{ h.role }}">{{ (h.name || '?').slice(0, 1).toUpperCase() }}</span>
+                    <div class="hist-body">
+                      <span class="cell-title">
+                        {{ h.name }} <span class="chip role-chip role-{{ h.role }}">{{ roleLabel[h.role] }}</span>
+                      </span>
+                      <span class="cell-sub"><i [class]="deviceIcon(h.device)"></i> {{ deviceTitle(h.device) }} · {{ h.device.browser || 'เบราว์เซอร์' }} · IP {{ h.ip || '—' }}</span>
+                      <span class="hist-time">
+                        <span class="t-in"><i class="pi pi-sign-in"></i> เข้า {{ formatDate(h.at) }}</span>
+                        <i class="pi pi-arrow-right arrow"></i>
+                        @if (h.active) {
+                          <span class="t-on"><span class="dot on"></span> ยังใช้งานอยู่</span>
+                        } @else {
+                          <span class="t-out" [class.kicked]="h.end_reason === 'kicked by admin'">
+                            <i class="pi pi-sign-out"></i> ออก {{ formatDate(h.ended_at) }} · {{ endReason(h) }}
+                          </span>
+                        }
+                        <span class="cell-sub">({{ duration(h.at, h.ended_at) }})</span>
+                      </span>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="hist-row failed">
+                    <span class="fail-icon"><i class="pi pi-times"></i></span>
+                    <div class="hist-body">
+                      <span class="cell-title">
+                        {{ h.username || '—' }} <span class="chip chip-danger">{{ failReason(h.reason) }}</span>
+                      </span>
+                      <span class="cell-sub"><i [class]="deviceIcon(h.device)"></i> {{ deviceTitle(h.device) }} · IP {{ h.ip || '—' }} · {{ formatDate(h.at) }}</span>
+                    </div>
+                  </div>
+                }
               } @empty {
                 <p class="cell-sub">ยังไม่มีประวัติ</p>
               }
             </div>
+            @if (history.length >= historyLimit && historyLimit < 500) {
+              <div class="more-row"><p-button label="ดูเพิ่ม" icon="pi pi-angle-down" size="small" severity="secondary" [text]="true" (onClick)="moreHistory()"></p-button></div>
+            }
           </section>
         }
 
