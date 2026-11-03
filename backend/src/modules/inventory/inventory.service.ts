@@ -71,11 +71,11 @@ export class InventoryService {
       .leftJoinAndSelect('p.packages', 'pkg');
 
     if (search) {
-      // ค้นได้ทั้งชื่อสินค้า ชื่อสามัญ SKU ยี่ห้อ และบาร์โค้ด
+      // ค้นได้ทั้งชื่อสินค้า ยี่ห้อ ชื่อสามัญ SKU ชื่อแบบบรรจุ และบาร์โค้ด
       qb.andWhere(
-        `(p.name ILIKE :search OR p.sku ILIKE :search OR p.generic_name ILIKE :search
+        `(p.name ILIKE :search OR p.brand ILIKE :search OR p.sku ILIKE :search OR p.generic_name ILIKE :search
           OR EXISTS (SELECT 1 FROM inventory_product_packages sp
-                     WHERE sp.product_id = p.id AND (sp.brand ILIKE :search OR sp.barcode = :exact)))`,
+                     WHERE sp.product_id = p.id AND (sp.name ILIKE :search OR sp.barcode = :exact)))`,
         { search: `%${search}%`, exact: search },
       );
     }
@@ -86,8 +86,9 @@ export class InventoryService {
       });
 
     qb.orderBy('p.name', 'ASC')
+      .addOrderBy('p.brand', 'ASC', 'NULLS FIRST')
       .addOrderBy('pkg.is_default', 'DESC')
-      .addOrderBy('pkg.brand', 'ASC')
+      .addOrderBy('pkg.name', 'ASC')
       .skip((page - 1) * limit)
       .take(limit);
 
@@ -103,7 +104,7 @@ export class InventoryService {
     const product = await this.productRepo.findOne({
       where: { id },
       relations: ['packages'],
-      order: { packages: { is_default: 'DESC', brand: 'ASC' } },
+      order: { packages: { is_default: 'DESC', name: 'ASC' } },
     });
     if (!product) throw new NotFoundException(`ไม่พบสินค้า ID: ${id}`);
     const [withStock] = await this.attachStockRemaining([product]);
@@ -209,11 +210,9 @@ export class InventoryService {
       if (input.id && !existingById.has(input.id)) {
         throw new BadRequestException(`ไม่พบแบบบรรจุ ID ${input.id} ของสินค้านี้`);
       }
-      const key = `${input.brand.trim().toLowerCase()}|${input.pack_unit.trim()}|${input.pack_size}`;
+      const key = input.name.trim().toLowerCase();
       if (seen.has(key)) {
-        throw new BadRequestException(
-          `แบบบรรจุซ้ำกัน: ${input.brand} ${input.pack_unit} ละ ${input.pack_size}`,
-        );
+        throw new BadRequestException(`ชื่อแบบบรรจุซ้ำกัน: "${input.name.trim()}"`);
       }
       seen.add(key);
     }
@@ -246,7 +245,7 @@ export class InventoryService {
 
     for (const input of inputs) {
       const data = {
-        brand: input.brand.trim(),
+        name: input.name.trim(),
         pack_unit: input.pack_unit.trim(),
         pack_size: input.pack_size,
         barcode: input.barcode?.trim() || undefined,
@@ -281,7 +280,7 @@ export class InventoryService {
       .findOne({ where: { id: packageId, product_id: productId } });
     if (!pkg) throw new BadRequestException(`ไม่พบแบบบรรจุ ID ${packageId} ของสินค้านี้`);
     if (!pkg.is_active && pkg.id !== allowInactiveId) {
-      throw new BadRequestException(`แบบบรรจุ "${pkg.brand} ${pkg.pack_unit}" ถูกปิดใช้งานแล้ว`);
+      throw new BadRequestException(`แบบบรรจุ "${pkg.name}" ถูกปิดใช้งานแล้ว`);
     }
     return pkg;
   }
@@ -297,8 +296,7 @@ export class InventoryService {
   // ----- Lots -----
 
   // ตั้งยอดยกมา: รับสินค้าเข้าล็อตโดยตรง ไม่ผ่านเอกสาร (ไม่ลงบัญชีการเงิน) — ซื้อของเข้าจริงให้ทำเอกสารรับของเข้า (RCV)
-  // เลือกยี่ห้อ/ขนาดบรรจุ (package) แล้วกรอกเป็นหน่วยซื้อ (เช่น 3 กล่อง) → แปลงเป็นหน่วยจ่ายจริงด้วย pack_size ของ package นั้น
-  // ยา 1 ตัวต่างยี่ห้อบรรจุไม่เท่ากันได้ (กล่องละ 40 / 50) จึงใช้ pack_size ของ package ไม่ใช่ของสินค้า
+  // เลือกแบบบรรจุ (package) แล้วกรอกเป็นหน่วยซื้อ (เช่น 3 กล่อง) → แปลงเป็นหน่วยจ่ายจริงด้วย pack_size ของแบบนั้น
   async createLot(dto: CreateInventoryLotDto, currentUser?: string) {
     const product = await this.findOneProduct(dto.product_id);
     const pkg = await this.resolvePackage(this.lotRepo.manager, product.id, dto.package_id);
@@ -310,7 +308,7 @@ export class InventoryService {
     if (dto.received_pack_qty) {
       if (!pkg) {
         throw new BadRequestException(
-          `กรุณาเลือกยี่ห้อ/ขนาดบรรจุ (package_id) ก่อนกรอกจำนวนเป็นหน่วยบรรจุ หรือระบุ quantity_in แทน`,
+          `กรุณาเลือกแบบบรรจุ (package_id) ก่อนกรอกจำนวนเป็นหน่วยบรรจุ หรือระบุ quantity_in แทน`,
         );
       }
       received_pack_qty = dto.received_pack_qty;
@@ -327,7 +325,7 @@ export class InventoryService {
     const lot = this.lotRepo.create({
       ...dto,
       ...this.packSnapshot(pkg),
-      brand: pkg ? pkg.brand : dto.brand,
+      brand: product.brand ?? dto.brand ?? null,
       received_pack_qty,
       quantity_in,
       unit_cost,
@@ -434,7 +432,7 @@ export class InventoryService {
     const withBalance = events.map((e) => ({ ...e, balance: (balance += e.quantity) }));
 
     return {
-      lot: { id: lot.id, lot_no: lot.lot_no, product_name: lot.product?.name, unit: lot.product?.unit,
+      lot: { id: lot.id, lot_no: lot.lot_no, product_name: lot.product ? [lot.product.name, lot.product.brand].filter(Boolean).join(' · ') : undefined, unit: lot.product?.unit,
         quantity_in: Number(lot.quantity_in), quantity_remaining: Number(lot.quantity_remaining) },
       movements: withBalance,
     };
@@ -511,7 +509,7 @@ export class InventoryService {
         unit_cost = Math.round((dto.pack_unit_cost / packSize) * 100) / 100;
       }
     } else if (packageChanged && pkg && lot.received_pack_qty && dto.quantity_in === undefined) {
-      // เปลี่ยนแค่ยี่ห้อ/ขนาดบรรจุ — จำนวนแพ็คเดิม × ขนาดใหม่
+      // เปลี่ยนแค่แบบบรรจุ — จำนวนแพ็คเดิม × ขนาดใหม่
       quantity_in = Number(lot.received_pack_qty) * pkg.pack_size;
     } else if (dto.quantity_in !== undefined || (packageChanged && !pkg)) {
       // เปลี่ยนมากรอกตรงเป็นหน่วยจ่ายจริงแล้ว เคลียร์ค่าหน่วยแพ็คเดิมทิ้งกันข้อมูลค้างไม่ตรงกัน (ต้องเป็น null ไม่ใช่ undefined
@@ -519,9 +517,8 @@ export class InventoryService {
       received_pack_qty = null;
     }
 
-    const packFields = packageChanged
-      ? { ...this.packSnapshot(pkg), brand: pkg ? pkg.brand : (dto.brand ?? lot.brand) }
-      : { brand: pkg ? lot.brand : (dto.brand ?? lot.brand) };
+    // ยี่ห้ออยู่ที่สินค้าแล้ว — เปลี่ยนแบบบรรจุไม่เปลี่ยนยี่ห้อของล็อต
+    const packFields = packageChanged ? this.packSnapshot(pkg) : {};
 
     // relation ที่โหลดมาจะทับ package_id ตอน save — ตัดทิ้งให้ TypeORM ใช้ค่า package_id ตรงๆ
     delete lot.package;
@@ -683,12 +680,13 @@ export class InventoryService {
     }
 
     const pkg = await this.resolvePackage(manager, data.product_id, data.package_id);
+    const product = await manager.getRepository(InventoryProduct).findOne({ where: { id: data.product_id }, select: ['id', 'brand'] });
     const lot = manager.getRepository(InventoryProductLot).create({
       ...data,
       supplier: data.supplier ?? undefined,
       note: data.note ?? undefined,
       ...this.packSnapshot(pkg),
-      brand: pkg?.brand ?? data.brand ?? null,
+      brand: product?.brand ?? data.brand ?? null,
       received_pack_qty: pkg ? (data.received_pack_qty ?? null) : null,
       quantity_remaining: data.quantity_in,
       create_by: 'document',

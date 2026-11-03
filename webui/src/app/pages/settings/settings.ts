@@ -13,7 +13,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
 import { AuthService } from '../../core/services/auth.service';
-import { ClinicSettings, DeviceSummary, LoginLogRow, Session, SettingsService, StaffUser } from '../../core/services/settings.service';
+import { ClinicSettings, DeviceSummary, HistoryItem, Session, SettingsService, StaffUser } from '../../core/services/settings.service';
 
 type Tab = 'account' | 'sessions' | 'online' | 'users' | 'clinic';
 
@@ -46,7 +46,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
   // ผู้ใช้ออนไลน์ (admin) — รีเฟรชเองทุก 30 วินาทีขณะเปิดแท็บนี้
   monitor: Session[] = [];
   monitorFilter: 'online' | 'all' = 'online';
-  loginLogs: LoginLogRow[] = [];
+  history: HistoryItem[] = [];
+  historyFilter: 'all' | 'sessions' | 'failed' = 'all';
+  historyLimit = 50;
   monitorUpdatedAt: Date | null = null;
   private monitorTimer: ReturnType<typeof setInterval> | null = null;
   readonly roleLabel = ROLE_LABEL;
@@ -237,7 +239,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
       },
       error: (e) => !silent && this.err(e),
     });
-    this.settings.loginLogs(30).subscribe({ next: (r) => (this.loginLogs = r.data), error: (e) => !silent && this.err(e) });
+    this.settings.history(this.historyLimit).subscribe({ next: (r) => (this.history = r.data), error: (e) => !silent && this.err(e) });
   }
 
   get monitorRows(): Session[] {
@@ -254,7 +256,45 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   get failedLogins24h(): number {
     const since = Date.now() - 24 * 3600 * 1000;
-    return this.loginLogs.filter((l) => !l.success && new Date(l.at).getTime() > since).length;
+    return this.history.filter((h) => h.type === 'failed' && new Date(h.at).getTime() > since).length;
+  }
+
+  get historyRows(): HistoryItem[] {
+    if (this.historyFilter === 'sessions') return this.history.filter((h) => h.type === 'session');
+    if (this.historyFilter === 'failed') return this.history.filter((h) => h.type === 'failed');
+    return this.history;
+  }
+
+  moreHistory(): void {
+    this.historyLimit = Math.min(this.historyLimit + 50, 500);
+    this.loadMonitor();
+  }
+
+  // เหตุที่ออกจากระบบ (ค่าจาก backend) → ข้อความไทย
+  endReason(h: HistoryItem & { type: 'session' }): string {
+    const map: Record<string, string> = {
+      logout: 'ออกจากระบบเอง',
+      'kicked by admin': 'ถูกเตะออก',
+      'signed out by owner': 'ออกจากระบบจากอุปกรณ์อื่น',
+      'signed out by owner (all other devices)': 'ออกจากระบบจากอุปกรณ์อื่น',
+      'password changed': 'เปลี่ยนรหัสผ่าน',
+      'password reset by admin': 'admin ตั้งรหัสผ่านใหม่',
+      'password set via script': 'ตั้งรหัสผ่านใหม่',
+      'account disabled': 'บัญชีถูกปิดใช้งาน',
+      expired: 'หมดเวลา (ไม่ได้ใช้งาน)',
+    };
+    const text = (h.end_reason && map[h.end_reason]) || h.end_reason || 'สิ้นสุด';
+    return h.ended_by && h.end_reason === 'kicked by admin' ? `${text}โดย ${h.ended_by}` : text;
+  }
+
+  // ระยะเวลาที่อยู่ในระบบ เช่น "1 ชม. 5 นาที"
+  duration(from: string, to: string | null): string {
+    const min = Math.max(0, Math.round(((to ? new Date(to) : new Date()).getTime() - new Date(from).getTime()) / 60000));
+    if (min < 1) return 'ไม่ถึง 1 นาที';
+    if (min < 60) return `${min} นาที`;
+    const h = Math.floor(min / 60);
+    if (h < 24) return `${h} ชม.${min % 60 ? ` ${min % 60} นาที` : ''}`;
+    return `${Math.floor(h / 24)} วัน${h % 24 ? ` ${h % 24} ชม.` : ''}`;
   }
 
   kick(s: Session): void {

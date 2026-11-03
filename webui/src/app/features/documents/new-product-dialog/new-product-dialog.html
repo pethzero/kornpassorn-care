@@ -7,6 +7,12 @@
         <input pInputText [(ngModel)]="name" placeholder="เช่น Amoxicillin 500 mg" autofocus />
       </label>
 
+      <label class="field">
+        <span>ยี่ห้อ / ผู้ผลิต</span>
+        <input pInputText [(ngModel)]="brand" placeholder="เช่น Sara, GPO, Nipro" />
+        <small class="hint">ยาตัวเดียวกันคนละยี่ห้อ = สินค้าแยก (สต็อกแยกกัน)</small>
+      </label>
+
       <div class="field-row">
         <div class="field">
           <span>ประเภท</span>
@@ -44,10 +50,6 @@
 
     @if (mode === 'package' || hasPack) {
       <div class="pack-box">
-        <label class="field">
-          <span>ยี่ห้อ / ผู้ผลิต <em>*</em></span>
-          <input pInputText [(ngModel)]="brand" placeholder="เช่น Sara, GPO, Nipro" />
-        </label>
         <div class="field">
           <span>ซื้อมาเป็น <em>*</em></span>
           <div class="chips">
@@ -63,8 +65,11 @@
         </label>
         <div class="ratio-preview" [class.empty]="!packSize">
           1 {{ packUnit || 'กล่อง' }} = <strong>{{ packSize || '?' }}</strong> {{ baseUnit }}
-          @if (brand) { <span class="muted">· {{ brand }}</span> }
         </div>
+        <label class="field">
+          <span>ชื่อแบบบรรจุ <small class="muted">(ไม่บังคับ)</small></span>
+          <input pInputText [(ngModel)]="packName" [placeholder]="autoPackName" />
+        </label>
         @if (mode === 'package') {
           <label class="check">
             <input type="checkbox" [(ngModel)]="isDefault" /> ตั้งเป็นแบบที่ซื้อประจำ
@@ -82,6 +87,6 @@
 
   <ng-template pTemplate="footer">
     <p-button label="ยกเลิก" severity="secondary" [outlined]="true" (onClick)="close()" [disabled]="saving"></p-button>
-    <p-button [label]="mode === 'product' ? 'สร้างสินค้า' : 'เพิ่มยี่ห้อนี้'" icon="pi pi-check" (onClick)="submit()" [loading]="saving"></p-button>
+    <p-button [label]="mode === 'product' ? 'สร้างสินค้า' : 'เพิ่มแบบบรรจุนี้'" icon="pi pi-check" (onClick)="submit()" [loading]="saving"></p-button>
   </ng-template>
 </p-dialog>

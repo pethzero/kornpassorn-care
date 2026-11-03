@@ -11,10 +11,10 @@
       <button pButton type="button" icon="pi pi-arrow-left" label="กลับหน้าสินค้า" size="small" severity="secondary"
         [outlined]="true" (click)="backToProducts()"></button>
       <div class="product-context-info">
-        <span class="product-context-name">{{ fp.name }}</span>
+        <span class="product-context-name">{{ productLabel(fp) }}</span>
         <span class="product-context-meta">
           @if (!showExpiringOnly) { คงเหลือรวม <span class="num">{{ totalRemaining() | number: '1.0-2' }}</span> {{ fp.unit }} · }
-          {{ fp.packages?.length || 0 }} ยี่ห้อ/ขนาดบรรจุ
+          {{ fp.packages?.length || 0 }} แบบบรรจุ
         </span>
       </div>
       <button type="button" class="link-button" (click)="clearFilters()">ดูทุกสินค้า</button>
@@ -38,7 +38,7 @@
     <p-select
       [options]="products"
       [(ngModel)]="selectedProductId"
-      optionLabel="name"
+      optionLabel="label"
       optionValue="id"
       [filter]="true"
       [showClear]="true"
@@ -63,7 +63,7 @@
       <ng-template pTemplate="header">
         <tr>
           <th style="min-width: 220px;">สินค้า / ล็อต</th>
-          <th style="width: 190px;">ยี่ห้อ / บรรจุ</th>
+          <th style="width: 190px;">แบบบรรจุ</th>
           <th style="width: 170px;">หมดอายุ</th>
           <th class="text-right" style="width: 170px;">คงเหลือ</th>
           <th class="text-right" style="width: 110px;">ทุน/หน่วย</th>
@@ -78,10 +78,10 @@
             <div class="cell-stack">
               <span class="cell-title">
                 @if (selectedProductId) {
-                  {{ lot.product?.name || productName(lot.product_id) }}
+                  {{ productLabel(lot.product) || productName(lot.product_id) }}
                 } @else {
                   <button type="button" class="link-button" (click)="filterByProduct(lot.product_id)"
-                    pTooltip="ดูเฉพาะล็อตของสินค้านี้" tooltipPosition="top">{{ lot.product?.name || productName(lot.product_id) }}</button>
+                    pTooltip="ดูเฉพาะล็อตของสินค้านี้" tooltipPosition="top">{{ productLabel(lot.product) || productName(lot.product_id) }}</button>
                 }
                 @if (lot.modify_date) {
                   <i class="pi pi-history edit-history-icon" [pTooltip]="editHistoryTooltip(lot)" tooltipPosition="top"></i>
@@ -92,7 +92,7 @@
           </td>
           <td>
             <div class="cell-stack">
-              <span>{{ lot.brand || '-' }}</span>
+              <span>{{ lot.package?.name || '-' }}</span>
               @if (receivedPackLine(lot)) {
                 <span class="cell-sub">{{ receivedPackLine(lot) }} {{ lot.product?.unit }}</span>
               } @else {
@@ -178,7 +178,7 @@
     <form [formGroup]="form" class="dialog-form">
       <div class="field">
         <label>สินค้า <span class="required">*</span></label>
-        <p-select formControlName="product_id" [options]="products" optionLabel="name" optionValue="id"
+        <p-select formControlName="product_id" [options]="products" optionLabel="label" optionValue="id"
           [filter]="true" placeholder="เลือกสินค้า" styleClass="full-width" (onChange)="onFormProductChange()"
           [class.ng-invalid]="isFieldInvalid('product_id')"></p-select>
         @if (isEditMode) {
@@ -205,14 +205,14 @@
 
       @if (selectedFormProduct()) {
         <div class="field">
-          <label>ยี่ห้อ / ขนาดบรรจุ</label>
+          <label>แบบบรรจุ</label>
           <p-select formControlName="package_id" [options]="packageOptions()" optionValue="id" [showClear]="true"
             placeholder="ไม่ระบุ (รับเป็นหน่วยย่อย)" appendTo="body" styleClass="full-width" (onChange)="onPackageChange()">
             <ng-template let-pkg pTemplate="item">{{ packageLabel(pkg) }}</ng-template>
             <ng-template let-pkg pTemplate="selectedItem">{{ packageLabel(pkg) }}</ng-template>
           </p-select>
           @if (!packageOptions().length) {
-            <small class="field-hint">สินค้านี้ยังไม่ได้เพิ่มยี่ห้อ/ขนาดบรรจุ — เพิ่มได้ที่หน้าสินค้า</small>
+            <small class="field-hint">สินค้านี้ยังไม่ได้เพิ่มแบบบรรจุ — เพิ่มได้ที่หน้าสินค้า</small>
           }
         </div>
       }
@@ -242,7 +242,7 @@
             <tbody>
               <tr>
                 <td>ซื้อมา</td>
-                <td>{{ packQty() }} {{ selectedPackage()?.pack_unit }} ({{ selectedPackage()?.brand }})</td>
+                <td>{{ packQty() }} {{ selectedPackage()?.pack_unit }} ({{ selectedPackage()?.name }})</td>
               </tr>
               <tr>
                 <td>อัตราส่วน</td>
@@ -274,12 +274,6 @@
           <label>ผู้จำหน่าย</label>
           <input pInputText formControlName="supplier" placeholder="ร้าน/คนที่ซื้อมา" class="full-width" />
         </div>
-        @if (!selectedPackage()) {
-          <div class="field">
-            <label>เจ้าของยี่ห้อ</label>
-            <input pInputText formControlName="brand" placeholder="เช่น Berlin Pharmaceutical" class="full-width" />
-          </div>
-        }
       </div>
 
       <div class="field">
@@ -300,7 +294,7 @@
     <ng-template pTemplate="header">
       <div class="history-title">
         <span class="title">ล็อต <span class="mono">{{ detailLot?.lot_no }}</span></span>
-        <span class="subtitle">{{ detailLot?.product?.name || history?.lot?.product_name }}</span>
+        <span class="subtitle">{{ productLabel(detailLot?.product) || history?.lot?.product_name }}</span>
       </div>
     </ng-template>
 
@@ -310,9 +304,9 @@
       <!-- ข้อมูลล็อต -->
       <dl class="lot-info">
         <div>
-          <dt>ยี่ห้อ / บรรจุ</dt>
+          <dt>แบบบรรจุ</dt>
           <dd>
-            {{ detailLot.brand || '-' }}
+            {{ detailLot.package?.name || '-' }}
             @if (detailLot.pack_unit && detailLot.pack_size) {
               <span class="cell-sub">· {{ detailLot.pack_unit }}ละ {{ detailLot.pack_size }} {{ detailLot.product?.unit }}</span>
             }

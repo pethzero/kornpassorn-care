@@ -23,6 +23,7 @@ import {
   InventoryProductPackage,
   LotMovement,
   LotMovementsResult,
+  productLabel,
 } from '../../../core/models/inventory.model';
 import { documentTypeInfo } from '../../../core/models/document.model';
 
@@ -51,7 +52,9 @@ import { documentTypeInfo } from '../../../core/models/document.model';
 })
 export class LotListComponent implements OnInit {
   lots: InventoryProductLot[] = [];
-  products: InventoryProduct[] = [];
+  // label = "ชื่อ · ยี่ห้อ" — ชื่อเดียวกันคนละยี่ห้อต้องแยกออกในตัวเลือก
+  products: (InventoryProduct & { label: string })[] = [];
+  readonly productLabel = productLabel;
   loading = false;
   saving = false;
   showDialog = false;
@@ -83,7 +86,6 @@ export class LotListComponent implements OnInit {
       received_pack_qty: [null],
       pack_unit_cost: [null],
       supplier: [''],
-      brand: [''],
       note: [''],
     });
   }
@@ -112,7 +114,7 @@ export class LotListComponent implements OnInit {
   loadProducts(onLoaded?: () => void): void {
     this.inventoryService.getProducts({ limit: 200 }).subscribe({
       next: (res) => {
-        this.products = res.data;
+        this.products = res.data.map((p) => ({ ...p, label: productLabel(p) }));
         onLoaded?.();
       },
     });
@@ -300,7 +302,6 @@ export class LotListComponent implements OnInit {
       received_pack_qty: lot.received_pack_qty,
       pack_unit_cost: null,
       supplier: lot.supplier || '',
-      brand: lot.brand || '',
       note: lot.note || '',
     });
     // ห้ามย้าย lot ไปสินค้าอื่นตอนแก้ไข — ปิดไว้ (ค่าของ control ที่ disabled จะไม่ถูกส่งไปกับ form.value ด้วย)
@@ -318,7 +319,7 @@ export class LotListComponent implements OnInit {
     return this.products.find((p) => p.id === productId);
   }
 
-  // ยี่ห้อ/ขนาดบรรจุที่เลือกได้ — แบบที่ปิดใช้งานแล้วจะโชว์เฉพาะถ้าล็อตนี้ใช้อยู่เดิม
+  // แบบบรรจุที่เลือกได้ — แบบที่ปิดใช้งานแล้วจะโชว์เฉพาะถ้าล็อตนี้ใช้อยู่เดิม
   packageOptions(): InventoryProductPackage[] {
     const currentId = this.form.get('package_id')?.value;
     return (this.selectedFormProduct()?.packages || []).filter((p) => p.is_active !== false || p.id === currentId);
@@ -326,7 +327,7 @@ export class LotListComponent implements OnInit {
 
   packageLabel(pkg: InventoryProductPackage): string {
     const unit = this.selectedFormProduct()?.unit || 'หน่วย';
-    return `${pkg.brand} — 1 ${pkg.pack_unit} = ${pkg.pack_size} ${unit}`;
+    return `${pkg.name} — 1 ${pkg.pack_unit} = ${pkg.pack_size} ${unit}`;
   }
 
   selectedPackage(): InventoryProductPackage | undefined {
@@ -334,7 +335,7 @@ export class LotListComponent implements OnInit {
     return this.selectedFormProduct()?.packages?.find((p) => p.id === packageId);
   }
 
-  // เปลี่ยนสินค้า → เลือกยี่ห้อที่ซื้อประจำให้อัตโนมัติ
+  // เปลี่ยนสินค้า → เลือกแบบบรรจุที่ซื้อประจำให้อัตโนมัติ
   onFormProductChange(): void {
     const options = this.packageOptions();
     const pkg = options.find((p) => p.is_default) || (options.length === 1 ? options[0] : undefined);
@@ -376,8 +377,6 @@ export class LotListComponent implements OnInit {
       return;
     }
 
-    // เลือกยี่ห้อแล้ว brand มาจาก package — ไม่ต้องส่ง brand ที่พิมพ์เอง
-    if (rest.package_id) delete rest.brand;
     const payload: Partial<InventoryProductLot> = use_pack
       ? { ...rest, received_pack_qty, pack_unit_cost }
       : { ...rest, quantity_in, unit_cost };
@@ -416,7 +415,7 @@ export class LotListComponent implements OnInit {
   }
 
   productName(productId: number): string {
-    return this.products.find((p) => p.id === productId)?.name || `#${productId}`;
+    return this.products.find((p) => p.id === productId)?.label || `#${productId}`;
   }
 
   isExpiringSoon(lot: InventoryProductLot): boolean {

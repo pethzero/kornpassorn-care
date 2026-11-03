@@ -26,9 +26,9 @@ export class SessionsAdminController {
     return { success: true, message: 'ออกจากระบบอุปกรณ์นั้นแล้ว' };
   }
 
-  // ประวัติการเข้าสู่ระบบล่าสุด รวมครั้งที่รหัสผิด (ดูว่ามีคนพยายามเดารหัสไหม)
-  @Get('login-logs')
-  async loginLogs(@Query('limit') limit = '50') {
-    return { success: true, data: await this.auth.recentLogins(Number(limit)) };
+  // ประวัติเข้า-ออกระบบ: แต่ละครั้งที่เข้าใช้ (เข้าเมื่อ → ออกเมื่อ/เพราะอะไร) + ครั้งที่ login ไม่สำเร็จ
+  @Get('history')
+  async history(@Query('limit') limit = '50') {
+    return { success: true, data: await this.auth.history(Number(limit)) };
   }
 }

@@ -318,3 +318,22 @@
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+
+// ยี่ห้อใต้ชื่อสินค้า (1 สินค้า = 1 ยี่ห้อ)
+.product-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: fit-content;
+  font-size: 0.78rem;
+  color: #0f766e;
+
+  i {
+    font-size: 0.7rem;
+  }
+}
+
+.brand-hint {
+  display: block;
+  margin: -0.4rem 0 0.6rem;
+}

@@ -87,16 +87,24 @@ async function main() {
     const somsri = await ensurePatient('DEMO-001', 'สมศรี', 'ใจดี (ตัวอย่าง)', 'female');
     const somchai = await ensurePatient('DEMO-002', 'สมชาย', 'รักษ์สุข (ตัวอย่าง)', 'male');
 
-    // ---------- 2) สินค้า 5 รายการ ----------
+    // ---------- 2) สินค้า 6 รายการ (1 สินค้า = 1 ยี่ห้อ — Paracetamol 2 ยี่ห้อจึงเป็น 2 สินค้า สต็อกแยกกัน) ----------
     const para = await inventory.createProduct(
       {
-        sku: 'MED-0001', name: 'Paracetamol 500 mg', generic_name: 'Paracetamol', strength: '500 mg',
-        dosage_form: 'tablet', category: 'medicine', unit: 'เม็ด', sell_price: 2, reorder_level: 100,
+        sku: 'MED-0001', name: 'Paracetamol 500 mg', brand: 'Sara (Thai Nakorn Patana)', generic_name: 'Paracetamol',
+        strength: '500 mg', dosage_form: 'tablet', category: 'medicine', unit: 'เม็ด', sell_price: 2, reorder_level: 100,
         description: 'ยาแก้ปวด ลดไข้',
         packages: [
-          { brand: 'Sara (Thai Nakorn Patana)', pack_unit: 'กล่อง', pack_size: 100, is_default: true },
-          { brand: 'Tylenol (Kenvue)', pack_unit: 'แผง', pack_size: 10 },
+          { name: 'กล่อง 100 เม็ด', pack_unit: 'กล่อง', pack_size: 100, is_default: true },
+          { name: 'แผง 10 เม็ด', pack_unit: 'แผง', pack_size: 10 },
         ],
+      },
+      USER,
+    );
+    const paraTylenol = await inventory.createProduct(
+      {
+        sku: 'MED-0004', name: 'Paracetamol 500 mg', brand: 'Tylenol (Kenvue)', generic_name: 'Paracetamol',
+        strength: '500 mg', dosage_form: 'tablet', category: 'medicine', unit: 'เม็ด', sell_price: 3, reorder_level: 50,
+        packages: [{ name: 'แผง 10 เม็ด', pack_unit: 'แผง', pack_size: 10, is_default: true }],
       },
       USER,
     );
@@ -118,8 +126,8 @@ async function main() {
     );
     const syringe = await inventory.createProduct(
       {
-        sku: 'SUP-0001', name: 'Syringe 3 ml', category: 'supply', unit: 'ชิ้น', sell_price: 5, reorder_level: 50,
-        packages: [{ brand: 'Nipro', pack_unit: 'กล่อง', pack_size: 100, is_default: true }],
+        sku: 'SUP-0001', name: 'Syringe 3 ml', brand: 'Nipro', category: 'supply', unit: 'ชิ้น', sell_price: 5, reorder_level: 50,
+        packages: [{ name: 'กล่อง 100 ชิ้น', pack_unit: 'กล่อง', pack_size: 100, is_default: true }],
       },
       USER,
     );
@@ -127,12 +135,12 @@ async function main() {
       {
         sku: 'SUP-0002', name: 'ถุงมือยางตรวจโรค ไซซ์ M', category: 'supply', unit: 'ชิ้น', sell_price: 3,
         reorder_level: 100,
-        packages: [{ brand: 'ทั่วไป', pack_unit: 'กล่อง', pack_size: 100, is_default: true }],
+        packages: [{ name: 'กล่อง 100 ชิ้น', pack_unit: 'กล่อง', pack_size: 100, is_default: true }],
       },
       USER,
     );
-    const pkg = (product: { packages?: { id: number; brand: string }[] }, brand: string) =>
-      product.packages!.find((p) => p.brand === brand)!.id;
+    const pkg = (product: { packages?: { id: number; name: string }[] }, name: string) =>
+      product.packages!.find((p) => p.name === name)!.id;
 
     // ---------- 3) เอกสาร ----------
     const done: string[] = [];
@@ -146,16 +154,16 @@ async function main() {
     await create({
       doc_type: 'receive', doc_date: day(-30), supplier: 'บริษัทเวชภัณฑ์ตัวอย่าง จำกัด', note: 'สั่งซื้อประจำเดือน',
       items: [
-        { product_id: para.id, package_id: pkg(para, 'Sara (Thai Nakorn Patana)'), pack_qty: 3, unit_price: 85,
+        { product_id: para.id, package_id: pkg(para, 'กล่อง 100 เม็ด'), pack_qty: 3, unit_price: 85,
           lot_no: 'SR2601', manufacture_date: day(-120), expiry_date: day(540) },
-        { product_id: syringe.id, package_id: pkg(syringe, 'Nipro'), pack_qty: 2, unit_price: 180,
+        { product_id: syringe.id, package_id: pkg(syringe, 'กล่อง 100 ชิ้น'), pack_qty: 2, unit_price: 180,
           lot_no: 'NP-S3-2509', expiry_date: day(1095) },
-        { product_id: gloves.id, package_id: pkg(gloves, 'ทั่วไป'), pack_qty: 3, unit_price: 150,
+        { product_id: gloves.id, package_id: pkg(gloves, 'กล่อง 100 ชิ้น'), pack_qty: 3, unit_price: 150,
           lot_no: 'GLV-M-01', expiry_date: day(730) },
       ],
     });
 
-    // รับของเข้า #2 — ปนกัน: รับเป็นหน่วยย่อย + ยาตัวเดียวกันคนละยี่ห้อ + ล็อตใกล้หมดอายุ
+    // รับของเข้า #2 — ปนกัน: รับเป็นหน่วยย่อย + Paracetamol อีกยี่ห้อ (คนละสินค้า) + ล็อตใกล้หมดอายุ
     await create({
       doc_type: 'receive', doc_date: day(-25), supplier: 'ร้านยาตัวอย่าง',
       items: [
@@ -163,7 +171,7 @@ async function main() {
         { product_id: betadine.id, quantity: 6, unit_price: 45, lot_no: 'BT-2410', manufacture_date: day(-760),
           expiry_date: day(-3), description: 'ล็อตเก่า ราคาพิเศษ' },
         { product_id: betadine.id, quantity: 10, unit_price: 48, lot_no: 'BT-2604', expiry_date: day(700) },
-        { product_id: para.id, package_id: pkg(para, 'Tylenol (Kenvue)'), pack_qty: 20, unit_price: 15,
+        { product_id: paraTylenol.id, package_id: pkg(paraTylenol, 'แผง 10 เม็ด'), pack_qty: 20, unit_price: 15,
           lot_no: 'TY-2509', expiry_date: day(20) },
       ],
     });
