@@ -3,7 +3,10 @@
     <app-loading-spinner [overlay]="true" [message]="loadingMessage"></app-loading-spinner>
   }
 
-  <h2 class="text-xl font-bold text-gray-800 mb-4">โปรไฟล์ของฉัน</h2>
+  <div class="title-with-back mb-4">
+    <app-back-button />
+    <h2 class="text-xl font-bold text-gray-800">โปรไฟล์ของฉัน</h2>
+  </div>
 
   <div *ngIf="needsProfile" class="profile-hint">
     กรุณากรอกชื่อ-นามสกุลของคุณเพื่อใช้งานระบบให้ครบถ้วน

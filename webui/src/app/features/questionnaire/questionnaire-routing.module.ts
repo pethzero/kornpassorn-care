@@ -4,7 +4,10 @@ import { QuestionnaireListComponent } from './questionnaire-list/questionnaire-l
 import { QuestionnaireDetailComponent } from './questionnaire-detail/questionnaire-detail';
 
 export const routes: Routes = [
+  // /questionnaire และ /questionnaire/detail → รายการ (ปุ่มย้อนกลับขึ้นหน้าแม่ได้ตอนเปิดลิงก์ตรง)
+  { path: '', pathMatch: 'full', redirectTo: 'list' },
   { path: 'list', component: QuestionnaireListComponent },
+  { path: 'detail', pathMatch: 'full', redirectTo: 'list' },
   { path: 'detail/:id', component: QuestionnaireDetailComponent },
 ];
 

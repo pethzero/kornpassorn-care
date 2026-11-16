@@ -10,13 +10,14 @@ import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService } from 'primeng/api';
+import { BackButtonComponent } from '../../../ui/back-button/back-button';
 
 const DAY_LABELS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 
 @Component({
   selector: 'app-hospital-schedule-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonModule, ToastModule, ConfirmDialogModule, LoadingSpinnerComponent],
+  imports: [BackButtonComponent, CommonModule, FormsModule, ButtonModule, ToastModule, ConfirmDialogModule, LoadingSpinnerComponent],
   templateUrl: './hospital-schedule-admin.html',
   styleUrls: ['./hospital-schedule-admin.scss'],
   providers: [MessageService, ConfirmationService],

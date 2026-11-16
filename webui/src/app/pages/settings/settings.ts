@@ -14,6 +14,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 
 import { AuthService } from '../../core/services/auth.service';
 import { ClinicSettings, DeviceSummary, HistoryItem, Session, SettingsService, StaffUser } from '../../core/services/settings.service';
+import { BackButtonComponent } from '../../ui/back-button/back-button';
 
 type Tab = 'account' | 'sessions' | 'online' | 'users' | 'clinic';
 
@@ -24,7 +25,7 @@ const MONITOR_REFRESH_MS = 30_000;
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ButtonModule, DialogModule, InputTextModule, InputNumberModule, ToastModule, TooltipModule, ConfirmDialogModule],
+  imports: [BackButtonComponent, CommonModule, FormsModule, RouterLink, ButtonModule, DialogModule, InputTextModule, InputNumberModule, ToastModule, TooltipModule, ConfirmDialogModule],
   templateUrl: './settings.html',
   styleUrls: ['../../ui/styles/list-page.scss', './settings.scss'],
   providers: [MessageService, ConfirmationService],

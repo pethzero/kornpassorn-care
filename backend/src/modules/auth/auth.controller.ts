@@ -1,4 +1,5 @@
 import { Controller, Post, Req, Res, Body, Get, UseGuards, HttpCode } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -48,6 +49,8 @@ export class AuthController {
     };
   }
 
+  // ไม่ต้อง login ก็ขอได้ และทุกครั้งสร้าง session ใหม่ใน DB — จำกัด 5 ครั้ง/นาที/IP
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('guest')
   @HttpCode(201)
   async loginAsGuest(@Req() req: Request) {

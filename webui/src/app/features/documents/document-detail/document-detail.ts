@@ -13,11 +13,12 @@ import { productLabel } from '../../../core/models/inventory.model';
 import { LoadingSpinnerComponent } from '../../../ui/loading-spinner/loading-spinner';
 import { DocumentService } from '../../../core/services/document.service';
 import { ClinicDocument, DocumentItem, documentTypeInfo } from '../../../core/models/document.model';
+import { BackButtonComponent } from '../../../ui/back-button/back-button';
 
 @Component({
   selector: 'app-document-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ButtonModule, DialogModule, InputTextModule, ToastModule, LoadingSpinnerComponent],
+  imports: [BackButtonComponent, CommonModule, FormsModule, RouterLink, ButtonModule, DialogModule, InputTextModule, ToastModule, LoadingSpinnerComponent],
   templateUrl: './document-detail.html',
   styleUrls: ['../../../ui/styles/list-page.scss', './document-detail.scss'],
   providers: [MessageService],

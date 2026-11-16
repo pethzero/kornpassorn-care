@@ -10,11 +10,12 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { BackButtonComponent } from '../../../ui/back-button/back-button';
 
 @Component({
   selector: 'app-questionnaire-detail',
   standalone: true,
-  imports: [CommonModule, ButtonModule, TagModule, ToastModule, LoadingSpinnerComponent],
+  imports: [BackButtonComponent, CommonModule, ButtonModule, TagModule, ToastModule, LoadingSpinnerComponent],
   templateUrl: './questionnaire-detail.html',
   styleUrls: ['./questionnaire-detail.scss'],
   providers: [MessageService],
@@ -92,9 +93,5 @@ export class QuestionnaireDetailComponent implements OnInit {
         });
       },
     });
-  }
-
-  back(): void {
-    this.router.navigate(['/questionnaire/list']);
   }
 }

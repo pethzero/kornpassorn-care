@@ -23,6 +23,22 @@ export const routes: Routes = [
     data: { roles: ['user', 'admin'] },
     title: 'ล็อตสินค้า',
   },
+  {
+    // ตู้เก็บยาแบบ 3 มิติ — โหลด three.js เฉพาะหน้านี้
+    path: 'cabinets',
+    loadComponent: () => import('./cabinets/cabinet-page').then((m) => m.CabinetPageComponent),
+    canActivate: [AuthGuard],
+    data: { roles: ['user', 'admin'] },
+    title: 'ตู้เก็บยา',
+  },
+  {
+    // ออกแบบห้องเก็บของ: ห้อง → ตู้ (ลากวางผัง 2 มิติ + ภาพ 3 มิติทั้งห้อง)
+    path: 'rooms',
+    loadComponent: () => import('./rooms/room-page').then((m) => m.RoomPageComponent),
+    canActivate: [AuthGuard],
+    data: { roles: ['user', 'admin'] },
+    title: 'ห้องเก็บของ',
+  },
 ];
 
 @NgModule({

@@ -25,6 +25,7 @@ import {
   DocumentType,
   documentTypeInfo,
 } from '../../../core/models/document.model';
+import { BackButtonComponent } from '../../../ui/back-button/back-button';
 
 interface Option<T = number> {
   label: string;
@@ -35,7 +36,7 @@ interface Option<T = number> {
 @Component({
   selector: 'app-document-form',
   standalone: true,
-  imports: [
+  imports: [BackButtonComponent, 
     CommonModule,
     FormsModule,
     ReactiveFormsModule,

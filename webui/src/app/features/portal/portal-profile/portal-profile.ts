@@ -10,11 +10,12 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { BackButtonComponent } from '../../../ui/back-button/back-button';
 
 @Component({
   selector: 'app-portal-profile',
   standalone: true,
-  imports: [
+  imports: [BackButtonComponent, 
     CommonModule,
     ReactiveFormsModule,
     SelectModule,

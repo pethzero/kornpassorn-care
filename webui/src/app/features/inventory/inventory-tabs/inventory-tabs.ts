@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
-// แถบสลับหน้า สินค้า <-> ล็อตสินค้า — วางไว้บนสุดของทั้งสองหน้าให้รู้ว่าเป็นหมวดเดียวกัน
+// แถบสลับหน้า สินค้า <-> ล็อตสินค้า <-> ตู้เก็บยา <-> ห้องเก็บของ — วางไว้บนสุดของทั้งสองหน้าให้รู้ว่าเป็นหมวดเดียวกัน
 @Component({
   selector: 'app-inventory-tabs',
   standalone: true,
@@ -13,6 +13,12 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       </a>
       <a routerLink="/inventory/lots" routerLinkActive="active" class="tab">
         <i class="pi pi-box"></i> ล็อตสินค้า / สต็อก
+      </a>
+      <a routerLink="/inventory/cabinets" routerLinkActive="active" class="tab">
+        <i class="pi pi-th-large"></i> ตู้เก็บยา
+      </a>
+      <a routerLink="/inventory/rooms" routerLinkActive="active" class="tab">
+        <i class="pi pi-map"></i> ห้องเก็บของ
       </a>
     </nav>
   `,

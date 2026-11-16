@@ -6,20 +6,6 @@ $line: #edf1f5;
 $accent: #0f766e;
 $accent-soft: #effaf8;
 
-.back {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-bottom: 1rem;
-  font-size: 0.85rem;
-  color: $muted;
-  text-decoration: none;
-
-  &:hover {
-    color: $accent;
-  }
-}
-
 // ----- หัว -----
 .hero {
   display: flex;

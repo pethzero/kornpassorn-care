@@ -13,12 +13,13 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 
 import { ApiClientService } from '../../core/services/api-client.service';
 import { ApiClient, ApiClientWithSecret, ApiScopeInfo } from '../../core/models/api-client.model';
+import { BackButtonComponent } from '../../ui/back-button/back-button';
 
 // จัดการระบบภายนอกที่เรียก API ได้ (admin) — secret แสดงครั้งเดียวตอนสร้าง/สร้างใหม่
 @Component({
   selector: 'app-api-client-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ButtonModule, DialogModule, InputTextModule, ToastModule, TooltipModule, ConfirmDialogModule],
+  imports: [BackButtonComponent, CommonModule, FormsModule, RouterLink, ButtonModule, DialogModule, InputTextModule, ToastModule, TooltipModule, ConfirmDialogModule],
   templateUrl: './api-client-list.html',
   styleUrls: ['../../ui/styles/list-page.scss', './api-client-list.scss'],
   providers: [MessageService, ConfirmationService],

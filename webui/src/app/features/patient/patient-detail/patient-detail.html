@@ -1,5 +1,4 @@
 <div class="inv-page detail">
-  <a routerLink="/patient/list" class="back"><i class="pi pi-arrow-left"></i> คนไข้ทั้งหมด</a>
 
   @if (notFound) {
     <div class="empty-state">
@@ -11,6 +10,7 @@
   @if (patient; as p) {
     <!-- ===== หัว: ชื่อ + ปุ่มที่ใช้บ่อย ===== -->
     <section class="hero">
+      <app-back-button />
       <span class="avatar" [ngClass]="'g-' + (gender(p.gender).key || 'none')">{{ initials(p) }}</span>
       <div class="hero-text">
         <h2>{{ name(p) }}</h2>

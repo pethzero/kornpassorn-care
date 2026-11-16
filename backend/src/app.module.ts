@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { AppController } from './app.controller';
@@ -18,9 +20,11 @@ import { ApiClientModule } from './modules/api-clients/api-client.module';
 import { PublicApiModule } from './modules/public-api/public-api.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
+import { StorageModule } from './modules/storage/storage.module';
 import { ProtectedModule } from './modules/protected/protected.module';
 import { DummyModule } from './modules/dummy/dummy.module';
 import { ProfileController } from './modules/profile/profile.controller';
+import { IpThrottlerGuard, isAnonymousOrGuest } from './common/guards/ip-throttler.guard';
 
 @Module({
   imports: [
@@ -31,6 +35,14 @@ import { ProfileController } from './modules/profile/profile.controller';
 
     // เปิดใช้ @Cron(...) ทั่วแอป — ต้อง forRoot() แค่จุดเดียวที่ root module (auth module ใช้สำหรับ TokenCleanupService)
     ScheduleModule.forRoot(),
+
+    // จำกัด request ต่อ IP ทั้งแอป (หลวม ๆ — เจ้าหน้าที่หลายคนในคลินิกอาจใช้ IP เดียวกัน)
+    // จุดเสี่ยงตั้งเข้มกว่าด้วย @Throttle(...) เช่น guest login, ส่งแบบสอบถาม
+    // + คนที่ไม่ได้ login / guest (ไม่รู้ว่าเป็นใคร) เพดานแยกเข้มกว่า: 60/นาที ≈ กด F5 หน้า guest-dashboard 30 ครั้ง
+    ThrottlerModule.forRoot([
+      { name: 'default', ttl: 60_000, limit: 300 },
+      { name: 'guest', ttl: 60_000, limit: 60, skipIf: (ctx) => !isAnonymousOrGuest(ctx.switchToHttp().getRequest()) },
+    ]),
 
     // DatabaseModule already registers TypeOrm default connection
     DatabaseModule,
@@ -56,6 +68,7 @@ import { ProfileController } from './modules/profile/profile.controller';
     HospitalScheduleModule,
     FinanceModule,
     InventoryModule,
+    StorageModule, // ตู้เก็บยา + ตำแหน่งล็อตในตู้ (/api/storage)
     DocumentModule,
     AppointmentModule,
     ApiClientModule, // admin จัดการระบบภายนอก (/api/api-clients)
@@ -65,7 +78,7 @@ import { ProfileController } from './modules/profile/profile.controller';
     DummyModule,
   ],
   controllers: [AppController, ProfileController],
-  providers: [AppService],
+  providers: [AppService, { provide: APP_GUARD, useClass: IpThrottlerGuard }],
 })
 export class AppModule {}
 

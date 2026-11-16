@@ -23,6 +23,9 @@ import {
   Appointment,
   ApiClient,
   AppSetting,
+  StorageRoom,
+  StorageCabinet,
+  StorageCompartment,
 } from '../database/entities';
 
 // Type definition สำหรับ Entity Class
@@ -52,6 +55,9 @@ export const DEFAULT_ENTITIES: EntityClass[] = [
   Appointment,
   ApiClient,
   AppSetting,
+  StorageRoom,
+  StorageCabinet,
+  StorageCompartment,
 ];
 
 // Entity configurations สำหรับแต่ละ database

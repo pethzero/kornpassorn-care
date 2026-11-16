@@ -26,11 +26,12 @@ import {
   productLabel,
 } from '../../../core/models/inventory.model';
 import { documentTypeInfo } from '../../../core/models/document.model';
+import { BackButtonComponent } from '../../../ui/back-button/back-button';
 
 @Component({
   selector: 'app-lot-list',
   standalone: true,
-  imports: [
+  imports: [BackButtonComponent, 
     CommonModule,
     FormsModule,
     ReactiveFormsModule,

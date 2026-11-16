@@ -21,6 +21,7 @@ import {
   AppointmentPayload,
   AppointmentStatus,
 } from '../../core/models/appointment.model';
+import { BackButtonComponent } from '../../ui/back-button/back-button';
 
 type Range = 'today' | 'week' | 'month' | 'custom';
 
@@ -33,7 +34,7 @@ interface DayGroup {
 @Component({
   selector: 'app-appointment-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonModule, DialogModule, InputTextModule, SelectModule, ToastModule, TooltipModule, ConfirmDialogModule],
+  imports: [BackButtonComponent, CommonModule, FormsModule, ButtonModule, DialogModule, InputTextModule, SelectModule, ToastModule, TooltipModule, ConfirmDialogModule],
   templateUrl: './appointment-list.html',
   styleUrls: ['../../ui/styles/list-page.scss', './appointment-list.scss'],
   providers: [MessageService, ConfirmationService],

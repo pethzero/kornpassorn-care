@@ -10,20 +10,6 @@ $accent-soft: #effaf8;
   max-width: 48rem;
 }
 
-.back {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-bottom: 0.75rem;
-  font-size: 0.85rem;
-  color: $muted;
-  text-decoration: none;
-
-  &:hover {
-    color: $accent;
-  }
-}
-
 .block {
   padding: 1.1rem 0 1.3rem;
   border-top: 1px solid $line;

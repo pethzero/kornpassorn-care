@@ -107,6 +107,6 @@ async function backupAll(ds: DataSource) {
 }
 
 main().catch((err) => {
-  console.error('✖ FAILED:', err.message);
+  console.error('✖ FAILED:', err.message || err.code || err);
   process.exit(1);
 });

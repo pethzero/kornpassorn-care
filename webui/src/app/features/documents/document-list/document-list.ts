@@ -22,11 +22,12 @@ import {
   DocumentType,
   documentTypeInfo,
 } from '../../../core/models/document.model';
+import { BackButtonComponent } from '../../../ui/back-button/back-button';
 
 @Component({
   selector: 'app-document-list',
   standalone: true,
-  imports: [
+  imports: [BackButtonComponent, 
     CommonModule,
     FormsModule,
     RouterLink,

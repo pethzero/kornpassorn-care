@@ -55,6 +55,8 @@ export const MENU_CONFIG: MenuItem[] = [
     children: [
       { label: 'สินค้า', icon: 'category', route: '/inventory/products', roles: ['user', 'admin'] },
       { label: 'ล็อตสินค้า', icon: 'local_pharmacy', route: '/inventory/lots', roles: ['user', 'admin'] },
+      { label: 'ตู้เก็บยา', icon: 'door_sliding', route: '/inventory/cabinets', roles: ['user', 'admin'] },
+      { label: 'ห้องเก็บของ', icon: 'meeting_room', route: '/inventory/rooms', roles: ['user', 'admin'] },
     ]
   },
   {

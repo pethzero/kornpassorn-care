@@ -141,7 +141,8 @@ export class AuthService {
     );
   }
 
-  loginAsGuest(): Observable<boolean> {
+  // สำเร็จ = true · ไม่สำเร็จ = ข้อความให้แสดง (429 = กดถี่เกิน ใช้ข้อความจาก backend)
+  loginAsGuest(): Observable<true | string> {
     return this.http.post<{ access_token?: string }>(
       `${environment.apiUrl}/auth/guest`,
       {},
@@ -152,10 +153,10 @@ export class AuthService {
           this.setAccessToken(res.access_token);
         }
       }),
-      map(() => true),
-      catchError(() => {
+      map(() => true as const),
+      catchError((err) => {
         this.clearAuthState();
-        return of(false);
+        return of(err?.status === 429 && err.error?.message ? String(err.error.message) : 'ไม่สามารถเข้าสู่ระบบ guest ได้');
       })
     );
   }

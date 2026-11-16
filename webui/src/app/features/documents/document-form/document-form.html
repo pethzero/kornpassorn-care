@@ -1,8 +1,8 @@
 <div class="inv-page doc-form">
-  <a routerLink="/documents" class="back-link"><i class="pi pi-arrow-left"></i> เอกสารทั้งหมด</a>
 
   <div class="list-header">
     <div class="header-title-group">
+      <app-back-button />
       <h2>สร้างเอกสาร</h2>
     </div>
   </div>
@@ -109,7 +109,7 @@
               <th style="min-width: 13rem;">{{ docType === 'patient_service' ? 'รายการ' : 'สินค้า' }}</th>
               @switch (docType) {
                 @case ('receive') {
-                  <th>ยี่ห้อ / บรรจุ</th>
+                  <th>แบบบรรจุ</th>
                   <th>เลขล็อต *</th>
                   <th>วันหมดอายุ</th>
                 }
@@ -177,7 +177,7 @@
                             [showClear]="true" [placeholder]="product(i) ? 'รับเป็น' + (product(i)?.unit || 'หน่วยย่อย') : '-'"
                             appendTo="body" styleClass="w-full" (onChange)="onPackageChange(i)"></p-select>
                           <button type="button" class="add-inline" (click)="openNewPackage(i)" [disabled]="!product(i)"
-                            pTooltip="ยี่ห้อ / ขนาดบรรจุใหม่" tooltipPosition="top"><i class="pi pi-plus"></i></button>
+                            pTooltip="แบบบรรจุใหม่" tooltipPosition="top"><i class="pi pi-plus"></i></button>
                         </div>
                       </td>
                       <td>

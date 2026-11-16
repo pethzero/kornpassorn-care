@@ -7,6 +7,7 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
+import { StorageCompartment } from './storage.entity';
 
 // สินค้า/ยา — 1 สินค้า = 1 ยี่ห้อ เช่น "Paracetamol 500 mg" ยี่ห้อ Sara กับยี่ห้อ Tylenol เป็นคนละสินค้า (สต็อกแยกกัน)
 // แบบบรรจุที่ซื้อเข้า (กล่อง 40 เม็ด / แผง 10 เม็ด / แท่งเล็ก ฯลฯ) อยู่ที่ InventoryProductPackage
@@ -211,6 +212,18 @@ export class InventoryProductLot {
 
   @Column({ type: 'date', default: () => 'CURRENT_DATE' })
   received_date: string;
+
+  // เก็บไว้ที่ไหน — ช่องในตู้ + ชั้น (ชั้น 1 = บนสุด) · ลบช่อง/ตู้ทิ้ง = ล็อตกลายเป็น "ยังไม่ระบุที่เก็บ"
+  @Column({ type: 'int', nullable: true })
+  @Index()
+  storage_compartment_id?: number | null;
+
+  @ManyToOne(() => StorageCompartment, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'storage_compartment_id' })
+  storage_compartment?: StorageCompartment | null;
+
+  @Column({ type: 'int', nullable: true })
+  storage_level?: number | null;
 
   @Column({ length: 255, nullable: true })
   note?: string;
