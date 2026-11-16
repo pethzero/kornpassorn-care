@@ -1,10 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NavHistoryService } from './core/services/nav-history.service';
+import { RateLimitNoticeComponent } from './ui/rate-limit-notice/rate-limit-notice';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, RateLimitNoticeComponent],
   templateUrl: './app.html',
   styleUrls: ['./app.scss']
 })

@@ -1,0 +1,242 @@
+<div class="inv-page">
+  <app-inventory-tabs></app-inventory-tabs>
+
+  <div class="list-header">
+    <div class="header-title-group">
+      <app-back-button />
+      <h2>ตู้เก็บยา</h2>
+      <span class="count-badge">{{ cabinets.length }} ตู้</span>
+    </div>
+    <div class="header-actions">
+      <p-button label="ผังห้อง" icon="pi pi-map" severity="secondary" [outlined]="true" routerLink="/inventory/rooms"
+        [queryParams]="current?.room_id ? { id: current?.room_id } : {}"></p-button>
+      <p-button label="เพิ่มตู้" icon="pi pi-plus" (onClick)="openCreate()"></p-button>
+    </div>
+  </div>
+
+  <!-- เลือกตู้ -->
+  @if (cabinets.length) {
+    <div class="cabinet-strip">
+      @for (c of cabinets; track c.id) {
+        <button type="button" class="cabinet-chip" [class.active]="c.id === current?.id" (click)="openCabinet(c.id)">
+          <span class="chip-code">{{ c.code }}</span>
+          <span class="chip-text">
+            <span class="chip-name">{{ c.name }}</span>
+            <span class="chip-sub">{{ c.room?.name || 'ยังไม่อยู่ในห้อง' }} · {{ c.compartments.length }} ช่อง · {{ c.lot_count || 0 }} ล็อต</span>
+          </span>
+          <app-expiry-badge class="chip-badge" [expired]="c.expired_count || 0" [expiring]="c.expiring_count || 0" />
+        </button>
+      }
+    </div>
+  } @else if (!loading) {
+    <div class="empty-state">
+      <i class="pi pi-th-large"></i>
+      <h3>ยังไม่มีตู้</h3>
+      <p>เพิ่มตู้แรก เลือกแบบสำเร็จรูป เช่น "ตู้ 2 ช่อง — กระจกบน + บานทึบล่าง" แล้วแก้ขนาดให้ตรงตู้จริง</p>
+      <p-button label="เพิ่มตู้" icon="pi pi-plus" (onClick)="openCreate()"></p-button>
+    </div>
+  }
+
+  @if (current) {
+    <div class="cabinet-layout">
+      <!-- 3 มิติ -->
+      <section class="viewer-card">
+        <div class="viewer-toolbar">
+          <div class="viewer-title">
+            <strong>{{ current.code }}</strong> {{ current.name }}
+            <span class="muted">{{ current.width_cm }}×{{ current.height_cm }}×{{ current.depth_cm }} ซม.</span>
+            <app-expiry-badge [expired]="currentStats.expired" [expiring]="currentStats.expiring" />
+          </div>
+          <div class="viewer-actions">
+            <button type="button" class="tool-btn" (click)="setAllOpen(true)" pTooltip="เปิดทุกบาน/ลิ้นชัก" tooltipPosition="top"><i class="pi pi-folder-open"></i></button>
+            <button type="button" class="tool-btn" (click)="setAllOpen(false)" pTooltip="ปิดทั้งหมด" tooltipPosition="top"><i class="pi pi-folder"></i></button>
+            <button type="button" class="tool-btn" (click)="resetView()" pTooltip="มุมกล้องเริ่มต้น" tooltipPosition="top"><i class="pi pi-refresh"></i></button>
+            <button type="button" class="tool-btn" (click)="openEdit()" pTooltip="แก้ตู้ / ช่อง" tooltipPosition="top"><i class="pi pi-pencil"></i></button>
+            <button type="button" class="tool-btn danger" (click)="confirmDelete()" pTooltip="ลบตู้" tooltipPosition="top"><i class="pi pi-trash"></i></button>
+          </div>
+        </div>
+        <div class="viewport" #viewport>
+          @if (hover) {
+            <div class="tip" [style.left.px]="hover.x + 14" [style.top.px]="hover.y + 14">
+              <strong>{{ hover.info.title }}</strong>
+              @for (line of hover.info.lines; track $index) { <span>{{ line }}</span> }
+            </div>
+          }
+        </div>
+        <div class="viewer-hint">
+          <span><i class="pi pi-hand-pointer"></i> คลิกบาน/ลิ้นชักเพื่อเปิด-ปิด</span>
+          <span><i class="pi pi-arrows-alt"></i> ลากเพื่อหมุน · เลื่อนลูกกลิ้งเพื่อซูม</span>
+          <span class="legend"><i class="dot soon"></i> ใกล้หมดอายุ ≤ 90 วัน <i class="dot expired"></i> หมดอายุ</span>
+        </div>
+      </section>
+
+      <!-- รายละเอียดช่อง -->
+      <aside class="side-card">
+        @if (selected; as comp) {
+          <div class="side-head">
+            <button type="button" class="link-btn" (click)="select(null)"><i class="pi pi-arrow-left"></i> ทุกช่อง</button>
+            <h3>{{ where(comp) }} <span class="muted">{{ comp.name }}</span></h3>
+            <span class="tag">{{ frontLabel[comp.front] }}@if (comp.front !== 'drawer') { · {{ comp.levels }} ชั้น }@if (comp.has_lock) { · <i class="pi pi-lock"></i> }</span>
+          </div>
+
+          @for (lv of levelsOf(comp); track lv.level) {
+            <div class="level">
+              @if (comp.front !== 'drawer') {
+                <div class="level-title">ชั้น {{ lv.level }}@if (lv.level === 1) { <span class="muted">(บนสุด)</span> }</div>
+              }
+              @for (l of lv.lots; track l.id) {
+                <div class="lot-row">
+                  <i class="swatch" [style.background]="lotColor(l)"></i>
+                  <div class="lot-main">
+                    <span class="lot-name">{{ l.product_name }}</span>
+                    <span class="lot-sub">
+                      {{ l.lot_no }} · {{ l.quantity_remaining | number: '1.0-2' }} {{ l.unit }} ·
+                      <span [class]="expiryClass(l.expiry_date)">{{ expiryText(l.expiry_date) }}</span>
+                    </span>
+                  </div>
+                  @if (comp.front !== 'drawer' && comp.levels > 1) {
+                    <p-select [options]="levelOptions(comp, true)" [ngModel]="l.storage_level" (ngModelChange)="moveLevel(l, $event)"
+                      size="small" appendTo="body" styleClass="level-select" pTooltip="ย้ายชั้น" tooltipPosition="top"></p-select>
+                  }
+                  <button type="button" class="icon-btn" (click)="takeOut(l)" pTooltip="เอาออกจากตู้" tooltipPosition="top"><i class="pi pi-sign-out"></i></button>
+                </div>
+              } @empty {
+                <div class="level-empty">ว่าง</div>
+              }
+            </div>
+          }
+
+          <div class="place-box">
+            <span class="place-title"><i class="pi pi-inbox"></i> วางล็อตเข้าช่องนี้</span>
+            @if (unplaced.length) {
+              <p-select [options]="unplacedOptions" [(ngModel)]="placeLotId" [filter]="true" filterBy="label" placeholder="เลือกล็อตที่ยังไม่ระบุที่เก็บ"
+                appendTo="body" styleClass="w-full"></p-select>
+              <div class="place-row">
+                @if (comp.front !== 'drawer') {
+                  <p-select [options]="levelOptions(comp)" [(ngModel)]="placeLevel" appendTo="body" styleClass="grow"></p-select>
+                }
+                <p-button label="วาง" icon="pi pi-check" [disabled]="!placeLotId" [loading]="placing" (onClick)="place()"></p-button>
+              </div>
+            } @else {
+              <span class="muted">ทุกล็อตที่มีของถูกจัดเข้าที่แล้ว</span>
+            }
+          </div>
+        } @else {
+          <div class="side-head">
+            <h3>ช่องในตู้ {{ current.code }}</h3>
+            <span class="muted">เลือกช่องเพื่อดูของ หรือคลิกในภาพ 3 มิติ</span>
+          </div>
+          @for (comp of current.compartments; track comp.id) {
+            <button type="button" class="comp-row" (click)="select(comp.id!)">
+              <span class="comp-code">{{ comp.code }}</span>
+              <span class="comp-text">
+                <span>{{ comp.name || 'ช่อง ' + comp.code }}</span>
+                <span class="muted">{{ frontLabel[comp.front] }}@if (comp.front !== 'drawer') { · {{ comp.levels }} ชั้น }@if (comp.has_lock) { · ล็อกได้ }</span>
+              </span>
+              <app-expiry-badge [expired]="compStats(comp).expired" [expiring]="compStats(comp).expiring" />
+              <span class="comp-count" [class.zero]="!lotsIn(comp)">{{ lotsIn(comp) }} ล็อต</span>
+              <i class="pi pi-angle-right"></i>
+            </button>
+          }
+          @if (unplaced.length) {
+            <div class="unplaced-note"><i class="pi pi-info-circle"></i> มี {{ unplaced.length }} ล็อตที่ยังไม่ระบุที่เก็บ — เลือกช่องแล้ววางได้เลย</div>
+          }
+        }
+      </aside>
+    </div>
+  }
+
+  <!-- เพิ่ม / แก้ตู้ -->
+  <p-dialog [(visible)]="showEditor" [modal]="true" [appendTo]="'body'" [header]="editingId ? 'แก้ตู้ ' + form.code : 'เพิ่มตู้'"
+    [style]="{ width: '980px' }" [breakpoints]="{ '1020px': '96vw' }" [closable]="!saving">
+    <div class="editor">
+      <div class="editor-form">
+        @if (!editingId) {
+          <div class="field">
+            <span>แบบตู้สำเร็จรูป</span>
+            <div class="preset-list">
+              @for (p of presets; track p.key) {
+                <button type="button" class="preset" [class.on]="presetKey === p.key" (click)="applyPreset(p.key)">{{ p.label }}</button>
+              }
+            </div>
+          </div>
+        }
+        <div class="field-row">
+          <label class="field small"><span>รหัสตู้ *</span><input pInputText [(ngModel)]="form.code" maxlength="20" /></label>
+          <label class="field"><span>ชื่อตู้ *</span><input pInputText [(ngModel)]="form.name" maxlength="100" /></label>
+          <label class="field"><span>ห้อง</span>
+            <p-select [options]="roomOptions" [(ngModel)]="form.room_id" [showClear]="true" placeholder="ยังไม่อยู่ในห้อง" appendTo="body"></p-select>
+          </label>
+        </div>
+        <div class="field-row">
+          <label class="field small"><span>กว้าง (ซม.)</span><input pInputText type="number" [(ngModel)]="form.width_cm" min="20" /></label>
+          <label class="field small"><span>สูง (ซม.)</span><input pInputText type="number" [(ngModel)]="form.height_cm" min="20" /></label>
+          <label class="field small"><span>ลึก (ซม.)</span><input pInputText type="number" [(ngModel)]="form.depth_cm" min="10" /></label>
+          <label class="field small"><span>สีตู้</span><input type="color" class="color-input" [(ngModel)]="form.color" /></label>
+        </div>
+
+        <div class="comp-table-head">
+          <span>ช่องในตู้ — ตำแหน่งวัดจากมุมล่างซ้าย (ซม.)</span>
+          <button type="button" class="link-btn" (click)="addCompartment()"><i class="pi pi-plus"></i> เพิ่มช่อง</button>
+        </div>
+        <div class="comp-table">
+          <div class="comp-tr head">
+            <span>รหัส</span><span>ชื่อ</span><span>หน้าตู้</span><span>บาน</span><span>ชั้น</span>
+            <span>X</span><span>Y</span><span>กว้าง</span><span>สูง</span><span title="มีกุญแจ"><i class="pi pi-lock"></i></span><span></span>
+          </div>
+          @for (c of form.compartments; track $index; let i = $index) {
+            <div class="comp-tr">
+              <input pInputText [(ngModel)]="c.code" maxlength="10" />
+              <input pInputText [(ngModel)]="c.name" maxlength="100" placeholder="เช่น ชั้นล่าง" />
+              <p-select [options]="frontOptions" [(ngModel)]="c.front" appendTo="body" size="small"></p-select>
+              <input pInputText type="number" [(ngModel)]="c.door_count" min="1" max="2" [disabled]="c.front === 'drawer' || c.front === 'open'" />
+              <input pInputText type="number" [(ngModel)]="c.levels" min="1" max="20" [disabled]="c.front === 'drawer'" />
+              <input pInputText type="number" [(ngModel)]="c.x_cm" min="0" />
+              <input pInputText type="number" [(ngModel)]="c.y_cm" min="0" />
+              <input pInputText type="number" [(ngModel)]="c.width_cm" min="5" />
+              <input pInputText type="number" [(ngModel)]="c.height_cm" min="5" />
+              <input type="checkbox" [(ngModel)]="c.has_lock" />
+              <button type="button" class="icon-btn danger" (click)="removeCompartment(i)" pTooltip="ลบช่อง" tooltipPosition="top"><i class="pi pi-times"></i></button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- ภาพหน้าตู้ -->
+      <div class="editor-preview">
+        <span class="muted">ภาพหน้าตู้</span>
+        <svg [attr.viewBox]="'-2 -2 ' + (+form.width_cm + 4) + ' ' + (+form.height_cm + 4)" preserveAspectRatio="xMidYMid meet">
+          <rect x="0" y="0" [attr.width]="form.width_cm" [attr.height]="form.height_cm" [attr.fill]="form.color" stroke="#94a3b8" stroke-width="1" rx="1" />
+          @for (c of form.compartments; track $index) {
+            <g>
+              <rect [attr.x]="+c.x_cm + 1" [attr.y]="previewY(c) + 1" [attr.width]="+c.width_cm - 2" [attr.height]="+c.height_cm - 2"
+                [class]="'pv ' + c.front" rx="1" />
+              @if (c.front === 'glass' || c.front === 'solid') {
+                @if (+c.door_count === 2) {
+                  <line [attr.x1]="+c.x_cm + c.width_cm / 2" [attr.x2]="+c.x_cm + c.width_cm / 2" [attr.y1]="previewY(c) + 1" [attr.y2]="previewY(c) + +c.height_cm - 1" class="pv-split" />
+                }
+                @if (c.front === 'glass') {
+                  @for (y of shelfLines(c); track $index) {
+                    <line [attr.x1]="+c.x_cm + 3" [attr.x2]="+c.x_cm + +c.width_cm - 3" [attr.y1]="y" [attr.y2]="y" class="pv-shelf" />
+                  }
+                }
+              }
+              @if (c.front === 'drawer') {
+                <line [attr.x1]="+c.x_cm + c.width_cm / 2 - 6" [attr.x2]="+c.x_cm + c.width_cm / 2 + 6"
+                  [attr.y1]="previewY(c) + c.height_cm * 0.4" [attr.y2]="previewY(c) + c.height_cm * 0.4" class="pv-handle" />
+              }
+              <text [attr.x]="+c.x_cm + 4" [attr.y]="previewY(c) + 9" class="pv-code">{{ c.code }}</text>
+            </g>
+          }
+        </svg>
+      </div>
+    </div>
+    <ng-template #footer>
+      <p-button label="ยกเลิก" severity="secondary" [outlined]="true" (onClick)="showEditor = false" [disabled]="saving"></p-button>
+      <p-button label="บันทึก" icon="pi pi-check" (onClick)="save()" [loading]="saving"></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <p-confirmdialog [style]="{ width: '440px' }"></p-confirmdialog>
+  <p-toast></p-toast>
+</div>

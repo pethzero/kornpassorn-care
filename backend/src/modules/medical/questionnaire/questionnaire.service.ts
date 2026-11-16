@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -17,11 +17,21 @@ export class QuestionnaireService {
     @InjectRepository(PatientQuestionnaireAnswer) private readonly answerRepo: Repository<PatientQuestionnaireAnswer>,
   ) {}
 
-  listActiveQuestions() {
-    return this.questionRepo.find({ order: { id: 'ASC' } });
+  // คำถามแทบไม่เปลี่ยน — cache 60 วินาที กด F5 รัว ๆ จะได้ไม่อ่าน DB ทุกครั้ง
+  private questionsCache: { at: number; data: Promise<QuestionnaireQuestion[]> } | null = null;
+
+  listActiveQuestions(): Promise<QuestionnaireQuestion[]> {
+    if (!this.questionsCache || Date.now() - this.questionsCache.at > 60_000) {
+      const data = this.questionRepo.find({ order: { id: 'ASC' } });
+      this.questionsCache = { at: Date.now(), data };
+      data.catch(() => (this.questionsCache = null)); // โหลดพลาด อย่าจำไว้
+    }
+    return this.questionsCache.data;
   }
 
   async submit(patientId: number | null, dto: SubmitQuestionnaireDto) {
+    dto.answers = await this.cleanAnswers(dto.answers);
+
     const questionnaire = await this.questionnaireRepo.save(
       this.questionnaireRepo.create({
         patient_id: patientId ?? undefined,
@@ -43,6 +53,24 @@ export class QuestionnaireService {
     await this.answerRepo.save(answers);
 
     return this.getDetail(questionnaire.id);
+  }
+
+  // ไม่เชื่อหน้าเว็บ: ตัดคำถามที่ไม่มีจริง/ซ้ำ/ว่าง และเช็กคำถามบังคับเองอีกรอบ
+  private async cleanAnswers(answers: SubmitQuestionnaireDto['answers']) {
+    const questions = await this.listActiveQuestions();
+    const byId = new Map(questions.map((q) => [q.id, q]));
+    const seen = new Set<number>();
+    const cleaned = answers.filter((a) => {
+      if (!byId.has(a.question_id) || seen.has(a.question_id)) return false;
+      seen.add(a.question_id);
+      a.answer_text = a.answer_text?.trim() || undefined;
+      return true;
+    });
+
+    const answered = new Set(cleaned.filter((a) => a.answer_text).map((a) => a.question_id));
+    const missing = questions.filter((q) => q.is_required && !answered.has(q.id));
+    if (missing.length) throw new BadRequestException(`กรุณาตอบคำถามที่จำเป็นให้ครบ (${missing.length} ข้อ)`);
+    return cleaned;
   }
 
   listForPatient(patientId: number) {

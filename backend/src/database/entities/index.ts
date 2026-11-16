@@ -17,4 +17,5 @@ export { DocumentSequence, Document, DocumentItem } from './document.entity';
 export { Appointment } from './appointment.entity';
 export { ApiClient } from './api-client.entity';
 export { AppSetting } from './app-setting.entity';
+export { StorageRoom, StorageCabinet, StorageCompartment } from './storage.entity';
 // export { ApiKey } from './api-key.entity'; // ไฟล์ว่างเปล่า

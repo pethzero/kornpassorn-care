@@ -1,21 +1,31 @@
 // src/app/core/interceptors/auth-interceptor.ts
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse, HttpEvent } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, throwError, switchMap } from 'rxjs';
+import { catchError, throwError, switchMap, Observable } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+import { RateLimitService } from '../services/rate-limit.service';
 
 const RETRIED_HEADER = 'X-Retried-After-Refresh';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const authService = inject(AuthService);
+  const rateLimit = inject(RateLimitService);
+
+  // 429 = backend จำกัดจำนวนครั้ง → โชว์แถบนับถอยหลัง (ทุก request รวม /auth/guest, /auth/login)
+  const notify429 = catchError<HttpEvent<unknown>, Observable<never>>((error: unknown) => {
+    if (error instanceof HttpErrorResponse && error.status === 429) {
+      rateLimit.hit(Number(error.error?.retry_after) || Number(error.headers.get('Retry-After')) || undefined);
+    }
+    return throwError(() => error);
+  });
 
   const token = localStorage.getItem('token');
 
   const skipUrls = ['/auth/login', '/auth/guest', '/auth/csrf-token', '/auth/refresh', '/patient-auth/otp'];
   if (skipUrls.some(url => req.url.includes(url))) {
-    return next(req);
+    return next(req).pipe(notify429);
   }
 
   const headersConfig: Record<string, string> = {};
@@ -29,6 +39,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   });
 
   return next(authReq).pipe(
+    notify429,
     catchError((error: HttpErrorResponse) => {
       // เคยลอง refresh+retry ไปแล้วรอบนึง ยัง 401 อีก แปลว่าไม่ใช่แค่ access token หมดอายุ -> เลิกลอง กัน loop ไม่รู้จบ
       if (error.status !== 401 || authReq.headers.has(RETRIED_HEADER)) {
